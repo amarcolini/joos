@@ -1,0 +1,6 @@
+/particle/
+/projectFilesBackup/
+/testRepo/
+build
+.gradle
+.idea

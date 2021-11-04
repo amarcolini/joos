@@ -1,0 +1,29 @@
+buildscript {
+    ext {
+        kotlin_version = "1.5.31"
+        lib_version = "0.1"
+    }
+
+    repositories {
+        jcenter()
+        google()
+    }
+
+    dependencies {
+        classpath("org.jetbrains.kotlin:kotlin-gradle-plugin:$kotlin_version")
+        classpath("com.android.tools.build:gradle:7.0.2")
+    }
+}
+
+allprojects {
+    repositories {
+//        maven {
+//            url uri("C:\\Users\\magui\\Documents\\Alessandro Luciano y Mariel\\Alessandro\\Robotics\\lib\\testRepo")
+//        }
+        jcenter()
+        mavenCentral()
+    }
+
+    group = "com.griffinrobotics.lib"
+    version = lib_version
+}
