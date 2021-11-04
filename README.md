@@ -15,6 +15,6 @@ repositories {
 }
 
 dependencies {
-  implementation "com.github.AMarcolini:joos:$module:0.1"
+  implementation "com.github.amarcolini:joos:$module:0.1"
 }
 ```
