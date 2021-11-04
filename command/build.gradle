@@ -63,10 +63,12 @@ publishing {
             artifact sourcesJar
             artifact("$buildDir/outputs/aar/command-release.aar")
             pom {
-                name = "Lib"
-                description = "[Insert Description Here]"
+                name = "Joos"
+                description = "A comprehensive kotlin library designed for FTC."
+                url = 'https://github.com/amarcolini/joos'
                 developers {
                     developer {
+                        id = 'amarcolini'
                         name = 'Alessandro Marcolini'
                     }
                 }

@@ -3,6 +3,7 @@ plugins {
     id 'org.openjfx.javafxplugin' version '0.0.8'
     id 'kotlin'
     id "com.github.johnrengelman.shadow" version "7.1.0"
+    id 'maven-publish'
 }
 
 repositories {
@@ -19,9 +20,9 @@ javafx {
 }
 
 shadowJar {
-    archiveBaseName.set('com.griffinrobotics.lib')
+    archiveBaseName.set(group)
     archiveClassifier.set('gui')
-    archiveVersion.set('0.1')
+    archiveVersion.set(lib_version)
 }
 
 dependencies {
@@ -31,4 +32,42 @@ dependencies {
 
     implementation "com.fasterxml.jackson.core:jackson-databind:2.12.5"
     implementation "com.fasterxml.jackson.module:jackson-module-kotlin:2.12.5"
+}
+
+java {
+    sourceCompatibility = JavaVersion.VERSION_1_8
+    targetCompatibility = JavaVersion.VERSION_1_8
+}
+
+task sourcesJar(type: Jar) {
+    from sourceSets.main.allSource
+    classifier('sources')
+}
+
+publishing {
+    publications {
+        release(MavenPublication) {
+            from components.java
+            artifact sourcesJar
+            artifactId = "gui"
+            pom {
+                name = "Joos"
+                description = "A comprehensive kotlin library designed for FTC."
+                url = 'https://github.com/amarcolini/joos'
+                developers {
+                    developer {
+                        id = 'amarcolini'
+                        name = 'Alessandro Marcolini'
+                    }
+                }
+            }
+        }
+    }
+
+    repositories {
+        maven {
+            name = 'testRepo'
+            url = '../testRepo'
+        }
+    }
 }

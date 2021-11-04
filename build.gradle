@@ -24,6 +24,6 @@ allprojects {
         mavenCentral()
     }
 
-    group = "com.griffinrobotics.lib"
+    group = "com.amarcolini.joos"
     version = lib_version
 }
