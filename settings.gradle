@@ -1,4 +1,4 @@
-rootProject.name = "lib"
+rootProject.name = "joos"
 include(":navigation")
 include(":gui")
 include(":command")
