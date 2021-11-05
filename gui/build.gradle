@@ -2,8 +2,8 @@ plugins {
     id 'application'
     id 'org.openjfx.javafxplugin' version '0.0.8'
     id 'kotlin'
-    id "com.github.johnrengelman.shadow" version "7.1.0"
     id 'maven-publish'
+    id "com.github.johnrengelman.shadow" version "7.1.0"
 }
 
 repositories {
@@ -20,9 +20,9 @@ javafx {
 }
 
 shadowJar {
-    archiveBaseName.set(group)
-    archiveClassifier.set('gui')
-    archiveVersion.set(lib_version)
+    archiveBaseName.set("$project.name-gui")
+    archiveClassifier.set(null)
+    archiveVersion.set(project.version)
 }
 
 dependencies {

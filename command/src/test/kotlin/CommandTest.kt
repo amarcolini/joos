@@ -1,6 +1,6 @@
-import com.griffinrobotics.lib.command.*
-import com.griffinrobotics.lib.hardware.gamepad.Button
-import com.griffinrobotics.lib.util.NanoClock
+import com.amarcolini.joos.command.*
+import com.amarcolini.joos.hardware.gamepad.Button
+import com.amarcolini.joos.util.NanoClock
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 
