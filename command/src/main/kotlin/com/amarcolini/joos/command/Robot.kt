@@ -28,7 +28,7 @@ abstract class Robot(opMode: OpMode) : CommandScheduler() {
 
     init {
         register(object : Component {
-            override fun update(scheduler: CommandScheduler) {
+            override fun update() {
                 telemetry.update()
                 dashboard.sendTelemetryPacket(packet)
                 packet = TelemetryPacket()
