@@ -19,7 +19,7 @@ abstract class DriveComponent : Drive(), Component {
     abstract val constants: TrajectoryConstraints
     protected abstract val imu: Imu?
 
-    override fun update(scheduler: CommandScheduler) {
+    override fun update() {
         updatePoseEstimate()
     }
 

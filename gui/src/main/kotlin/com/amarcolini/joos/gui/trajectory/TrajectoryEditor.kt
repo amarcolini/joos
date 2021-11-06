@@ -537,4 +537,12 @@ internal class TrajectoryEditor(val renderer: TrajectoryRenderer) : View() {
             owner = currentWindow
         )
     }
+
+    private fun getLast(): Pair<Pose2d, Degree> {
+        val lastPose =
+            if (waypoints.size > 1) waypoints.toTrajectory(constraints.value).first.end()
+            else start.pose
+        val lastTangent = Degree(lastPose.heading, false)
+        return lastPose to lastTangent
+    }
 }

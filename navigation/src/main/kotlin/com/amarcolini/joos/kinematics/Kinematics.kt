@@ -64,7 +64,7 @@ object Kinematics {
     fun calculateMotorFeedforward(
         vels: List<Double>,
         accels: List<Double>,
-        coeffs: FeedforwardCoefficients
+        coeffs: FeedforwardCoefficients,
     ) =
         vels.zip(accels)
             .map { (vel, accel) -> calculateMotorFeedforward(vel, accel, coeffs) }
@@ -73,12 +73,14 @@ object Kinematics {
      * Computes the motor feedforward (i.e., open loop power) for the given set of coefficients.
      */
     @JvmStatic
+    @JvmOverloads
     fun calculateMotorFeedforward(
         vel: Double,
         accel: Double,
-        coeffs: FeedforwardCoefficients
+        coeffs: FeedforwardCoefficients,
+        base: Double = 0.0
     ): Double {
-        val basePower = vel * coeffs.kV + accel * coeffs.kA
+        val basePower = vel * coeffs.kV + accel * coeffs.kA + base
         return if (basePower epsilonEquals 0.0) {
             0.0
         } else {

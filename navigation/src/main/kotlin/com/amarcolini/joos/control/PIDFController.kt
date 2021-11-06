@@ -1,5 +1,6 @@
 package com.amarcolini.joos.control
 
+import com.amarcolini.joos.kinematics.Kinematics
 import com.amarcolini.joos.util.NanoClock
 import com.amarcolini.joos.util.epsilonEquals
 import kotlin.math.abs
@@ -132,26 +133,24 @@ class PIDFController
             lastError = error
             lastUpdateTimestamp = currentTimestamp
 
-            // note: we'd like to refactor this with Kinematics.calculateMotorFeedforward() but kF complicates the
-            // determination of the sign of kStatic
-            val baseOutput = pid.kP * error + pid.kI * errorSum +
-                    pid.kD * filteredDeriv +
-                    feedforward.kV * targetVelocity + feedforward.kA * targetAcceleration + kF(
+            val pidOutput = pid.kP * error + pid.kI * errorSum +
+                    pid.kD * filteredDeriv + kF(
                 measuredPosition,
                 measuredVelocity
             )
-            val output =
-                if (baseOutput epsilonEquals 0.0) 0.0 else baseOutput + sign(baseOutput) * feedforward.kStatic
+            val output = Kinematics.calculateMotorFeedforward(
+                targetVelocity,
+                targetAcceleration,
+                feedforward,
+                pidOutput
+            )
 
             if (outputBounded) {
-                if (output != max(
-                        minOutput,
-                        min(output, maxOutput)
-                    ) && sign(error) == sign(output)
+                if (output != output.coerceIn(minOutput, maxOutput) && sign(error) == sign(output)
                 ) {
                     errorSum -= 0.5 * (error + lastError) * dt
                 }
-                max(minOutput, min(output, maxOutput))
+                output.coerceIn(minOutput, maxOutput)
             } else {
                 output
             }

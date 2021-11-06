@@ -93,7 +93,7 @@ class GamepadEx(gamepad: Gamepad) : Component {
     val y: Button = Button()
 
 
-    override fun update(scheduler: CommandScheduler) {
+    override fun update() {
         a.update(internal.a)
         b.update(internal.b)
         back.update(internal.back)

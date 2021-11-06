@@ -168,4 +168,17 @@ abstract class Command {
      */
     fun onEnd(action: BiConsumer<Command, Boolean>) =
         ListenerCommand(this, {}, {}, action)
+
+    /**
+     * Adds [requirements] to this command's list of required components.
+     */
+    fun requires(requirements: Set<Component>) =
+        FunctionalCommand(
+            this::init,
+            this::execute,
+            this::end,
+            this::isFinished,
+            this.isInterruptable,
+            this.requirements + requirements
+        )
 }

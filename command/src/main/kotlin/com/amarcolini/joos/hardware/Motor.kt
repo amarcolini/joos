@@ -1,5 +1,6 @@
 package com.amarcolini.joos.hardware
 
+import com.amarcolini.joos.command.Command
 import com.amarcolini.joos.command.CommandScheduler
 import com.amarcolini.joos.command.Component
 import com.amarcolini.joos.control.FeedforwardCoefficients
@@ -263,7 +264,7 @@ class Motor @JvmOverloads constructor(
         }
 
     /**
-     * The target position used by [RunMode.PositionControl]
+     * The target position used by [RunMode.PositionControl].
      */
     var targetPosition: Int = 0
         set(value) {
@@ -319,7 +320,7 @@ class Motor @JvmOverloads constructor(
      * @param output the percentage of power/velocity to set. Should be in the range `[-1.0, 1.0]`
      */
     fun set(output: Double) {
-        speed = min(1.0, max(-1.0, output))
+        speed = output.coerceIn(-1.0, 1.0)
         when (runMode) {
             RunMode.VelocityControl -> {
                 veloController.targetPosition = speed * maxTPS
@@ -351,7 +352,7 @@ class Motor @JvmOverloads constructor(
      * Updates both [RunMode.VelocityControl] and [RunMode.PositionControl]. Running this method is
      * not necessary for [RunMode.RawPower].
      */
-    override fun update(scheduler: CommandScheduler) {
+    override fun update() {
         when (runMode) {
             RunMode.VelocityControl -> motors.forEach {
                 it.power =
@@ -364,6 +365,17 @@ class Motor @JvmOverloads constructor(
             else -> return
         }
     }
+
+    /**
+     * Returns a command that runs this motor until it has reached the desired position.
+     */
+    fun goToPosition(position: Int) = Command.of {
+        runMode = RunMode.PositionControl
+        targetPosition = position
+        update()
+    }
+        .runUntil { !isBusy() }
+        .onEnd { _, _ -> set(0.0) }
 
     /**
      * The distance per pulse of the encoder used to compute distance travelled by the motor.

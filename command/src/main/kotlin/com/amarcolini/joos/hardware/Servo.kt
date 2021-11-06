@@ -65,7 +65,7 @@ class Servo @JvmOverloads constructor(
         }
         set(value) {
             val (start, end) = currentAngleRange
-            field = max(min(start, value * gearRatio), end)
+            field = (value * gearRatio).coerceIn(start, end)
             position = (angle - start) / (end - start)
         }
 
@@ -116,7 +116,7 @@ class Servo @JvmOverloads constructor(
      */
     var position: Double = 0.0
         set(value) {
-            field = max(min(0.0, value), 1.0)
+            field = value.coerceIn(0.0, 1.0)
             servo.position = field
         }
 }

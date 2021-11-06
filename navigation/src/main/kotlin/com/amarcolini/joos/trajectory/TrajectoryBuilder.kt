@@ -145,8 +145,8 @@ class TrajectoryBuilder private constructor(
         //TODO: fix splicing
         MotionState(
             0.0,
-            trajectory.velocity(0.0).vec().norm(),
-            trajectory.acceleration(0.0).vec().norm()
+            (trajectory.velocity(t).vec() / trajectory.velocity(t).vec().norm()).angle(),
+            (trajectory.acceleration(t).vec() / trajectory.acceleration(t).vec().norm()).angle()
         ),
         resolution
     )

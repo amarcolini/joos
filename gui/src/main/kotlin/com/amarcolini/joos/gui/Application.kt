@@ -81,13 +81,8 @@ internal class MainView : View() {
         }
     }
 
-    override
-    val root = borderpane {
-        top = menubar {
-            menu("_File") {
-                menu("_New") {
-                }
-            }
+    override val root = vbox {
+        menubar {
             menu("_Theme") {
                 item("_Dark").action {
                     val dark = Dark()
@@ -103,7 +98,7 @@ internal class MainView : View() {
                 }
             }
         }
-        bottom = splitpane {
+        splitpane {
             tabpane {
                 tabClosingPolicy = TabPane.TabClosingPolicy.UNAVAILABLE
                 tab("Trajectory") {

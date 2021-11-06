@@ -1,5 +1,7 @@
 package com.amarcolini.joos.command
 
+import java.util.function.BooleanSupplier
+
 /**
  * The main orchestrator for [Command]s and [Component]s.
  */
@@ -11,7 +13,7 @@ open class CommandScheduler {
 
     private val requirements = LinkedHashMap<Component, Command>()
 
-    private val conditions = LinkedHashMap<() -> Boolean, MutableSet<Command>>()
+    private val conditions = LinkedHashMap<BooleanSupplier, MutableSet<Command>>()
 
     /**
      * Returns whether a command can currently be scheduled.
@@ -48,7 +50,7 @@ open class CommandScheduler {
     }
 
     fun update() {
-        components.forEach { it.update(this) }
+        components.forEach { it.update() }
 
         for (command in scheduledCommands) {
             command.execute()
@@ -61,7 +63,13 @@ open class CommandScheduler {
             }
         }
 
-        conditions.filterKeys { it() }.values.forEach { commands -> commands.forEach { schedule(it) } }
+        conditions.filterKeys { it.asBoolean }.values.forEach { commands ->
+            commands.forEach {
+                schedule(
+                    it
+                )
+            }
+        }
 
         for (component in components) {
             if (!requirements.containsKey(component)) {
@@ -74,6 +82,9 @@ open class CommandScheduler {
      * Registers the given components to this CommandScheduler so that their update functions are called and their default commands are scheduled.
      */
     fun register(vararg components: Component) {
+        components.forEach {
+            if (it is AbstractComponent) it.scheduler = this
+        }
         this.components += components
     }
 
@@ -81,6 +92,9 @@ open class CommandScheduler {
      * Unregisters the given components from this CommandScheduler so that their update functions are no longer called and their default commands are no longer scheduled.
      */
     fun unregister(vararg components: Component) {
+        components.forEach {
+            if (it is AbstractComponent && it.scheduler == this) it.scheduler = null
+        }
         this.components -= components
     }
 
@@ -107,11 +121,11 @@ open class CommandScheduler {
     /**
      * Maps a condition to commands. If the condition returns true, the commands are scheduled. A command can be mapped to multiple conditions.
      */
-    fun map(condition: () -> Boolean, vararg commands: Command) {
+    fun map(condition: BooleanSupplier, vararg commands: Command) {
         conditions[condition] = commands.toMutableSet()
     }
 
-    fun map(condition: () -> Boolean, vararg commands: Runnable) {
+    fun map(condition: BooleanSupplier, vararg commands: Runnable) {
         map(condition, *commands.map { Command.of(it) }.toTypedArray())
     }
 
@@ -125,7 +139,7 @@ open class CommandScheduler {
     /**
      * Removes a condition from the list of mappings.
      */
-    fun unmap(condition: () -> Boolean) {
+    fun unmap(condition: BooleanSupplier) {
         conditions.remove(condition)
     }
 

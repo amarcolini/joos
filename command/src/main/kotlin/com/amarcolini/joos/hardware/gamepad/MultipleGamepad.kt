@@ -15,8 +15,8 @@ class MultipleGamepad(
 ) : Component {
     constructor(p1: Gamepad, p2: Gamepad) : this(GamepadEx(p1), GamepadEx(p2))
 
-    override fun update(scheduler: CommandScheduler) {
-        p1.update(scheduler)
-        p2.update(scheduler)
+    override fun update() {
+        p1.update()
+        p2.update()
     }
 }
