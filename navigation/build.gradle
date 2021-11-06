@@ -57,7 +57,7 @@ task sourcesJar(type: Jar) {
 publishing {
     publications {
         release(MavenPublication) {
-//            from components.java
+            from components.java
             artifact sourcesJar
             artifactId = "navigation"
             pom {

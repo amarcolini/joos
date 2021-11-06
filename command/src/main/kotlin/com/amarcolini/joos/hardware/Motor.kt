@@ -16,8 +16,8 @@ import kotlin.math.*
  * A wrapper for the [DcMotor] object in the FTC SDK.
  *
  * @param motors the motors for this wrapper to use
- * @param CPR the counts per revolution of the motor
  * @param maxRPM the revolutions per minute of the motor
+ * @param CPR the counts per revolution of the motor
  */
 class Motor @JvmOverloads constructor(
     val maxRPM: Double,
@@ -27,8 +27,8 @@ class Motor @JvmOverloads constructor(
     /**
      * @param hMap the hardware map from the OpMode
      * @param id the device id from the RC config
-     * @param CPR the counts per revolution of the motor
      * @param maxRPM the maximum revolutions per minute of the motor
+     * @param CPR the counts per revolution of the motor
      */
     @JvmOverloads
     constructor(hMap: HardwareMap, id: String, maxRPM: Double, CPR: Double = 1.0) : this(
@@ -39,8 +39,8 @@ class Motor @JvmOverloads constructor(
 
     /**
      * @param motors the motors for this wrapper to use
-     * @param CPR the counts per revolution of the motor
      * @param maxRPM the revolutions per minute of the motor
+     * @param CPR the counts per revolution of the motor
      * @param wheelRadius the radius of the wheel this motor is turning
      * @param gearRatio the gear ratio from the output shaft to the wheel
      */
@@ -59,8 +59,8 @@ class Motor @JvmOverloads constructor(
 
     /**
      * @param motor the motor for this wrapper to use
-     * @param CPR the counts per revolution of the motor
      * @param maxRPM the revolutions per minute of the motor
+     * @param CPR the counts per revolution of the motor
      * @param wheelRadius the radius of the wheel this motor is turning
      * @param gearRatio the gear ratio from the output shaft to the wheel
      */
@@ -81,8 +81,8 @@ class Motor @JvmOverloads constructor(
     /**
      * @param hMap the hardware map from the OpMode
      * @param id the device id from the RC config
-     * @param CPR the counts per revolution of the motor
      * @param maxRPM the revolutions per minute of the motor
+     * @param CPR the counts per revolution of the motor
      * @param wheelRadius the radius of the wheel this motor is turning
      * @param gearRatio the gear ratio from the output shaft to the wheel
      */
@@ -98,8 +98,8 @@ class Motor @JvmOverloads constructor(
 
     /**
      * @param hMap the hardware map from the OpMode
-     * @param CPR the counts per revolution of the motor
      * @param maxRPM the revolutions per minute of the motor
+     * @param CPR the counts per revolution of the motor
      * @param wheelRadius the radius of the wheel this motor is turning
      * @param gearRatio the gear ratio from the output shaft to the wheel
      * @param ids the device ids from the RC config
@@ -117,6 +117,24 @@ class Motor @JvmOverloads constructor(
         CPR,
         wheelRadius,
         gearRatio,
+        *(ids.map { hMap.get(DcMotor::class.java, it) }.toTypedArray())
+    )
+
+    /**
+     * @param hMap the hardware map from the OpMode
+     * @param maxRPM the revolutions per minute of the motor
+     * @param CPR the counts per revolution of the motor
+     * @param ids the device ids from the RC config
+     */
+    @JvmOverloads
+    constructor(
+        hMap: HardwareMap,
+        maxRPM: Double,
+        CPR: Double = 1.0,
+        vararg ids: String,
+    ) : this(
+        maxRPM,
+        CPR,
         *(ids.map { hMap.get(DcMotor::class.java, it) }.toTypedArray())
     )
 
