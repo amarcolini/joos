@@ -6,7 +6,7 @@ import java.util.function.Consumer
 /**
  * A command whose properties can be defined externally. Useful for making simple inline commands or combining commands together.
  */
-class FunctionalCommand(
+class FunctionalCommand @JvmOverloads constructor(
     var init: Runnable = Runnable {},
     var execute: Runnable = Runnable {},
     var end: Consumer<Boolean> = Consumer {},

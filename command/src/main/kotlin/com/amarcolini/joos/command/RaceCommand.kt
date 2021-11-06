@@ -3,7 +3,7 @@ package com.amarcolini.joos.command
 /**
  * A command that runs commands in parallel (Runs them all simultaneously until one of them finishes).
  */
-class RaceCommand(
+class RaceCommand @JvmOverloads constructor(
     override val isInterruptable: Boolean = true,
     private vararg val commands: Command
 ) : Command() {
