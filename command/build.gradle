@@ -58,32 +58,33 @@ task sourcesJar(type: Jar) {
     classifier "sources"
 }
 
-publishing {
-    publications {
-        release(MavenPublication) {
-            artifactId = "command"
-            artifact sourcesJar
-            artifact("$buildDir/outputs/aar/command-release.aar")
-            pom {
-                name = "Joos"
-                description = "A comprehensive kotlin library designed for FTC."
-                url = 'https://github.com/amarcolini/joos'
-                developers {
-                    developer {
-                        id = 'amarcolini'
-                        name = 'Alessandro Marcolini'
+project.afterEvaluate {
+    publishing {
+        publications {
+            release(MavenPublication) {
+                artifactId = "command"
+                artifact sourcesJar
+                artifact bundleReleaseAar
+//            artifact("$buildDir/outputs/aar/command-release.aar")
+                pom {
+                    name = "Joos"
+                    description = "A comprehensive kotlin library designed for FTC."
+                    url = 'https://github.com/amarcolini/joos'
+                    developers {
+                        developer {
+                            id = 'amarcolini'
+                            name = 'Alessandro Marcolini'
+                        }
                     }
                 }
             }
         }
-    }
 
-    repositories {
-        maven {
-            name = 'testRepo'
-            url = '../testRepo'
+        repositories {
+            maven {
+                name = 'testRepo'
+                url = '../testRepo'
+            }
         }
     }
 }
-
-publish.dependsOn(build)

@@ -20,8 +20,9 @@ javafx {
 }
 
 shadowJar {
-    archiveBaseName.set("$project.name-gui")
-    archiveClassifier.set(null)
+    destinationDirectory.set(buildDir)
+    archiveBaseName.set("$rootProject.name-gui")
+    archiveClassifier.set("shadow")
     archiveVersion.set(project.version)
 }
 
