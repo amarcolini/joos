@@ -1,6 +1,7 @@
 package com.amarcolini.joos.command
 
 import java.util.function.BiConsumer
+import java.util.function.BooleanSupplier
 import java.util.function.Consumer
 
 /**
@@ -20,7 +21,7 @@ abstract class Command {
          * Creates a command that does nothing.
          */
         @JvmStatic
-        fun empty() = InstantCommand {}
+        fun emptyCommand() = InstantCommand {}
     }
 
     /**
@@ -134,13 +135,13 @@ abstract class Command {
     /**
      * Waits until [condition] returns true after this command finishes.
      */
-    infix fun waitUntil(condition: () -> Boolean) =
+    infix fun waitUntil(condition: BooleanSupplier) =
         this then FunctionalCommand(isFinished = condition)
 
     /**
      * Overrides this command's [isFinished] function to finish when [condition] returns true.
      */
-    fun runUntil(condition: () -> Boolean) =
+    fun runUntil(condition: BooleanSupplier) =
         FunctionalCommand(
             this::init,
             this::execute,

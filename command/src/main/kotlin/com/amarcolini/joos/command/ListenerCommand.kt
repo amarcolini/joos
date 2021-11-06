@@ -11,7 +11,7 @@ import java.util.function.Consumer
  * @param onEnd the action to run when this command is ended. Takes in [command] and whether it was interrupted as parameters.
  */
 class ListenerCommand @JvmOverloads constructor(
-    val command: Command = empty(),
+    val command: Command = emptyCommand(),
     val onInit: Consumer<Command>,
     val onExecute: Consumer<Command>,
     val onEnd: BiConsumer<Command, Boolean>
