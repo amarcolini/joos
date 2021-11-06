@@ -54,7 +54,7 @@ abstract class DriveComponent : Drive(), Component {
                 end = { setDriveSignal(DriveSignal()) },
                 requirements = setOf(this)
             )
-        } else Command.empty()
+        } else Command.emptyCommand()
     }
 
     final override val rawExternalHeading: Double
