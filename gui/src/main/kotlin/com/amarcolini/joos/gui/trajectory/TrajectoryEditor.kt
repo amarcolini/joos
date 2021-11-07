@@ -315,7 +315,7 @@ internal class TrajectoryEditor(val renderer: TrajectoryRenderer) : View() {
                             fun update() {
                                 constraints.set(
                                     when (type.value) {
-                                        TrajectoryConstraints.DriveType.GENERIC -> GenericConfig(
+                                        TrajectoryConstraints.DriveType.GENERIC, null -> GenericConfig(
                                             maxVel.value,
                                             maxAccel.value,
                                             maxAngVel.value.radians,

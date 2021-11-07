@@ -9,11 +9,11 @@ import java.lang.IllegalStateException
 import kotlin.reflect.full.createType
 import kotlin.reflect.full.declaredMemberProperties
 
-fun Pose2d.toKotlin(): String = String.format("Pose2d(%.2f, %.2f, %.5f)", x, y, heading)
-fun Pose2d.toJava(): String = String.format("new Pose2d(%.2f, %.2f, %.5f)", x, y, heading)
-fun Vector2d.toKotlin(): String = String.format("Vector2d(%.2f, %.2f)", x, y)
-fun Vector2d.toJava(): String = String.format("new Vector2d(%.2f, %.2f)", x, y)
-fun Waypoint.toKotlin(): String {
+internal fun Pose2d.toKotlin(): String = String.format("Pose2d(%.2f, %.2f, %.5f)", x, y, heading)
+internal fun Pose2d.toJava(): String = String.format("new Pose2d(%.2f, %.2f, %.5f)", x, y, heading)
+internal fun Vector2d.toKotlin(): String = String.format("Vector2d(%.2f, %.2f)", x, y)
+internal fun Vector2d.toJava(): String = String.format("new Vector2d(%.2f, %.2f)", x, y)
+internal fun Waypoint.toKotlin(): String {
     var string = (this::class.simpleName?.replaceFirstChar { it.lowercase() } ?: "") + "("
     this::class.declaredMemberProperties.forEach { prop ->
         when (val value = prop.call(this)) {
@@ -27,7 +27,7 @@ fun Waypoint.toKotlin(): String {
     return string
 }
 
-fun TrajectoryConstraints.toKotlin(): String {
+internal fun TrajectoryConstraints.toKotlin(): String {
     var string = this::class.simpleName + "("
     this::class.declaredMemberProperties.filter { it.returnType == Double::class.createType() }
         .forEach { prop ->
@@ -37,7 +37,7 @@ fun TrajectoryConstraints.toKotlin(): String {
     return string
 }
 
-fun Waypoint.toJava(): String {
+internal fun Waypoint.toJava(): String {
     var string = (this::class.simpleName?.replaceFirstChar { it.lowercase() } ?: "") + "("
     this::class.declaredMemberProperties.forEach { prop ->
         when (val value = prop.call(this)) {
@@ -165,7 +165,7 @@ fun Collection<Waypoint>.toConfig(constraints: TrajectoryConstraints): Trajector
     )
 }
 
-fun Collection<Waypoint>.toTrajectory(constraints: TrajectoryConstraints): Pair<Trajectory, Boolean> {
+internal fun Collection<Waypoint>.toTrajectory(constraints: TrajectoryConstraints): Pair<Trajectory, Boolean> {
     val first = this.first()
     val start =
         if (first is Start) {
