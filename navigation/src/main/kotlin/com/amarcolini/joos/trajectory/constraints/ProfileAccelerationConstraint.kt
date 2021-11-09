@@ -12,6 +12,7 @@ class ProfileAccelerationConstraint(
         s: Double,
         pose: Pose2d,
         deriv: Pose2d,
+        secondDeriv: Pose2d,
         baseRobotVel: Pose2d
     ) = maxProfileAccel
 }

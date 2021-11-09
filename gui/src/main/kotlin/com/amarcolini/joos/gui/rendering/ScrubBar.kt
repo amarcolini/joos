@@ -8,7 +8,10 @@ import javafx.scene.canvas.Canvas
 import javafx.scene.text.TextAlignment
 import tornadofx.*
 
-internal class ScrubBar(private val theme: SimpleObjectProperty<Theme>, private var prefHeight: Double = 50.0) : Canvas() {
+internal class ScrubBar(
+    private val theme: SimpleObjectProperty<Theme>,
+    private var prefHeight: Double = 50.0
+) : Canvas() {
     var time = 0.0
         set(value) {
             timeProperty.set(value)

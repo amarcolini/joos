@@ -2,12 +2,19 @@ package com.amarcolini.joos.gui.trajectory
 
 import com.amarcolini.joos.geometry.Pose2d
 import com.amarcolini.joos.geometry.Vector2d
+import com.amarcolini.joos.path.Path
+import com.amarcolini.joos.path.PathBuilder
+import com.amarcolini.joos.path.PathBuilderException
 import com.amarcolini.joos.trajectory.*
+import com.amarcolini.joos.trajectory.config.GenericConstraints
 import com.amarcolini.joos.trajectory.config.TrajectoryConfig
 import com.amarcolini.joos.trajectory.config.TrajectoryConstraints
+import com.amarcolini.joos.trajectory.constraints.UnsatisfiableConstraint
 import java.lang.IllegalStateException
+import kotlin.math.PI
 import kotlin.reflect.full.createType
 import kotlin.reflect.full.declaredMemberProperties
+import kotlin.reflect.full.primaryConstructor
 
 internal fun Pose2d.toKotlin(): String = String.format("Pose2d(%.2f, %.2f, %.5f)", x, y, heading)
 internal fun Pose2d.toJava(): String = String.format("new Pose2d(%.2f, %.2f, %.5f)", x, y, heading)
@@ -27,15 +34,8 @@ internal fun Waypoint.toKotlin(): String {
     return string
 }
 
-internal fun TrajectoryConstraints.toKotlin(): String {
-    var string = this::class.simpleName + "("
-    this::class.declaredMemberProperties.filter { it.returnType == Double::class.createType() }
-        .forEach { prop ->
-            string += prop.call(this).toString() + ", "
-        }
-    string = string.dropLast(2) + ")"
-    return string
-}
+internal fun TrajectoryConstraints.toKotlin() = toString().replace("\\w+=".toRegex(), "")
+internal fun TrajectoryConstraints.toJava() = "new " + toString().replace("\\w+=".toRegex(), "")
 
 internal fun Waypoint.toJava(): String {
     var string = (this::class.simpleName?.replaceFirstChar { it.lowercase() } ?: "") + "("
@@ -165,14 +165,17 @@ fun Collection<Waypoint>.toConfig(constraints: TrajectoryConstraints): Trajector
     )
 }
 
-internal fun Collection<Waypoint>.toTrajectory(constraints: TrajectoryConstraints): Pair<Trajectory, Boolean> {
+internal fun Collection<Waypoint>.toTrajectory(
+    constraints: TrajectoryConstraints,
+    resolution: Double = 0.25,
+): Trajectory? {
     val first = this.first()
     val start =
         if (first is Start) {
             first
         } else Start(Pose2d(), Degree(0.0))
     val builder = TrajectoryBuilder(
-        start.pose, start.tangent.radians, constraints
+        start.pose, start.tangent.radians, constraints, resolution
     )
 
     this.forEach {
@@ -205,25 +208,91 @@ internal fun Collection<Waypoint>.toTrajectory(constraints: TrajectoryConstraint
                 is Start -> {
                 }
             }
-            it.isBad.set(false)
+            it.error.value = null
         } catch (e: Exception) {
-            it.isBad.set(true)
+            it.error.value = e.message ?: e::class.simpleName
             return try {
-                builder.build() to false
+                builder.build()
             } catch (e: Exception) {
-                builder.wait(0.0)
-                builder.build() to false
+                it.error.value = e.message ?: e::class.simpleName
+                null
             }
         }
     }
     return try {
-        builder.build() to true
+        builder.build()
     } catch (e: Exception) {
-        builder.wait(0.0)
-        builder.build() to false
+        last().error.value = e.message ?: e::class.simpleName
+        null
     }
 }
 
-//fun String.toWaypoints(): List<Waypoint> {
-//
-//}
+internal fun Collection<Waypoint>.getLast(): Pair<Pose2d, Degree> {
+    val first = this.first()
+    val start =
+        if (first is Start) {
+            first
+        } else Start(Pose2d(), Degree(0.0))
+    var pose = start.pose
+    var tangent = start.tangent.value
+
+    this.forEach {
+        when (it) {
+            is LineTo -> {
+                pose = Pose2d(it.pos, pose.heading)
+                tangent = pose.heading
+            }
+            is LineToConstantHeading -> {
+                pose = Pose2d(it.pos, pose.heading)
+                tangent = pose.heading
+            }
+            is LineToLinearHeading -> {
+                pose = it.pose
+                tangent = pose.heading
+            }
+            is LineToSplineHeading -> {
+                pose = it.pose
+                tangent = pose.heading
+            }
+            is SplineTo -> {
+                pose = Pose2d(it.pos, it.tangent.radians)
+                tangent = it.tangent.value
+            }
+            is SplineToConstantHeading -> {
+                pose = Pose2d(it.pos, pose.heading)
+                tangent = it.tangent.value
+            }
+            is SplineToLinearHeading -> {
+                pose = it.pose
+                tangent = it.tangent.value
+            }
+            is SplineToSplineHeading -> {
+                pose = it.pose
+                tangent = it.tangent.value
+            }
+            is Back -> {
+                pose += Pose2d(Vector2d.polar(-it.distance, pose.heading), pose.heading)
+                tangent = pose.heading
+            }
+            is Forward -> {
+                pose += Pose2d(Vector2d.polar(it.distance, pose.heading), pose.heading)
+                tangent = pose.heading
+            }
+            is StrafeLeft -> {
+                pose += Pose2d(Vector2d.polar(it.distance, pose.heading + PI / 2), pose.heading)
+                tangent = pose.heading
+            }
+            is StrafeRight -> {
+                pose += Pose2d(Vector2d.polar(-it.distance, pose.heading + PI / 2), pose.heading)
+                tangent = pose.heading
+            }
+            is StrafeTo -> {
+                pose = Pose2d(it.pos, pose.heading)
+                tangent = pose.heading
+            }
+            else -> {
+            }
+        }
+    }
+    return pose to Degree(tangent)
+}

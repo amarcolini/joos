@@ -6,6 +6,7 @@ import javafx.scene.layout.BorderStrokeStyle
 import javafx.scene.paint.Color
 import javafx.scene.text.FontWeight
 import tornadofx.*
+import kotlin.reflect.jvm.internal.impl.metadata.ProtoBuf
 
 /**
  * Class defining the style of the application.
@@ -36,7 +37,7 @@ import tornadofx.*
     "controlFocus",
     "menuHover"
 )
-abstract class Theme : Stylesheet() {
+sealed class Theme : Stylesheet() {
     companion object {
         val editorText by cssclass()
         val valueText by cssclass()
@@ -282,6 +283,13 @@ abstract class Theme : Stylesheet() {
 
         s(fieldset, padding) {
             padding = box(0.3.em)
+        }
+
+        tooltip {
+            backgroundColor += background
+            effect = DropShadow(0.0, Color.TRANSPARENT)
+            borderRadius += box(0.2.em)
+            borderColor += box(controlBorder)
         }
     }
 }

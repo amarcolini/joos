@@ -4,6 +4,7 @@ import com.fasterxml.jackson.databind.SerializationFeature
 import com.fasterxml.jackson.databind.json.JsonMapper
 import com.fasterxml.jackson.module.kotlin.registerKotlinModule
 import com.amarcolini.joos.gui.style.Theme
+import com.amarcolini.joos.gui.style.Themes
 import com.amarcolini.joos.gui.trajectory.Waypoints
 import com.amarcolini.joos.trajectory.config.TrajectoryConstraints
 import tornadofx.launch
@@ -17,7 +18,7 @@ class GUI {
 
     init {
         mapper.registerKotlinModule()
-        mapper.configure(SerializationFeature.FAIL_ON_EMPTY_BEANS, false);
+        mapper.configure(SerializationFeature.FAIL_ON_EMPTY_BEANS, false)
     }
 
     /**
@@ -38,8 +39,8 @@ class GUI {
         return this
     }
 
-    fun setTheme(theme: Theme): GUI {
-        val string = mapper.writeValueAsString(theme)
+    fun setTheme(theme: Themes): GUI {
+        val string = theme.name.lowercase()
         args["theme"] = string
         return this
     }

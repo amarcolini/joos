@@ -1,7 +1,7 @@
 package com.amarcolini.joos
 
 import com.amarcolini.joos.geometry.Pose2d
-import com.amarcolini.joos.trajectory.config.GenericConfig
+import com.amarcolini.joos.trajectory.config.GenericConstraints
 import com.amarcolini.joos.trajectory.config.TrajectoryConfig
 import com.amarcolini.joos.trajectory.config.TrajectoryConfigManager
 import org.junit.jupiter.api.Test
@@ -21,7 +21,7 @@ class ConfigTest {
             TrajectoryConfig.Wait(5.0),
             TrajectoryConfig.Turn(Math.toRadians(90.0))
         )
-        val constraints = GenericConfig(30.0, 30.0, Math.toRadians(180.0), Math.toRadians(180.0))
+        val constraints = GenericConstraints(30.0, 30.0, Math.toRadians(180.0), Math.toRadians(180.0))
         val config = TrajectoryConfig(Pose2d(), 0.0, waypoints, constraints)
         TrajectoryConfigManager.saveConfig(config, File("${CONFIG_DIR}/test.yaml"))
     }

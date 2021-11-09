@@ -3,6 +3,7 @@ package com.amarcolini.joos.trajectory.constraints
 import com.amarcolini.joos.geometry.Pose2d
 import com.amarcolini.joos.kinematics.Kinematics
 import com.amarcolini.joos.kinematics.TankKinematics
+import com.amarcolini.joos.util.epsilonEquals
 import kotlin.math.abs
 import kotlin.math.max
 
@@ -23,7 +24,8 @@ open class TankVelocityConstraint(
         }
 
         val robotDeriv = Kinematics.fieldToRobotVelocity(pose, deriv)
-
+        println(robotDeriv.y)
+        println(robotDeriv.y epsilonEquals 0.0)
         val wheel = TankKinematics.robotToWheelVelocities(robotDeriv, trackWidth)
         return wheel0.zip(wheel).map {
             max(

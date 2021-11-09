@@ -15,10 +15,10 @@ sealed interface TrajectoryConstraints {
      * Type of drivetrain.
      */
     enum class DriveType(val clazz: KClass<out TrajectoryConstraints>) {
-        GENERIC(GenericConfig::class),
-        MECANUM(MecanumConfig::class),
-        SWERVE(SwerveConfig::class),
-        TANK(TankConfig::class)
+        GENERIC(GenericConstraints::class),
+        MECANUM(MecanumConstraints::class),
+        SWERVE(SwerveConstraints::class),
+        TANK(TankConstraints::class)
     }
 
     val type: DriveType
@@ -31,7 +31,7 @@ sealed interface TrajectoryConstraints {
     val maxAngJerk: Double
 }
 
-data class MecanumConfig(
+data class MecanumConstraints(
     val maxRPM: Double = 0.0,
     val trackWidth: Double = 1.0,
     val wheelBase: Double = trackWidth,
@@ -53,19 +53,29 @@ data class MecanumConfig(
     override val type = TrajectoryConstraints.DriveType.MECANUM
 }
 
-data class GenericConfig(
+data class GenericConstraints(
     val maxVel: Double = 30.0,
     val maxAccel: Double = 30.0,
     override val maxAngVel: Double = Math.toRadians(180.0),
     override val maxAngAccel: Double = Math.toRadians(180.0),
     override val maxAngJerk: Double = 0.0
 ) : TrajectoryConstraints {
-    override val velConstraint = TranslationalVelocityConstraint(maxVel)
-    override val accelConstraint = ProfileAccelerationConstraint(maxAccel)
+    override val velConstraint = MinVelocityConstraint(
+        listOf(
+            TranslationalVelocityConstraint(maxVel),
+            AngularVelocityConstraint(maxAngVel)
+        )
+    )
+    override val accelConstraint = MinAccelerationConstraint(
+        listOf(
+            ProfileAccelerationConstraint(maxAccel),
+            AngularAccelerationConstraint(maxAngAccel)
+        )
+    )
     override val type = TrajectoryConstraints.DriveType.GENERIC
 }
 
-data class TankConfig(
+data class TankConstraints(
     val maxRPM: Double = 0.0,
     val trackWidth: Double = 1.0,
     val maxVel: Double = 30.0,
@@ -81,11 +91,16 @@ data class TankConfig(
             TranslationalVelocityConstraint(maxVel),
         )
     )
-    override val accelConstraint = ProfileAccelerationConstraint(maxAccel)
+    override val accelConstraint = MinAccelerationConstraint(
+        listOf(
+            ProfileAccelerationConstraint(maxAccel),
+            AngularAccelerationConstraint(maxAngAccel)
+        )
+    )
     override val type = TrajectoryConstraints.DriveType.TANK
 }
 
-data class SwerveConfig(
+data class SwerveConstraints(
     val maxRPM: Double = 0.0,
     val trackWidth: Double = 1.0,
     val wheelBase: Double = trackWidth,
@@ -102,6 +117,11 @@ data class SwerveConfig(
             TranslationalVelocityConstraint(maxVel),
         )
     )
-    override val accelConstraint = ProfileAccelerationConstraint(maxAccel)
+    override val accelConstraint = MinAccelerationConstraint(
+        listOf(
+            ProfileAccelerationConstraint(maxAccel),
+            AngularAccelerationConstraint(maxAngAccel)
+        )
+    )
     override val type = TrajectoryConstraints.DriveType.SWERVE
 }

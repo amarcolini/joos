@@ -11,7 +11,7 @@ repositories {
 }
 
 application {
-    mainClass = 'com.griffinrobotics.lib.gui.ApplicationKt'
+    mainClass = "${rootProject.group}.gui.ApplicationKt"
 }
 
 javafx {

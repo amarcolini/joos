@@ -3,7 +3,6 @@ package com.amarcolini.joos.gui
 import com.fasterxml.jackson.databind.json.JsonMapper
 import com.fasterxml.jackson.module.kotlin.registerKotlinModule
 import com.amarcolini.joos.gui.rendering.TrajectoryRenderer
-import com.amarcolini.joos.gui.style.Custom
 import com.amarcolini.joos.gui.style.Dark
 import com.amarcolini.joos.gui.style.Light
 import com.amarcolini.joos.gui.trajectory.TrajectoryEditor
@@ -11,6 +10,7 @@ import com.amarcolini.joos.gui.trajectory.Waypoints
 import com.amarcolini.joos.trajectory.config.TrajectoryConstraints
 import javafx.beans.property.SimpleObjectProperty
 import javafx.scene.control.TabPane
+import javafx.scene.layout.Priority
 import javafx.stage.Screen
 import javafx.stage.Stage
 import tornadofx.*
@@ -32,18 +32,8 @@ internal class MainApp : App(MainView::class, Dark::class) {
             "light" -> {
                 importStylesheet<Light>()
             }
-            "dark" -> {
-                importStylesheet<Dark>()
-            }
             else -> {
-                try {
-                    val mapper = JsonMapper()
-                    mapper.registerKotlinModule()
-                    val theme = mapper.readValue(parameters.named["theme"], Custom::class.java)
-                    importStylesheet(theme.base64URL.toExternalForm())
-                } catch (e: Exception) {
-                    e.printStackTrace()
-                }
+                importStylesheet<Dark>()
             }
         }
         super.start(stage)
@@ -106,6 +96,7 @@ internal class MainView : View() {
                 }
             }
             add(editor.renderer)
+            vgrow = Priority.ALWAYS
         }
     }
 }

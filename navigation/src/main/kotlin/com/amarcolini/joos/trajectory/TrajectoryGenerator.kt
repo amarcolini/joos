@@ -30,7 +30,7 @@ object TrajectoryGenerator {
                 val t = path.reparam(s)
                 velocityConstraint[
                         s,
-                        path[t],
+                        path[s, t],
                         path.deriv(s, t),
                         Pose2d()
                 ]
@@ -41,6 +41,7 @@ object TrajectoryGenerator {
                         s,
                         path[s, t],
                         path.deriv(s, t),
+                        path.secondDeriv(s, t),
                         Pose2d()
                 ]
             },

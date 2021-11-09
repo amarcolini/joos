@@ -11,7 +11,7 @@ import com.amarcolini.joos.hardware.Servo
 import com.amarcolini.joos.kinematics.SwerveKinematics
 import com.amarcolini.joos.localization.Localizer
 import com.amarcolini.joos.localization.SwerveLocalizer
-import com.amarcolini.joos.trajectory.config.SwerveConfig
+import com.amarcolini.joos.trajectory.config.SwerveConstraints
 
 /**
  * A [Component] implementation of a swerve drive.
@@ -22,7 +22,7 @@ class SwerveDrive @JvmOverloads constructor(
     private val backRight: Pair<Motor, Servo>,
     private val frontRight: Pair<Motor, Servo>,
     override val imu: Imu? = null,
-    override val constants: SwerveConfig = SwerveConfig(
+    override val constants: SwerveConstraints = SwerveConstraints(
         listOf(
             frontLeft,
             backLeft,

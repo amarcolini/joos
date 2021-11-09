@@ -11,7 +11,7 @@ import com.amarcolini.joos.hardware.Motor
 import com.amarcolini.joos.kinematics.TankKinematics
 import com.amarcolini.joos.localization.Localizer
 import com.amarcolini.joos.localization.TankLocalizer
-import com.amarcolini.joos.trajectory.config.TankConfig
+import com.amarcolini.joos.trajectory.config.TankConstraints
 import kotlin.math.min
 
 /**
@@ -21,7 +21,7 @@ class TankDrive @JvmOverloads constructor(
     private val left: Motor,
     private val right: Motor,
     override val imu: Imu? = null,
-    override val constants: TankConfig = TankConfig(min(left.maxRPM, right.maxRPM)),
+    override val constants: TankConstraints = TankConstraints(min(left.maxRPM, right.maxRPM)),
     translationalPID: PIDCoefficients = PIDCoefficients(4.0, 0.0, 0.5),
     headingPID: PIDCoefficients = PIDCoefficients(4.0, 0.0, 0.5)
 ) : DriveComponent() {

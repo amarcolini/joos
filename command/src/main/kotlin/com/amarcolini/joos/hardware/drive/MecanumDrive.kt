@@ -10,7 +10,7 @@ import com.amarcolini.joos.hardware.Motor
 import com.amarcolini.joos.kinematics.MecanumKinematics
 import com.amarcolini.joos.localization.Localizer
 import com.amarcolini.joos.localization.MecanumLocalizer
-import com.amarcolini.joos.trajectory.config.MecanumConfig
+import com.amarcolini.joos.trajectory.config.MecanumConstraints
 import kotlin.math.abs
 
 /**
@@ -22,7 +22,7 @@ class MecanumDrive @JvmOverloads constructor(
     private val backRight: Motor,
     private val frontRight: Motor,
     override val imu: Imu? = null,
-    override val constants: MecanumConfig = MecanumConfig(
+    override val constants: MecanumConstraints = MecanumConstraints(
         listOf(
             frontLeft,
             backLeft,

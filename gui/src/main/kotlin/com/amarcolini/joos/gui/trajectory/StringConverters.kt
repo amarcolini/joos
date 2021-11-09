@@ -29,7 +29,8 @@ internal class Pose2dStringConverter : StringConverter<Pose2d>() {
         return Pose2d(
             doubles.getOrElse(0) { 0.0 },
             doubles.getOrElse(1) { 0.0 },
-            Math.toRadians(doubles.getOrElse(2) { 0.0 }))
+            Math.toRadians(doubles.getOrElse(2) { 0.0 })
+        )
     }
 }
 

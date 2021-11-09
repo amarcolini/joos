@@ -4,7 +4,9 @@ import com.fasterxml.jackson.annotation.JsonSubTypes
 import com.fasterxml.jackson.annotation.JsonTypeInfo
 import com.amarcolini.joos.geometry.Pose2d
 import com.amarcolini.joos.geometry.Vector2d
+import com.fasterxml.jackson.annotation.JsonIgnore
 import javafx.beans.property.SimpleBooleanProperty
+import javafx.beans.property.SimpleObjectProperty
 
 @JsonTypeInfo(use = JsonTypeInfo.Id.MINIMAL_CLASS, include = JsonTypeInfo.As.PROPERTY)
 @JsonSubTypes(
@@ -27,7 +29,8 @@ import javafx.beans.property.SimpleBooleanProperty
     JsonSubTypes.Type(Wait::class),
 )
 sealed class Waypoint {
-    val isBad = SimpleBooleanProperty()
+    @JsonIgnore
+    val error: SimpleObjectProperty<String?> = SimpleObjectProperty<String?>(null)
 }
 
 class Waypoints(val waypoints: List<Waypoint>) {
@@ -36,15 +39,23 @@ class Waypoints(val waypoints: List<Waypoint>) {
 
 internal data class Start(var pose: Pose2d = Pose2d(), var tangent: Degree = Degree()) : Waypoint()
 internal sealed class Spline : Waypoint()
-internal data class SplineTo(var pos: Vector2d = Vector2d(), var tangent: Degree = Degree()) : Spline()
-internal data class SplineToConstantHeading(var pos: Vector2d = Vector2d(), var tangent: Degree = Degree()) :
+internal data class SplineTo(var pos: Vector2d = Vector2d(), var tangent: Degree = Degree()) :
     Spline()
 
-internal data class SplineToLinearHeading(var pose: Pose2d = Pose2d(), var tangent: Degree = Degree()) :
-    Spline()
+internal data class SplineToConstantHeading(
+    var pos: Vector2d = Vector2d(),
+    var tangent: Degree = Degree()
+) : Spline()
 
-internal data class SplineToSplineHeading(var pose: Pose2d = Pose2d(), var tangent: Degree = Degree()) :
-    Spline()
+internal data class SplineToLinearHeading(
+    var pose: Pose2d = Pose2d(),
+    var tangent: Degree = Degree()
+) : Spline()
+
+internal data class SplineToSplineHeading(
+    var pose: Pose2d = Pose2d(),
+    var tangent: Degree = Degree()
+) : Spline()
 
 internal sealed class Line : Waypoint()
 internal data class StrafeTo(var pos: Vector2d = Vector2d()) : Line()

@@ -6,6 +6,7 @@ import com.amarcolini.joos.gui.rendering.TrajectoryRenderer
 import com.amarcolini.joos.gui.style.Theme
 import com.amarcolini.joos.trajectory.config.*
 import com.amarcolini.joos.util.DoubleProgression
+import javafx.beans.binding.BooleanExpression
 import javafx.beans.property.SimpleDoubleProperty
 import javafx.beans.property.SimpleObjectProperty
 import javafx.collections.ObservableList
@@ -27,7 +28,7 @@ import kotlin.reflect.full.memberProperties
 internal class TrajectoryEditor(val renderer: TrajectoryRenderer) : View() {
     private val start = Start()
     val constraints: SimpleObjectProperty<TrajectoryConstraints> = SimpleObjectProperty(
-        GenericConfig(30.0, 30.0, Math.toRadians(180.0), Math.toRadians(180.0))
+        GenericConstraints(30.0, 30.0, Math.toRadians(180.0), Math.toRadians(180.0))
     )
     val waypoints: ObservableList<Waypoint> = listOf(
         start
@@ -35,10 +36,12 @@ internal class TrajectoryEditor(val renderer: TrajectoryRenderer) : View() {
 
     init {
         waypoints.onChange {
-            renderer.trajectory = it.list.toTrajectory(constraints.value).first
+            val trajectory = it.list.toTrajectory(constraints.value)
+            if (trajectory != null) renderer.trajectory = trajectory
         }
         constraints.onChange {
-            renderer.trajectory = waypoints.toTrajectory(constraints.value).first
+            val trajectory = waypoints.toTrajectory(constraints.value)
+            if (trajectory != null) renderer.trajectory = trajectory
         }
     }
 
@@ -50,14 +53,21 @@ internal class TrajectoryEditor(val renderer: TrajectoryRenderer) : View() {
                 isEditable = true
                 cellFormat {
                     graphic = textflow {
-                        it.isBad.addListener { _, _, newValue ->
-                            togglePseudoClass(Theme.error.name, newValue)
+                        it.error.addListener { _, _, newValue ->
+                            togglePseudoClass(Theme.error.name, newValue != null)
                         }
-                        togglePseudoClass(Theme.error.name, it.isBad.value)
+                        togglePseudoClass(Theme.error.name, it.error.value != null)
                         text("!!") {
-                            removeWhen { !it.isBad }
+                            removeWhen {
+                                it.error.select { (it == null).toProperty() }
+                            }
                             addClass(Theme.errorText)
                         }
+                        tooltipProperty().bind(it.error.select {
+                            (if (it == null) null else tooltip(
+                                it
+                            )).toProperty()
+                        })
                         text(it::class.simpleName?.replaceFirstChar {
                             it.lowercase()
                         }) {
@@ -94,8 +104,8 @@ internal class TrajectoryEditor(val renderer: TrajectoryRenderer) : View() {
                                 action {
                                     it.setter.call(item, textFormatter.value)
                                     valueText.text = it.call(item).toString()
-                                    renderer.trajectory =
-                                        waypoints.toTrajectory(constraints.value).first
+                                    waypoints.toTrajectory(constraints.value)
+                                        ?.let { renderer.trajectory = it }
                                     commitEdit(item)
                                 }
                             }
@@ -109,16 +119,13 @@ internal class TrajectoryEditor(val renderer: TrajectoryRenderer) : View() {
                         }
                         contextmenu {
                             var index = waypoints.indexOf(it) + 1
-                            var lastPose =
-                                if (waypoints.indexOf(it) > 1) waypoints.toTrajectory(constraints.value).first.end()
-                                else start.pose
-                            var lastTangent = Degree(lastPose.heading, false)
+                            var (lastPose, lastTangent) = waypoints.getLast()
+
                             fun update() {
                                 index = waypoints.indexOf(it) + 1
-                                lastPose =
-                                    if (index > 1) waypoints.toTrajectory(constraints.value).first.end()
-                                    else start.pose
-                                lastTangent = Degree(lastPose.heading, false)
+                                val (newPose, newTangent) = waypoints.getLast()
+                                lastPose = newPose
+                                lastTangent = newTangent
                             }
                             menu("_New") {
                                 item("Wait").action {
@@ -221,19 +228,21 @@ internal class TrajectoryEditor(val renderer: TrajectoryRenderer) : View() {
                         createSymbols = false
                         legendSide = Side.TOP
                         fun update() {
-                            data.clear()
                             if (waypoints.isNotEmpty()) {
-                                val trajectory = waypoints.toTrajectory(constraints.value).first
-                                val progression =
-                                    DoubleProgression.fromClosedInterval(
-                                        0.0,
-                                        trajectory.duration(),
-                                        1000
-                                    )
-                                multiseries("ẋ", "ẏ", "ω") {
-                                    progression.forEach {
-                                        val result = trajectory.velocity(it)
-                                        data(it, result.x, result.y, result.heading)
+                                val trajectory = waypoints.toTrajectory(constraints.value)
+                                if (trajectory != null) {
+                                    data.clear()
+                                    val progression =
+                                        DoubleProgression.fromClosedInterval(
+                                            0.0,
+                                            trajectory.duration(),
+                                            1000
+                                        )
+                                    multiseries("ẋ", "ẏ", "ω") {
+                                        progression.forEach {
+                                            val result = trajectory.velocity(it)
+                                            data(it, result.x, result.y, result.heading)
+                                        }
                                     }
                                 }
                             }
@@ -241,9 +250,11 @@ internal class TrajectoryEditor(val renderer: TrajectoryRenderer) : View() {
                         waypoints.onChange { update() }
                         constraints.onChange { update() }
                         line {
-                            stroke = Color.TRANSPARENT
+                            stroke = renderer.theme.value.text
+                            renderer.theme.onChange {
+                                stroke = it?.text
+                            }
                             renderer.timeProperty.onChange {
-                                stroke = renderer.theme.value.text
                                 val xPos = this.parent.sceneToLocal(
                                     xAxis.localToScene(
                                         xAxis.getDisplayPosition(it),
@@ -299,30 +310,44 @@ internal class TrajectoryEditor(val renderer: TrajectoryRenderer) : View() {
                             constraints.onChange {
                                 val current = constraints.value
                                 type.set(current.type)
-                                if (current !is GenericConfig) {
-                                    maxRPM.set((current as MecanumConfig).maxRPM)
-                                    trackWidth.set(current.trackWidth)
-                                }
-                                if (current is MecanumConfig) {
-                                    wheelBase.set(current.wheelBase)
-                                    lateralMultiplier.set(current.lateralMultiplier)
-                                }
-                                if (current is SwerveConfig) {
-                                    wheelBase.set(current.wheelBase)
+                                when (current) {
+                                    is GenericConstraints -> {
+                                        maxVel.set(current.maxVel)
+                                        maxAccel.set(current.maxAccel)
+                                    }
+                                    is MecanumConstraints -> {
+                                        maxVel.set(current.maxVel)
+                                        maxAccel.set(current.maxAccel)
+                                        maxRPM.set(current.maxRPM)
+                                        trackWidth.set(current.trackWidth)
+                                        lateralMultiplier.set(current.lateralMultiplier)
+                                    }
+                                    is SwerveConstraints -> {
+                                        maxVel.set(current.maxVel)
+                                        maxAccel.set(current.maxAccel)
+                                        maxRPM.set(current.maxRPM)
+                                        trackWidth.set(current.trackWidth)
+                                    }
+                                    is TankConstraints -> {
+                                        maxVel.set(current.maxVel)
+                                        maxAccel.set(current.maxAccel)
+                                        maxRPM.set(current.maxRPM)
+                                        trackWidth.set(current.trackWidth)
+                                    }
                                 }
                             }
 
                             fun update() {
                                 constraints.set(
                                     when (type.value) {
-                                        TrajectoryConstraints.DriveType.GENERIC, null -> GenericConfig(
+                                        TrajectoryConstraints.DriveType.GENERIC, null -> GenericConstraints(
                                             maxVel.value,
                                             maxAccel.value,
                                             maxAngVel.value.radians,
                                             maxAngAccel.value.radians,
                                             maxAngJerk.value.radians
                                         )
-                                        TrajectoryConstraints.DriveType.MECANUM -> MecanumConfig(
+                                        TrajectoryConstraints.DriveType.MECANUM -> MecanumConstraints(
                                             maxRPM.value,
                                             trackWidth.value,
                                             wheelBase.value,
@@ -333,7 +358,7 @@ internal class TrajectoryEditor(val renderer: TrajectoryRenderer) : View() {
                                             maxAngAccel.value.radians,
                                             maxAngJerk.value.radians
                                         )
-                                        TrajectoryConstraints.DriveType.SWERVE -> SwerveConfig(
+                                        TrajectoryConstraints.DriveType.SWERVE -> SwerveConstraints(
                                             maxRPM.value,
                                             trackWidth.value,
                                             wheelBase.value,
@@ -343,7 +368,7 @@ internal class TrajectoryEditor(val renderer: TrajectoryRenderer) : View() {
                                             maxAngAccel.value.radians,
                                             maxAngJerk.value.radians
                                         )
-                                        TrajectoryConstraints.DriveType.TANK -> TankConfig(
+                                        TrajectoryConstraints.DriveType.TANK -> TankConstraints(
                                             maxRPM.value,
                                             trackWidth.value,
                                             maxVel.value,
@@ -360,21 +385,33 @@ internal class TrajectoryEditor(val renderer: TrajectoryRenderer) : View() {
 
                             textflow {
                                 text("maxRPM: ").addClass(Theme.propertyText)
-                                textfield(maxRPM, DoubleStringConverter()).action(::update)
+                                textfield(maxRPM, DoubleStringConverter()) {
+                                    action(::update)
+                                    textFormatter =
+                                        TextFormatter(DoubleStringConverter(), maxRPM.value)
+                                }
                                 addClass(Theme.padding)
                                 visibleWhen { type.select { (it != TrajectoryConstraints.DriveType.GENERIC).toProperty() } }
                                 managedProperty().bind(visibleProperty())
                             }
                             textflow {
                                 text("trackWidth: ").addClass(Theme.propertyText)
-                                textfield(trackWidth, DoubleStringConverter()).action(::update)
+                                textfield(trackWidth, DoubleStringConverter()) {
+                                    action(::update)
+                                    textFormatter =
+                                        TextFormatter(DoubleStringConverter(), trackWidth.value)
+                                }
                                 addClass(Theme.padding)
                                 visibleWhen { type.select { (it != TrajectoryConstraints.DriveType.GENERIC).toProperty() } }
                                 managedProperty().bind(visibleProperty())
                             }
                             textflow {
                                 text("wheelBase: ").addClass(Theme.propertyText)
-                                textfield(wheelBase, DoubleStringConverter()).action(::update)
+                                textfield(wheelBase, DoubleStringConverter()) {
+                                    action(::update)
+                                    textFormatter =
+                                        TextFormatter(DoubleStringConverter(), wheelBase.value)
+                                }
                                 addClass(Theme.padding)
                                 visibleWhen {
                                     type.select {
@@ -386,37 +423,61 @@ internal class TrajectoryEditor(val renderer: TrajectoryRenderer) : View() {
                             }
                             textflow {
                                 text("lateralMultiplier: ").addClass(Theme.propertyText)
-                                textfield(
-                                    lateralMultiplier,
-                                    DoubleStringConverter()
-                                ).action(::update)
+                                textfield(lateralMultiplier, DoubleStringConverter()) {
+                                    action(::update)
+                                    textFormatter =
+                                        TextFormatter(
+                                            DoubleStringConverter(),
+                                            lateralMultiplier.value
+                                        )
+                                }
                                 addClass(Theme.padding)
                                 visibleWhen { type.select { (it == TrajectoryConstraints.DriveType.MECANUM).toProperty() } }
                                 managedProperty().bind(visibleProperty())
                             }
                             textflow {
                                 text("maxVel: ").addClass(Theme.propertyText)
-                                textfield(maxVel, DoubleStringConverter()).action(::update)
+                                textfield(maxVel, DoubleStringConverter()) {
+                                    action(::update)
+                                    textFormatter =
+                                        TextFormatter(DoubleStringConverter(), maxVel.value)
+                                }
                                 addClass(Theme.padding)
                             }
                             textflow {
                                 text("maxAccel: ").addClass(Theme.propertyText)
-                                textfield(maxAccel, DoubleStringConverter()).action(::update)
+                                textfield(maxAccel, DoubleStringConverter()) {
+                                    action(::update)
+                                    textFormatter =
+                                        TextFormatter(DoubleStringConverter(), maxAccel.value)
+                                }
                                 addClass(Theme.padding)
                             }
                             textflow {
                                 text("maxAngVel: ").addClass(Theme.propertyText)
-                                textfield(maxAngVel, DegreeStringConverter()).action(::update)
+                                textfield(maxAngVel, DegreeStringConverter()) {
+                                    action(::update)
+                                    textFormatter =
+                                        TextFormatter(DegreeStringConverter(), maxAngVel.value)
+                                }
                                 addClass(Theme.padding)
                             }
                             textflow {
                                 text("maxAngAccel: ").addClass(Theme.propertyText)
-                                textfield(maxAngAccel, DegreeStringConverter()).action(::update)
+                                textfield(maxAngAccel, DegreeStringConverter()) {
+                                    action(::update)
+                                    textFormatter =
+                                        TextFormatter(DegreeStringConverter(), maxAngAccel.value)
+                                }
                                 addClass(Theme.padding)
                             }
                             textflow {
                                 text("maxAngJerk: ").addClass(Theme.propertyText)
-                                textfield(maxAngJerk, DegreeStringConverter()).action(::update)
+                                textfield(maxAngJerk, DegreeStringConverter()) {
+                                    action(::update)
+                                    textFormatter =
+                                        TextFormatter(DegreeStringConverter(), maxAngJerk.value)
+                                }
                                 addClass(Theme.padding)
                             }
                         }
@@ -468,7 +529,7 @@ internal class TrajectoryEditor(val renderer: TrajectoryRenderer) : View() {
         var string = """new TrajectoryBuilder(
                         |   ${start.pose.toJava()},
                         |   ${start.tangent.radians},
-                        |   new ${constraints.value.toKotlin()}
+                        |   ${constraints.value.toJava()}
                         |)
                     """.trimMargin()
         waypoints.filter { it !is Start }.forEach { waypoint ->
@@ -536,13 +597,5 @@ internal class TrajectoryEditor(val renderer: TrajectoryRenderer) : View() {
             title = "Error",
             owner = currentWindow
         )
-    }
-
-    private fun getLast(): Pair<Pose2d, Degree> {
-        val lastPose =
-            if (waypoints.size > 1) waypoints.toTrajectory(constraints.value).first.end()
-            else start.pose
-        val lastTangent = Degree(lastPose.heading, false)
-        return lastPose to lastTangent
     }
 }
