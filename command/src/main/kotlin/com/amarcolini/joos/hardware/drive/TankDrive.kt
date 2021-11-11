@@ -21,7 +21,7 @@ class TankDrive @JvmOverloads constructor(
     private val left: Motor,
     private val right: Motor,
     override val imu: Imu? = null,
-    override val constants: TankConstraints = TankConstraints(min(left.maxRPM, right.maxRPM)),
+    override val constraints: TankConstraints = TankConstraints(min(left.maxRPM, right.maxRPM)),
     translationalPID: PIDCoefficients = PIDCoefficients(4.0, 0.0, 0.5),
     headingPID: PIDCoefficients = PIDCoefficients(4.0, 0.0, 0.5)
 ) : DriveComponent() {
@@ -34,7 +34,7 @@ class TankDrive @JvmOverloads constructor(
     override var localizer: Localizer = TankLocalizer(
         { listOf(left.distance, right.distance) },
         { listOf(left.distanceVelocity, right.distanceVelocity) },
-        constants.trackWidth,
+        constraints.trackWidth,
         this, imu != null
     )
 
@@ -42,11 +42,11 @@ class TankDrive @JvmOverloads constructor(
         motors.zip(
             TankKinematics.robotToWheelVelocities(
                 driveSignal.vel,
-                constants.trackWidth,
+                constraints.trackWidth,
             ).zip(
                 TankKinematics.robotToWheelAccelerations(
                     driveSignal.accel,
-                    constants.trackWidth,
+                    constraints.trackWidth,
                 )
             )
         ).forEach { (motor, power) ->

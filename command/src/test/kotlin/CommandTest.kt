@@ -237,7 +237,7 @@ class RangeCommand @JvmOverloads constructor(
 class DummyComponent(val name: String) : Component {
     private var updateCount = 0
 
-    override fun update(scheduler: CommandScheduler) {
+    override fun update() {
         updateCount++
 //        println("Updating component $name: $updateCount")
     }

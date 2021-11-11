@@ -1,6 +1,7 @@
 package com.amarcolini.joos.trajectory.constraints
 
 import com.amarcolini.joos.geometry.Pose2d
+import com.amarcolini.joos.path.Path
 
 /**
  * Composite constraint representing the minimum of its constituent acceleration constraints.
@@ -8,12 +9,6 @@ import com.amarcolini.joos.geometry.Pose2d
 class MinAccelerationConstraint(
     val constraints: List<TrajectoryAccelerationConstraint>
 ) : TrajectoryAccelerationConstraint {
-    override fun get(
-        s: Double,
-        pose: Pose2d,
-        deriv: Pose2d,
-        secondDeriv: Pose2d,
-        baseRobotVel: Pose2d
-    ) =
-        constraints.map { it[s, pose, deriv, secondDeriv, baseRobotVel] }.minOrNull()!!
+    override fun get(lastS: Double, s: Double, lastVel: Double, dx: Double, path: Path) =
+        constraints.map { it[lastS, s, lastVel, dx, path] }.minOrNull()!!
 }

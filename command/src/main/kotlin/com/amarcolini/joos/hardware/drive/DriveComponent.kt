@@ -16,7 +16,7 @@ import kotlin.Double.Companion.NaN
  */
 abstract class DriveComponent : Drive(), Component {
     protected abstract val trajectoryFollower: TrajectoryFollower
-    abstract val constants: TrajectoryConstraints
+    abstract val constraints: TrajectoryConstraints
     protected abstract val imu: Imu?
 
     override fun update() {
@@ -29,9 +29,9 @@ abstract class DriveComponent : Drive(), Component {
     ) = TrajectoryBuilder(
         startPose,
         startHeading,
-        constants.velConstraint,
-        constants.accelConstraint,
-        constants.maxAngVel, constants.maxAngAccel, constants.maxAngJerk
+        constraints.velConstraint,
+        constraints.accelConstraint,
+        constraints.maxAngVel, constraints.maxAngAccel, constraints.maxAngJerk
     )
 
     fun trajectoryBuilder(
@@ -40,9 +40,9 @@ abstract class DriveComponent : Drive(), Component {
     ) = TrajectoryBuilder(
         startPose,
         reversed,
-        constants.velConstraint,
-        constants.accelConstraint,
-        constants.maxAngVel, constants.maxAngAccel, constants.maxAngJerk
+        constraints.velConstraint,
+        constraints.accelConstraint,
+        constraints.maxAngVel, constraints.maxAngAccel, constraints.maxAngJerk
     )
 
     fun followTrajectory(trajectory: Trajectory): Command {

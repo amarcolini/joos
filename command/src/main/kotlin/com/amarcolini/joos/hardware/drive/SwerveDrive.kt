@@ -22,7 +22,7 @@ class SwerveDrive @JvmOverloads constructor(
     private val backRight: Pair<Motor, Servo>,
     private val frontRight: Pair<Motor, Servo>,
     override val imu: Imu? = null,
-    override val constants: SwerveConstraints = SwerveConstraints(
+    override val constraints: SwerveConstraints = SwerveConstraints(
         listOf(
             frontLeft,
             backLeft,
@@ -48,7 +48,7 @@ class SwerveDrive @JvmOverloads constructor(
         ::getWheelPositions,
         ::getWheelVelocities,
         ::getModuleOrientations,
-        constants.trackWidth, constants.wheelBase,
+        constraints.trackWidth, constraints.wheelBase,
         this, imu != null
     )
 
@@ -56,14 +56,14 @@ class SwerveDrive @JvmOverloads constructor(
         motors.zip(
             SwerveKinematics.robotToWheelVelocities(
                 driveSignal.vel,
-                constants.trackWidth,
-                constants.wheelBase,
+                constraints.trackWidth,
+                constraints.wheelBase,
             ).zip(
                 SwerveKinematics.robotToWheelAccelerations(
                     driveSignal.vel,
                     driveSignal.accel,
-                    constants.trackWidth,
-                    constants.wheelBase,
+                    constraints.trackWidth,
+                    constraints.wheelBase,
                 )
             )
         ).forEach { (motor, power) ->
@@ -74,8 +74,8 @@ class SwerveDrive @JvmOverloads constructor(
         servos.zip(
             SwerveKinematics.robotToModuleOrientations(
                 driveSignal.vel,
-                constants.trackWidth,
-                constants.wheelBase
+                constraints.trackWidth,
+                constraints.wheelBase
             )
         ).forEach { (servo, orientation) ->
             servo.angle = orientation
@@ -83,19 +83,19 @@ class SwerveDrive @JvmOverloads constructor(
     }
 
     override fun setDrivePower(drivePower: Pose2d) {
-        val avg = (constants.trackWidth + constants.wheelBase) / 2.0
+        val avg = (constraints.trackWidth + constraints.wheelBase) / 2.0
         motors.zip(
             SwerveKinematics.robotToWheelVelocities(
                 drivePower,
-                constants.trackWidth / avg,
-                constants.wheelBase / avg,
+                constraints.trackWidth / avg,
+                constraints.wheelBase / avg,
             )
         ).forEach { (motor, speed) -> motor.set(speed) }
         servos.zip(
             SwerveKinematics.robotToModuleOrientations(
                 drivePower,
-                constants.trackWidth / avg,
-                constants.wheelBase / avg
+                constraints.trackWidth / avg,
+                constraints.wheelBase / avg
             )
         ).forEach { (servo, orientation) ->
             servo.angle = orientation

@@ -102,5 +102,5 @@ internal class MainView : View() {
 }
 
 fun main(args: Array<String>) {
-    launch<MainApp>(args)
+    launch<MainApp>(args + "--add-modules javafx.controls,javafx.fxml")
 }

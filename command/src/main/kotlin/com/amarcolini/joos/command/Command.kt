@@ -10,7 +10,7 @@ import java.util.function.Consumer
  * together to form complex multi-step actions.
  */
 abstract class Command {
-    companion object Static {
+    companion object {
         /**
          * Creates an [InstantCommand] out of the provided [runnable].
          */

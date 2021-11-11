@@ -22,7 +22,7 @@ class MecanumDrive @JvmOverloads constructor(
     private val backRight: Motor,
     private val frontRight: Motor,
     override val imu: Imu? = null,
-    override val constants: MecanumConstraints = MecanumConstraints(
+    override val constraints: MecanumConstraints = MecanumConstraints(
         listOf(
             frontLeft,
             backLeft,
@@ -46,7 +46,7 @@ class MecanumDrive @JvmOverloads constructor(
     override var localizer: Localizer = MecanumLocalizer(
         ::getWheelPositions,
         ::getWheelVelocities,
-        constants.trackWidth, constants.wheelBase, constants.lateralMultiplier,
+        constraints.trackWidth, constraints.wheelBase, constraints.lateralMultiplier,
         this, imu != null
     )
 
@@ -58,15 +58,15 @@ class MecanumDrive @JvmOverloads constructor(
         motors.zip(
             MecanumKinematics.robotToWheelVelocities(
                 driveSignal.vel,
-                constants.trackWidth,
-                constants.wheelBase,
-                constants.lateralMultiplier
+                constraints.trackWidth,
+                constraints.wheelBase,
+                constraints.lateralMultiplier
             ).zip(
                 MecanumKinematics.robotToWheelAccelerations(
                     driveSignal.accel,
-                    constants.trackWidth,
-                    constants.wheelBase,
-                    constants.lateralMultiplier
+                    constraints.trackWidth,
+                    constraints.wheelBase,
+                    constraints.lateralMultiplier
                 )
             )
         ).forEach { (motor, power) ->
@@ -82,7 +82,7 @@ class MecanumDrive @JvmOverloads constructor(
                 drivePower,
                 1.0,
                 1.0,
-                constants.lateralMultiplier
+                constraints.lateralMultiplier
             )
         ).forEach { (motor, speed) -> motor.set(speed) }
     }

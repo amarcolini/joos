@@ -19,6 +19,7 @@ class GUI {
     init {
         mapper.registerKotlinModule()
         mapper.configure(SerializationFeature.FAIL_ON_EMPTY_BEANS, false)
+        args["add-modules"] = "javafx.controls,javafx.fxml"
     }
 
     /**

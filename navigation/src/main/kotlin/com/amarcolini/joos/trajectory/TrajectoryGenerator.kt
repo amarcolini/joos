@@ -35,15 +35,8 @@ object TrajectoryGenerator {
                         Pose2d()
                 ]
             },
-            { s ->
-                val t = path.reparam(s)
-                accelerationConstraint[
-                        s,
-                        path[s, t],
-                        path.deriv(s, t),
-                        path.secondDeriv(s, t),
-                        Pose2d()
-                ]
+            { lastS, s, lastVel, dx ->
+                accelerationConstraint[lastS, s, lastVel, dx, path]
             },
             resolution
         )

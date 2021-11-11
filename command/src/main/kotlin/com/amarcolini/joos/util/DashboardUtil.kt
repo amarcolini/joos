@@ -6,7 +6,7 @@ import com.amarcolini.joos.path.Path
 import kotlin.math.ceil
 
 /**
- * Class containing various utilities for use with FtcDashboard.
+ * Class containing various utilities for use with [FTC Dashboard](https://github.com/acmerobotics/ftc-dashboard).
  */
 object DashboardUtil {
     private const val ROBOT_RADIUS = 9.0

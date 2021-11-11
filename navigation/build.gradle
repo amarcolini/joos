@@ -81,3 +81,8 @@ publishing {
         }
     }
 }
+
+tasks["clean"].doFirst {
+    delete file("graphs")
+    delete file("config")
+}

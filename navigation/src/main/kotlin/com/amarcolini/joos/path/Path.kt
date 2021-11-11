@@ -81,6 +81,12 @@ class Path(val segments: List<PathSegment>) {
         return segment.internalSecondDeriv(remainingDisplacement, t)
     }
 
+    @JvmOverloads
+    fun curvature(s: Double, t: Double = reparam(s)): Double {
+        val (segment, remainingDisplacement) = segment(s)
+        return segment.curvature(remainingDisplacement, t)
+    }
+
     internal fun reparam(s: Double): Double {
         val (segment, remainingDisplacement) = segment(s)
         return segment.reparam(remainingDisplacement)

@@ -6,6 +6,7 @@ import com.amarcolini.joos.trajectory.config.TrajectoryConfig
 import com.amarcolini.joos.trajectory.config.TrajectoryConfigManager
 import org.junit.jupiter.api.Test
 import java.io.File
+import java.nio.file.Paths
 
 const val CONFIG_DIR = "./config/"
 
@@ -21,9 +22,12 @@ class ConfigTest {
             TrajectoryConfig.Wait(5.0),
             TrajectoryConfig.Turn(Math.toRadians(90.0))
         )
-        val constraints = GenericConstraints(30.0, 30.0, Math.toRadians(180.0), Math.toRadians(180.0))
+        val constraints =
+            GenericConstraints(30.0, 30.0, Math.toRadians(180.0), Math.toRadians(180.0))
         val config = TrajectoryConfig(Pose2d(), 0.0, waypoints, constraints)
-        TrajectoryConfigManager.saveConfig(config, File("${CONFIG_DIR}/test.yaml"))
+        val file = File("${CONFIG_DIR}/test.yaml")
+        file.parentFile.mkdirs()
+        TrajectoryConfigManager.saveConfig(config, file)
     }
 
     @Test
@@ -31,6 +35,5 @@ class ConfigTest {
         saveConfig()
         val loadedConfig = TrajectoryConfigManager.loadConfig(File("${CONFIG_DIR}/test.yaml"))
         assert(loadedConfig != null)
-        println(loadedConfig)
     }
 }

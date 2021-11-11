@@ -3,7 +3,7 @@ package com.amarcolini.joos.hardware.gamepad
 /**
  * Represents the state of a trigger.
  */
-class Trigger(
+class Trigger @JvmOverloads constructor(
     value: Float = 0.0f,
     var threshold: Float = 0.5f
 ) : Toggleable() {

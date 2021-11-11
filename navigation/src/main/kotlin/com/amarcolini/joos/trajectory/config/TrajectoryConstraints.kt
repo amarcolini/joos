@@ -8,7 +8,7 @@ import kotlin.reflect.KClass
 /**
  * Configuration describing constraints and other robot-specific parameters that are shared by a group of trajectories.
  */
-@JsonIgnoreProperties("velConstraint", "accelConstraint")
+@JsonIgnoreProperties("velConstraint", "accelConstraint", "type")
 @JsonTypeInfo(use = JsonTypeInfo.Id.NAME, include = JsonTypeInfo.As.PROPERTY, property = "type")
 sealed interface TrajectoryConstraints {
     /**
@@ -31,8 +31,8 @@ sealed interface TrajectoryConstraints {
     val maxAngJerk: Double
 }
 
-data class MecanumConstraints(
-    val maxRPM: Double = 0.0,
+data class MecanumConstraints @JvmOverloads constructor(
+    val maxRPM: Double = 100.0,
     val trackWidth: Double = 1.0,
     val wheelBase: Double = trackWidth,
     val lateralMultiplier: Double = 1.0,
@@ -49,11 +49,11 @@ data class MecanumConstraints(
             TranslationalVelocityConstraint(maxVel),
         )
     )
-    override val accelConstraint = ProfileAccelerationConstraint(maxAccel)
+    override val accelConstraint = TranslationalAccelerationConstraint(maxAccel)
     override val type = TrajectoryConstraints.DriveType.MECANUM
 }
 
-data class GenericConstraints(
+data class GenericConstraints @JvmOverloads constructor(
     val maxVel: Double = 30.0,
     val maxAccel: Double = 30.0,
     override val maxAngVel: Double = Math.toRadians(180.0),
@@ -68,15 +68,15 @@ data class GenericConstraints(
     )
     override val accelConstraint = MinAccelerationConstraint(
         listOf(
-            ProfileAccelerationConstraint(maxAccel),
+            TranslationalAccelerationConstraint(maxAccel),
             AngularAccelerationConstraint(maxAngAccel)
         )
     )
     override val type = TrajectoryConstraints.DriveType.GENERIC
 }
 
-data class TankConstraints(
-    val maxRPM: Double = 0.0,
+data class TankConstraints @JvmOverloads constructor(
+    val maxRPM: Double = 100.0,
     val trackWidth: Double = 1.0,
     val maxVel: Double = 30.0,
     val maxAccel: Double = 30.0,
@@ -93,15 +93,15 @@ data class TankConstraints(
     )
     override val accelConstraint = MinAccelerationConstraint(
         listOf(
-            ProfileAccelerationConstraint(maxAccel),
+            TranslationalAccelerationConstraint(maxAccel),
             AngularAccelerationConstraint(maxAngAccel)
         )
     )
     override val type = TrajectoryConstraints.DriveType.TANK
 }
 
-data class SwerveConstraints(
-    val maxRPM: Double = 0.0,
+data class SwerveConstraints @JvmOverloads constructor(
+    val maxRPM: Double = 100.0,
     val trackWidth: Double = 1.0,
     val wheelBase: Double = trackWidth,
     val maxVel: Double = 30.0,
@@ -119,7 +119,7 @@ data class SwerveConstraints(
     )
     override val accelConstraint = MinAccelerationConstraint(
         listOf(
-            ProfileAccelerationConstraint(maxAccel),
+            TranslationalAccelerationConstraint(maxAccel),
             AngularAccelerationConstraint(maxAngAccel)
         )
     )

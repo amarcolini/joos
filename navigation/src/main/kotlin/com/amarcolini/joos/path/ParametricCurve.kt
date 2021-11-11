@@ -131,12 +131,8 @@ abstract class ParametricCurve {
     /**
      * Computes the curvature of a parametric curve at the internal parameter [t].
      */
-    fun curvature(t: Double): Double {
-        val deriv = internalDeriv(t)
-        val derivNorm = deriv.norm()
-        val (x, y) = internalSecondDeriv(t)
-        return (deriv.x * y - deriv.y * x) / (derivNorm * derivNorm * derivNorm)
-    }
+    @JvmOverloads
+    fun curvature(s: Double, t: Double = reparam(s)): Double = secondDeriv(s, t).norm()
 
     private var length: Double = 0.0
     private val tSamples = mutableListOf(0.0)

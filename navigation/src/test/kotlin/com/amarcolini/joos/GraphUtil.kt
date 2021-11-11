@@ -7,6 +7,8 @@ import org.knowm.xchart.BitmapEncoder
 import org.knowm.xchart.QuickChart
 import org.knowm.xchart.XYChart
 import org.knowm.xchart.style.theme.MatlabTheme
+import java.awt.BasicStroke
+import java.awt.Stroke
 import java.io.File
 import java.nio.file.Paths
 

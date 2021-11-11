@@ -24,8 +24,6 @@ open class TankVelocityConstraint(
         }
 
         val robotDeriv = Kinematics.fieldToRobotVelocity(pose, deriv)
-        println(robotDeriv.y)
-        println(robotDeriv.y epsilonEquals 0.0)
         val wheel = TankKinematics.robotToWheelVelocities(robotDeriv, trackWidth)
         return wheel0.zip(wheel).map {
             max(

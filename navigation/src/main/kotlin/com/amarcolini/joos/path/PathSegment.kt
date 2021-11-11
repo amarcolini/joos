@@ -42,6 +42,9 @@ class PathSegment @JvmOverloads constructor(
     internal fun internalSecondDeriv(s: Double, t: Double = reparam(s)) =
         Pose2d(curve.internalSecondDeriv(t), interpolator.internalDeriv(s, t))
 
+    @JvmOverloads
+    fun curvature(s: Double, t: Double = reparam(s)) = curve.curvature(s, t)
+
     fun reparam(s: Double) = curve.reparam(s)
 
     /**
