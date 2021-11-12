@@ -59,7 +59,7 @@ internal class TrajectoryEditor(val renderer: TrajectoryRenderer) : View() {
                         togglePseudoClass(Theme.error.name, it.error.value != null)
                         text("!!") {
                             removeWhen {
-                                it.error.select { (it == null).toProperty() }
+                                it.error.isNull
                             }
                             addClass(Theme.errorText)
                         }

@@ -57,7 +57,7 @@ internal class MainView : View() {
                 mapper.readValue(app.parameters.named["trajectory"], Waypoints::class.java)
             editor.waypoints.setAll(trajectory.waypoints)
         } catch (e: Exception) {
-            e.printStackTrace()
+
         }
         try {
             editor.constraints.set(
@@ -67,7 +67,7 @@ internal class MainView : View() {
                 )
             )
         } catch (e: Exception) {
-            e.printStackTrace()
+
         }
     }
 
