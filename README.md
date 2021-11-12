@@ -2,6 +2,8 @@
 
 ---
 
+[![](https://jitpack.io/v/amarcolini/joos.svg?style=flat-square)](https://jitpack.io/#amarcolini/joos)
+
 A comprehensive kotlin library designed for FTC. Based on [Road Runner](https://github.com/acmerobotics/road-runner).
 
 ### Features
