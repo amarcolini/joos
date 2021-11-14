@@ -1,14 +1,17 @@
-<img src="temp_logo.svg">
+
+![logo](temp_logo.svg)
 
 ---
 
-A comprehensive kotlin library designed for FTC. Based on <a href="https://github.com/acmerobotics/road-runner">Road Runner</a>.
+[![](https://jitpack.io/v/amarcolini/joos.svg?style=flat-square)](https://jitpack.io/#amarcolini/joos)
+
+A comprehensive kotlin library designed for FTC. Based on [Road Runner](https://github.com/acmerobotics/road-runner).
 
 ### Features
- - Support for advanced trajectory planning and following.
- - Command-based paradigm
- - Easy to use GUI for trajectory generation
- - <a href="https://github.com/acmerobotics/ftc-dashboard">FTC Dashboard</a> built in
+- Support for advanced trajectory planning and following.
+- Command-based paradigm
+- Easy to use GUI for trajectory generation
+- [FTC Dashboard](https://github.com/acmerobotics/ftc-dashboard) built in
 
 ## Installation
 
@@ -18,7 +21,6 @@ A comprehensive kotlin library designed for FTC. Based on <a href="https://githu
 repositories {
   maven { url 'https://jitpack.io' }
 }
-
 dependencies {
   implementation "com.github.amarcolini.joos:$module:0.1.1-alpha"
 }
