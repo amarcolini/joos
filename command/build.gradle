@@ -62,10 +62,9 @@ project.afterEvaluate {
     publishing {
         publications {
             release(MavenPublication) {
+                from components.release
                 artifactId = "command"
                 artifact sourcesJar
-                artifact bundleReleaseAar
-//            artifact("$buildDir/outputs/aar/command-release.aar")
                 pom {
                     name = "Joos"
                     description = "A comprehensive kotlin library designed for FTC."

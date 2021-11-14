@@ -1,4 +1,4 @@
-package com.amarcolini.joos.hardware.gamepad
+package com.amarcolini.joos.gamepad
 
 enum class GamepadButton {
     Y, X, A, B, LEFT_BUMPER, RIGHT_BUMPER, BACK,

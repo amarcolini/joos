@@ -3,6 +3,7 @@ package com.amarcolini.joos.command
 import java.util.function.BiConsumer
 import java.util.function.BooleanSupplier
 import java.util.function.Consumer
+import java.util.function.Supplier
 
 /**
  * A state machine representing a complete action to be performed using any number of [Component]s.
@@ -16,6 +17,12 @@ abstract class Command {
          */
         @JvmStatic
         fun of(runnable: Runnable) = InstantCommand(runnable)
+
+        /**
+         * Creates a [SelectCommand] out of the provided [command].
+         */
+        @JvmStatic
+        fun select(command: Supplier<Command>) = SelectCommand(command)
 
         /**
          * Creates a command that does nothing.
@@ -38,6 +45,7 @@ abstract class Command {
      * An internal property which stores this command's current [CommandScheduler]. This is useful when using multiple [CommandScheduler]s.
      */
     var scheduler: CommandScheduler? = null
+        internal set
 
     /**
      * Runs once when first scheduled.
@@ -152,6 +160,19 @@ abstract class Command {
         )
 
     /**
+     * Overrides this command's [isFinished] function to finish when [condition] is true.
+     */
+    fun runUntil(condition: Boolean) =
+        FunctionalCommand(
+            this::init,
+            this::execute,
+            this::end,
+            { condition },
+            isInterruptable,
+            requirements
+        )
+
+    /**
      * Returns a [ListenerCommand] that runs the specified action when this command initializes.
      */
     fun onInit(action: Consumer<Command>) =
@@ -180,5 +201,31 @@ abstract class Command {
             this::isFinished,
             this.isInterruptable,
             this.requirements + requirements
+        )
+
+    /**
+     * Adds [requirements] to this command's list of required components.
+     */
+    fun requires(vararg requirements: Component) =
+        FunctionalCommand(
+            this::init,
+            this::execute,
+            this::end,
+            this::isFinished,
+            this.isInterruptable,
+            this.requirements + requirements
+        )
+
+    /**
+     * Sets whether this command is interruptable.
+     */
+    fun isInterruptable(interruptable: Boolean) =
+        FunctionalCommand(
+            this::init,
+            this::execute,
+            this::end,
+            this::isFinished,
+            interruptable,
+            requirements
         )
 }

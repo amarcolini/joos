@@ -1,6 +1,5 @@
-package com.amarcolini.joos.hardware.gamepad
+package com.amarcolini.joos.gamepad
 
-import com.amarcolini.joos.command.CommandScheduler
 import com.amarcolini.joos.command.Component
 import com.amarcolini.joos.geometry.Vector2d
 import com.qualcomm.robotcore.hardware.Gamepad

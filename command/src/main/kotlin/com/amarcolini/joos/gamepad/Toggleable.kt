@@ -1,4 +1,4 @@
-package com.amarcolini.joos.hardware.gamepad
+package com.amarcolini.joos.gamepad
 
 /**
  * Represents the state of any toggleable.

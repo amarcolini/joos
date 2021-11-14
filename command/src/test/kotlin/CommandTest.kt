@@ -1,5 +1,5 @@
 import com.amarcolini.joos.command.*
-import com.amarcolini.joos.hardware.gamepad.Button
+import com.amarcolini.joos.gamepad.Button
 import com.amarcolini.joos.util.NanoClock
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test

@@ -15,7 +15,7 @@ class ParallelCommand @JvmOverloads constructor(
             if ((requirements intersect command.requirements).isNotEmpty()) throw IllegalArgumentException(
                 "Multiple commands in a parallel group cannot require the same components"
             )
-            requirements.addAll(command.requirements)
+            requirements += command.requirements
             this.commands[command] = false
         }
     }

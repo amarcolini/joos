@@ -23,8 +23,18 @@ object MathUtil {
             else -> emptyList()
         }
     }
+
+    /**
+     * Ensures that [n] lies in the range [min]..[max],
+     * where [min] and [max] are modularly-equivalent (that is, [n] wraps around).
+     */
+    @JvmStatic
+    fun wrap(n: Double, min: Double, max: Double): Double =
+        if (n < min) max - (min - n) % (max - min)
+        else min + (n - min) % (max - min)
 }
 
 const val EPSILON = 1e-6
 
 infix fun Double.epsilonEquals(other: Double) = abs(this - other) < EPSILON
+fun Double.wrap(min: Double, max: Double) = MathUtil.wrap(this, min, max)

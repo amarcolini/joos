@@ -14,6 +14,15 @@ class FunctionalCommand @JvmOverloads constructor(
     override var isInterruptable: Boolean = true,
     override var requirements: Set<Component> = emptySet()
 ) : Command() {
+    constructor(
+        init: () -> Unit = {},
+        execute: () -> Unit = {},
+        end: (Boolean) -> Unit = {},
+        isFinished: () -> Boolean = { false },
+        isInterruptable: Boolean = true,
+        vararg requirements: Component
+    ) : this(init, execute, end, isFinished, isInterruptable, requirements.toSet())
+
     override fun init() = init.run()
     override fun execute() = execute.run()
     override fun end(interrupted: Boolean) = end.accept(interrupted)

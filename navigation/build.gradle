@@ -28,8 +28,8 @@ compileKotlin {
 
 shadowJar {
     destinationDirectory.set(buildDir)
-    archiveBaseName.set("$rootProject.name-navigation")
-    archiveClassifier.set("shadow")
+    archiveBaseName.set("navigation")
+    archiveClassifier.set("all")
     archiveVersion.set(project.version)
 }
 
