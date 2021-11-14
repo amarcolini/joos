@@ -30,8 +30,12 @@ allprojects {
 
     tasks.withType(org.jetbrains.kotlin.gradle.tasks.KotlinCompile).all {
         kotlinOptions {
-            freeCompilerArgs = ['-Xjvm-default=enable'] //enable or compatibility
+            freeCompilerArgs = ['-Xjvm-default=all'] //all or all-compatibility
             jvmTarget = "1.8"
         }
+    }
+
+    tasks.withType(GenerateModuleMetadata) {
+        enabled = false
     }
 }

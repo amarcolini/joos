@@ -8,7 +8,7 @@ import com.amarcolini.joos.kinematics.Kinematics
  * @param kA acceleration gain
  * @param kStatic additive constant
  */
-data class FeedforwardCoefficients(
+data class FeedforwardCoefficients @JvmOverloads constructor(
     @JvmField var kV: Double = 0.0,
     @JvmField var kA: Double = 0.0,
     @JvmField var kStatic: Double = 0.0

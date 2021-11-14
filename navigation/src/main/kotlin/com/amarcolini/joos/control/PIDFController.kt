@@ -2,10 +2,7 @@ package com.amarcolini.joos.control
 
 import com.amarcolini.joos.kinematics.Kinematics
 import com.amarcolini.joos.util.NanoClock
-import com.amarcolini.joos.util.epsilonEquals
 import kotlin.math.abs
-import kotlin.math.max
-import kotlin.math.min
 import kotlin.math.sign
 
 /**
@@ -17,8 +14,7 @@ import kotlin.math.sign
  * @param kF custom feedforward that depends on position and/or velocity (e.g., a gravity term for arms)
  * @param clock clock
  */
-class PIDFController
-@JvmOverloads constructor(
+class PIDFController @JvmOverloads constructor(
     var pid: PIDCoefficients,
     var feedforward: FeedforwardCoefficients = FeedforwardCoefficients(),
     private val kF: (Double, Double?) -> Double = { _, _ -> 0.0 },

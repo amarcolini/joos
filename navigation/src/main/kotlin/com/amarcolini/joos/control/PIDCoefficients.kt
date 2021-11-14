@@ -8,7 +8,7 @@ package com.amarcolini.joos.control
  * @param kD derivative gain
  * @param N low-pass filter coefficient for derivative
  */
-data class PIDCoefficients(
+data class PIDCoefficients @JvmOverloads constructor(
     @JvmField var kP: Double = 0.0,
     @JvmField var kI: Double = 0.0,
     @JvmField var kD: Double = 0.0,

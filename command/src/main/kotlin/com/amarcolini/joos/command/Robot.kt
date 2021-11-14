@@ -15,7 +15,7 @@ abstract class Robot(opMode: OpMode) : CommandScheduler() {
     val gamepad: MultipleGamepad = MultipleGamepad(opMode.gamepad1, opMode.gamepad2)
 
     @JvmField
-    val hardwareMap = opMode.hardwareMap
+    val hMap = opMode.hardwareMap
 
     @JvmField
     val dashboard = FtcDashboard.getInstance()
