@@ -6,17 +6,7 @@ package com.amarcolini.joos.command
 class RaceCommand @JvmOverloads constructor(
     override val isInterruptable: Boolean = true,
     private vararg val commands: Command
-) : Command() {
-    override val requirements = HashSet<Component>()
-
-    init {
-        for (command in commands) {
-            if ((requirements intersect command.requirements).isNotEmpty()) throw IllegalArgumentException(
-                "Multiple commands in a parallel group cannot require the same components"
-            )
-            requirements.addAll(command.requirements)
-        }
-    }
+) : CommandGroup(*commands) {
 
     override fun init() {
         commands.forEach { it.init() }
@@ -30,6 +20,7 @@ class RaceCommand @JvmOverloads constructor(
     override fun end(interrupted: Boolean) {
         if (!interrupted) commands.filter { !it.isFinished() }.forEach { it.end(true) }
         else commands.forEach { it.end(true) }
+        super.end(interrupted)
     }
 
     override fun isFinished() = commands.any { it.isFinished() }

@@ -5,16 +5,9 @@ package com.amarcolini.joos.command
  */
 class SequentialCommand @JvmOverloads constructor(
     override val isInterruptable: Boolean = true,
-    vararg commands: Command
-) : Command() {
-    override val requirements = HashSet<Component>()
-    val commands: List<Command>
+    vararg val commands: Command
+) : CommandGroup(*commands) {
     private var index = -1
-
-    init {
-        commands.forEach { requirements.addAll(it.requirements) }
-        this.commands = commands.toList()
-    }
 
     override fun init() {
         commands.forEach { it.scheduler = scheduler }
@@ -39,5 +32,6 @@ class SequentialCommand @JvmOverloads constructor(
     override fun end(interrupted: Boolean) {
         if (index < 0) return
         if (interrupted) commands[index].end(interrupted)
+        super.end(interrupted)
     }
 }

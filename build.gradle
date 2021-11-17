@@ -1,7 +1,7 @@
 buildscript {
     ext {
         kotlin_version = "1.5.31"
-        lib_version = "v0.1.1-alpha"
+        lib_version = "v0.1.2-alpha"
     }
 
     repositories {
@@ -30,7 +30,7 @@ allprojects {
 
     tasks.withType(org.jetbrains.kotlin.gradle.tasks.KotlinCompile).all {
         kotlinOptions {
-            freeCompilerArgs = ['-Xjvm-default=all'] //all or all-compatibility
+            freeCompilerArgs = ['-Xjvm-default=all-compatibility'] //all or all-compatibility
             jvmTarget = "1.8"
         }
     }

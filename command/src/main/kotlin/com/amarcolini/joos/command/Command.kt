@@ -13,10 +13,10 @@ import java.util.function.Supplier
 abstract class Command {
     companion object {
         /**
-         * Creates an [InstantCommand] out of the provided [runnable].
+         * Creates a [BasicCommand] out of the provided [runnable].
          */
         @JvmStatic
-        fun of(runnable: Runnable) = InstantCommand(runnable)
+        fun of(runnable: Runnable) = BasicCommand(runnable)
 
         /**
          * Creates a [SelectCommand] out of the provided [command].
@@ -108,7 +108,7 @@ abstract class Command {
      * Adds a runnable to run after this one.
      */
     infix fun then(runnable: Runnable) =
-        this then InstantCommand(runnable)
+        this then BasicCommand(runnable)
 
     /**
      * Waits [duration] seconds after this command finishes.
@@ -126,7 +126,7 @@ abstract class Command {
      * Adds a runnable to run in parallel with this one (Both run simultaneously until they finish).
      */
     infix fun and(runnable: Runnable) =
-        this and InstantCommand(runnable)
+        this and BasicCommand(runnable)
 
     /**
      * Adds a command to run in parallel with this one (Both run simultaneously until one finishes).
@@ -138,7 +138,7 @@ abstract class Command {
      * Adds a runnable to run in parallel with this one (Both run simultaneously until one finishes).
      */
     infix fun race(runnable: Runnable) =
-        this race InstantCommand(runnable)
+        this race BasicCommand(runnable)
 
     /**
      * Waits until [condition] returns true after this command finishes.

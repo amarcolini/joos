@@ -1,11 +1,9 @@
 package com.amarcolini.joos.hardware
 
 import com.amarcolini.joos.command.Component
-import com.amarcolini.joos.util.Direction
+import com.amarcolini.joos.util.Angle
 import com.qualcomm.robotcore.hardware.HardwareMap
 import com.qualcomm.robotcore.hardware.Servo
-import java.lang.Double.max
-import java.lang.Double.min
 
 /**
  * A wrapper for the [Servo] object in the FTC SDK.
@@ -40,6 +38,11 @@ class Servo @JvmOverloads constructor(
         startAngle, endAngle, gearRatio
     )
 
+    enum class Direction(val multiplier: Int) {
+        FORWARD(1),
+        REVERSE(-1)
+    }
+
     /**
      * The logical direction in which this servo operates.
      */
@@ -65,7 +68,7 @@ class Servo @JvmOverloads constructor(
         }
         set(value) {
             val (start, end) = currentAngleRange
-            field = (value * gearRatio).coerceIn(start, end)
+            field = (Angle.norm(value) * gearRatio).coerceIn(start, end)
             position = (angle - start) / (end - start)
         }
 

@@ -14,6 +14,9 @@ abstract class Robot(opMode: OpMode) : CommandScheduler() {
     @JvmField
     val gamepad: MultipleGamepad = MultipleGamepad(opMode.gamepad1, opMode.gamepad2)
 
+    /**
+     * The hardware map obtained from the opmode.
+     */
     @JvmField
     val hMap = opMode.hardwareMap
 
@@ -26,16 +29,21 @@ abstract class Robot(opMode: OpMode) : CommandScheduler() {
     var packet: TelemetryPacket = TelemetryPacket()
         private set
 
+    /**
+     * A telemetry for both FtcDashboard and the driver station. Automatically updates every update cycle.
+     */
     @JvmField
     val telemetry = MultipleTelemetry(dashboard.telemetry, opMode.telemetry)
 
     init {
+        telemetry.isAutoClear = false
         register(object : Component {
             override fun update() {
+                telemetry.clear()
                 telemetry.update()
                 dashboard.sendTelemetryPacket(packet)
                 packet = TelemetryPacket()
             }
-        })
+        }, gamepad)
     }
 }

@@ -64,11 +64,7 @@ open class CommandScheduler {
         }
 
         conditions.filterKeys { it.asBoolean }.values.forEach { commands ->
-            commands.forEach {
-                schedule(
-                    it
-                )
-            }
+            commands.forEach { schedule(it) }
         }
 
         for (component in components) {

@@ -10,6 +10,13 @@ repositories {
     maven { url = 'https://maven.brott.dev/' }
 }
 
+tasks.withType(Test) {
+    useJUnitPlatform()
+    testLogging {
+        events("passed", "skipped", "failed")
+    }
+}
+
 java {
     sourceCompatibility = JavaVersion.VERSION_1_8
     targetCompatibility = JavaVersion.VERSION_1_8

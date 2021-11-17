@@ -14,7 +14,7 @@ class CommandTest {
 
     @Test
     fun testCommand() {
-//        println("   **testCommand**")
+        println("   **testCommand**")
         val command = RangeCommand("test", 0, 10, true)
         scheduler.schedule(command)
         assert(command.isScheduled())
@@ -30,7 +30,7 @@ class CommandTest {
 
     @Test
     fun testComponent() {
-//        println("   **testComponent**")
+        println("   **testComponent**")
         val component = DummyComponent("test")
         scheduler.register(component)
         scheduler.update()
@@ -42,7 +42,7 @@ class CommandTest {
 
     @Test
     fun testCancel() {
-//        println("   **testCancel**")
+        println("   **testCancel**")
         val command = RangeCommand("test", 0, 10, false)
         scheduler.schedule(command)
         assert(command.isScheduled())
@@ -60,7 +60,7 @@ class CommandTest {
 
     @Test
     fun testInterrupt() {
-//        println("   **testInterrupt**")
+        println("   **testInterrupt**")
         val component = DummyComponent("Bobby")
         val command = RangeCommand("test", 0, 10, true, setOf(component))
         scheduler.schedule(command)
@@ -80,7 +80,7 @@ class CommandTest {
 
     @Test
     fun testUninterruptible() {
-//        println("   **testUninterruptible**")
+        println("   **testUninterruptible**")
         val component = DummyComponent("Bobby")
         val command = RangeCommand("test", 0, 10, false, setOf(component))
         scheduler.schedule(command)
@@ -100,7 +100,7 @@ class CommandTest {
 
     @Test
     fun testSequential() {
-//        println("   **testSequential**")
+        println("   **testSequential**")
         val cmd1 = RangeCommand("#1", 0, 5, true)
         val cmd2 = RangeCommand("#2", 1, 7, false)
         val group = cmd1 then cmd2
@@ -125,7 +125,7 @@ class CommandTest {
 
     @Test
     fun testWait() {
-//        println("   **testWait**")
+        println("   **testWait**")
         val cmd = WaitCommand(1.0)
         val clock = NanoClock.system()
         val start = clock.seconds()
@@ -135,7 +135,7 @@ class CommandTest {
 
     @Test
     fun testParallel() {
-//        println("   **testParallel**")
+        println("   **testParallel**")
         val a1 = RangeCommand("#A1", 0, 5)
         val a2 = RangeCommand("#A2", 0, 6)
         val cmd = a1 and a2
@@ -148,12 +148,28 @@ class CommandTest {
     }
 
     @Test
+    fun testRace() {
+        println("   **testRace**")
+        val a1 = RangeCommand("#A1", 0, 5)
+        val a2 = RangeCommand("#A2", 0, 6)
+        val cmd = a1 race a2
+        cmd.init()
+        assert(a1.isInitialized && a2.isInitialized)
+        while (!a1.isFinished()) cmd.execute()
+        assert(a1.hasEnded && !a2.hasEnded)
+        assert(a1.isFinished() && !a2.isFinished() && cmd.isFinished())
+        cmd.end(true)
+    }
+
+    @Test
     fun testPretty() {
-        val cmd = InstantCommand { println("first") }
+        println("   **testPretty**")
+        val cmd = Command.of { println("first") }
             .then { println("second") }
             .then(
-                Command.of { println("A1") } and Command.of { println { "A2" } }
+                Command.of { println("A1") } and { println("A2") }
             )
+            .then { println("third") }
             .wait(1.0)
             .then { println("So cool!!") }
         cmd.run()
@@ -161,15 +177,16 @@ class CommandTest {
 
     @Test
     fun testCondition() {
+        println("   **testCondition**")
         val btn1 = Button()
         val btn2 = Button()
         var runCount = 0
-        val cmd = Command.of { runCount++ }
+        val cmd = InstantCommand { runCount++ }
 
         scheduler.map(btn1::justActivated, cmd)
         scheduler.map(btn2::isActive, cmd)
 
-        repeat(20) {
+        repeat(10) {
             scheduler.update()
         }
 
@@ -200,6 +217,22 @@ class CommandTest {
 
         assert(runCount == 4)
     }
+
+    @Test
+    fun testSelect() {
+        println("   **testSelect**")
+        var number = 0
+        println("number is $number.")
+        val cmd = Command.select {
+            val newNumber = number + 1
+            Command.of {
+                number = newNumber
+                println("setting number to $newNumber.")
+            }
+        }
+        cmd.run()
+        assert(number == 1)
+    }
 }
 
 class RangeCommand @JvmOverloads constructor(
@@ -217,18 +250,18 @@ class RangeCommand @JvmOverloads constructor(
     override fun init() {
         num = start
         isInitialized = true
-//        println("Initializing $name at $start")
+        println("Initializing $name at $start")
     }
 
     override fun execute() {
         num++
-//        println("Running $name. Currently at $num.")
+        println("Running $name. Currently at $num.")
     }
 
     override fun end(interrupted: Boolean) {
         hasEnded = true
         wasInterrupted = interrupted
-//        println("Ending $name. $interrupted")
+        println("Ending $name. $interrupted")
     }
 
     override fun isFinished() = num >= end
@@ -239,7 +272,7 @@ class DummyComponent(val name: String) : Component {
 
     override fun update() {
         updateCount++
-//        println("Updating component $name: $updateCount")
+        println("Updating component $name: $updateCount")
     }
 
     fun updateCount() = updateCount
