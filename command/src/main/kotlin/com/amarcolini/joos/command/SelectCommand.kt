@@ -19,6 +19,7 @@ class SelectCommand @JvmOverloads constructor(
 
     override fun init() {
         selected = command.get()
+        selected.init()
     }
 
     override fun execute() {
@@ -32,5 +33,5 @@ class SelectCommand @JvmOverloads constructor(
     override val isInterruptable: Boolean
         get() = selected.isInterruptable
 
-    override fun isFinished(): Boolean = selected.isInterruptable
+    override fun isFinished(): Boolean = selected.isFinished()
 }

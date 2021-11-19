@@ -10,7 +10,6 @@ class SequentialCommand @JvmOverloads constructor(
     private var index = -1
 
     override fun init() {
-        commands.forEach { it.scheduler = scheduler }
         index = 0
         commands[index].init()
     }

@@ -14,11 +14,12 @@ class FunctionalCommand @JvmOverloads constructor(
     override var isInterruptable: Boolean = true,
     override var requirements: Set<Component> = emptySet()
 ) : Command() {
+    @JvmOverloads
     constructor(
-        init: () -> Unit = {},
-        execute: () -> Unit = {},
-        end: (Boolean) -> Unit = {},
-        isFinished: () -> Boolean = { false },
+        init: Runnable = Runnable {},
+        execute: Runnable = Runnable {},
+        end: Consumer<Boolean> = Consumer {},
+        isFinished: BooleanSupplier = BooleanSupplier { false },
         isInterruptable: Boolean = true,
         vararg requirements: Component
     ) : this(init, execute, end, isFinished, isInterruptable, requirements.toSet())

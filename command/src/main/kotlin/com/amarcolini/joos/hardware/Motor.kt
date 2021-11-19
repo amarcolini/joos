@@ -1,7 +1,6 @@
 package com.amarcolini.joos.hardware
 
 import com.amarcolini.joos.command.Command
-import com.amarcolini.joos.command.CommandScheduler
 import com.amarcolini.joos.command.Component
 import com.amarcolini.joos.control.FeedforwardCoefficients
 import com.amarcolini.joos.control.PIDCoefficients
@@ -10,7 +9,9 @@ import com.amarcolini.joos.util.NanoClock
 import com.qualcomm.robotcore.hardware.DcMotor
 import com.qualcomm.robotcore.hardware.DcMotorSimple
 import com.qualcomm.robotcore.hardware.HardwareMap
-import kotlin.math.*
+import kotlin.math.PI
+import kotlin.math.abs
+import kotlin.math.sign
 
 
 /**
@@ -272,8 +273,14 @@ class Motor @JvmOverloads constructor(
             field = value
         }
 
+    /**
+     * Whether this motor is reversed.
+     */
     var reversed: Boolean = false
-        @JvmName("reversed")
+        /**
+         * Sets whether the direction of this motor is reversed.
+         */
+        @JvmName("setReversed")
         set(value) {
             motors.forEach {
                 it.direction =
@@ -282,7 +289,7 @@ class Motor @JvmOverloads constructor(
             }
             field = value
         }
-        @JvmName("reversed")
+        @JvmName("isReversed")
         get() = motors[0].direction == DcMotorSimple.Direction.REVERSE
 
     /**
@@ -313,6 +320,14 @@ class Motor @JvmOverloads constructor(
      * The maximum achievable ticks per second velocity of the motor.
      */
     val maxTPS: Double = CPR * (maxRPM / 60)
+
+    /**
+     * Reverses the direction of this motor.
+     */
+    fun reversed(): Motor {
+        reversed = !reversed
+        return this
+    }
 
     /**
      * Sets the speed of the motor.
