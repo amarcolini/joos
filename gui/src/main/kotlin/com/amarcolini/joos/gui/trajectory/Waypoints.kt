@@ -1,11 +1,12 @@
 package com.amarcolini.joos.gui.trajectory
 
-import com.fasterxml.jackson.annotation.JsonSubTypes
-import com.fasterxml.jackson.annotation.JsonTypeInfo
 import com.amarcolini.joos.geometry.Pose2d
 import com.amarcolini.joos.geometry.Vector2d
+import com.amarcolini.joos.trajectory.config.GenericConstraints
+import com.amarcolini.joos.trajectory.config.TrajectoryConstraints
 import com.fasterxml.jackson.annotation.JsonIgnore
-import javafx.beans.property.SimpleBooleanProperty
+import com.fasterxml.jackson.annotation.JsonSubTypes
+import com.fasterxml.jackson.annotation.JsonTypeInfo
 import javafx.beans.property.SimpleObjectProperty
 
 @JsonTypeInfo(use = JsonTypeInfo.Id.MINIMAL_CLASS, include = JsonTypeInfo.As.PROPERTY)
@@ -33,28 +34,44 @@ sealed class Waypoint {
     val error: SimpleObjectProperty<String?> = SimpleObjectProperty<String?>(null)
 }
 
-class Waypoints(val waypoints: List<Waypoint>) {
-    constructor(vararg waypoints: Waypoint) : this(waypoints.toList())
+class WaypointTrajectory(
+    val waypoints: List<Waypoint>,
+    val constraints: TrajectoryConstraints = GenericConstraints()
+) {
+    constructor(
+        constraints: TrajectoryConstraints = GenericConstraints(),
+        vararg waypoints: Waypoint
+    ) : this(waypoints.toList(), constraints)
+
+    val trajectory by lazy {
+        waypoints.toTrajectory(constraints)
+    }
 }
 
 internal data class Start(var pose: Pose2d = Pose2d(), var tangent: Degree = Degree()) : Waypoint()
-internal sealed class Spline : Waypoint()
-internal data class SplineTo(var pos: Vector2d = Vector2d(), var tangent: Degree = Degree()) :
+internal sealed class Spline : Waypoint() {
+    abstract var tangent: Degree
+}
+
+internal data class SplineTo(
+    var pos: Vector2d = Vector2d(),
+    override var tangent: Degree = Degree()
+) :
     Spline()
 
 internal data class SplineToConstantHeading(
     var pos: Vector2d = Vector2d(),
-    var tangent: Degree = Degree()
+    override var tangent: Degree = Degree()
 ) : Spline()
 
 internal data class SplineToLinearHeading(
     var pose: Pose2d = Pose2d(),
-    var tangent: Degree = Degree()
+    override var tangent: Degree = Degree()
 ) : Spline()
 
 internal data class SplineToSplineHeading(
     var pose: Pose2d = Pose2d(),
-    var tangent: Degree = Degree()
+    override var tangent: Degree = Degree()
 ) : Spline()
 
 internal sealed class Line : Waypoint()

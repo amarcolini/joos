@@ -1,7 +1,7 @@
 package com.amarcolini.joos.trajectory.constraints
 
 import com.amarcolini.joos.path.Path
-import kotlin.math.pow
+import org.apache.commons.math3.util.FastMath
 import kotlin.math.sqrt
 
 /**
@@ -12,7 +12,7 @@ class AngularAccelerationConstraint(val maxAngAccel: Double) : TrajectoryAcceler
         val currentCurvature = path.curvature(s)
         val lastCurvature = path.curvature(lastS)
         return sqrt(
-            (lastCurvature * lastVel.pow(2) + 2 * maxAngAccel * dx) /
+            (lastCurvature * FastMath.pow(lastVel, 2) + 2 * maxAngAccel * dx) /
                     currentCurvature
         )
     }

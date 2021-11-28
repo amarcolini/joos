@@ -1,9 +1,8 @@
 package com.amarcolini.joos.geometry
 
 import com.amarcolini.joos.util.Angle
-import com.amarcolini.joos.util.*
-import kotlin.math.cos
-import kotlin.math.sin
+import com.amarcolini.joos.util.epsilonEquals
+import org.apache.commons.math3.util.FastMath
 
 /**
  * Class for representing 2D robot poses (x, y, and heading) and their derivatives.
@@ -23,7 +22,7 @@ data class Pose2d @JvmOverloads constructor(
     /**
      * Returns the vector representation of this pose's heading.
      */
-    fun headingVec() = Vector2d(cos(heading), sin(heading))
+    fun headingVec() = Vector2d(FastMath.cos(heading), FastMath.sin(heading))
 
     /**
      * Adds two poses.

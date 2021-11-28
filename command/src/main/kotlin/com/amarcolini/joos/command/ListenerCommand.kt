@@ -12,9 +12,9 @@ import java.util.function.Consumer
  */
 class ListenerCommand @JvmOverloads constructor(
     val command: Command = emptyCommand(),
-    val onInit: Consumer<Command> = Consumer {},
-    val onExecute: Consumer<Command> = Consumer {},
-    val onEnd: BiConsumer<Command, Boolean> = BiConsumer<Command, Boolean> { _: Command, _: Boolean -> }
+    private val onInit: Consumer<Command> = Consumer {},
+    private val onExecute: Consumer<Command> = Consumer {},
+    private val onEnd: BiConsumer<Command, Boolean> = BiConsumer<Command, Boolean> { _: Command, _: Boolean -> }
 ) : Command() {
     override val requirements = command.requirements
 

@@ -2,19 +2,19 @@ package com.amarcolini.joos.gui.trajectory
 
 import com.amarcolini.joos.geometry.Pose2d
 import com.amarcolini.joos.geometry.Vector2d
-import com.amarcolini.joos.gui.rendering.TrajectoryRenderer
+import com.amarcolini.joos.gui.rendering.Renderer
 import com.amarcolini.joos.gui.style.Theme
 import com.amarcolini.joos.trajectory.config.*
 import com.amarcolini.joos.util.DoubleProgression
-import javafx.beans.binding.BooleanExpression
 import javafx.beans.property.SimpleDoubleProperty
 import javafx.beans.property.SimpleObjectProperty
-import javafx.collections.ObservableList
 import javafx.geometry.Orientation
 import javafx.geometry.Side
 import javafx.scene.chart.NumberAxis
-import javafx.scene.control.*
-import javafx.scene.paint.Color
+import javafx.scene.control.Alert
+import javafx.scene.control.ButtonType
+import javafx.scene.control.TabPane
+import javafx.scene.control.TextFormatter
 import javafx.stage.FileChooser
 import tornadofx.*
 import java.io.File
@@ -25,30 +25,12 @@ import kotlin.reflect.KVisibility
 import kotlin.reflect.full.memberProperties
 
 
-internal class TrajectoryEditor(val renderer: TrajectoryRenderer) : View() {
-    private val start = Start()
-    val constraints: SimpleObjectProperty<TrajectoryConstraints> = SimpleObjectProperty(
-        GenericConstraints(30.0, 30.0, Math.toRadians(180.0), Math.toRadians(180.0))
-    )
-    val waypoints: ObservableList<Waypoint> = listOf(
-        start
-    ).toObservable()
-
-    init {
-        waypoints.onChange {
-            val trajectory = it.list.toTrajectory(constraints.value)
-            if (trajectory != null) renderer.trajectory = trajectory
-        }
-        constraints.onChange {
-            val trajectory = waypoints.toTrajectory(constraints.value)
-            if (trajectory != null) renderer.trajectory = trajectory
-        }
-    }
+internal class TrajectoryEditor(val renderer: Renderer) : View() {
 
     override val root = tabpane {
         tabClosingPolicy = TabPane.TabClosingPolicy.UNAVAILABLE
         tab("Path") {
-            listview(waypoints) {
+            listview(renderer.waypoints) {
                 fitToParentHeight()
                 isEditable = true
                 cellFormat {
@@ -82,7 +64,15 @@ internal class TrajectoryEditor(val renderer: TrajectoryRenderer) : View() {
                                 addClass(Theme.propertyText)
                             }
                             val value = it.call(item)
-                            val valueText = text(value.toString()) {
+                            val valueText = text(
+                                when (value) {
+                                    is Degree -> DegreeStringConverter().toString(value)
+                                    is Double -> DoubleStringConverter().toString(value)
+                                    is Vector2d -> Vector2dStringConverter().toString(value)
+                                    is Pose2d -> Pose2dStringConverter().toString(value)
+                                    else -> null
+                                }
+                            ) {
                                 removeWhen { editingProperty() }
                             }
                             textfield(value.toString()) {
@@ -104,8 +94,10 @@ internal class TrajectoryEditor(val renderer: TrajectoryRenderer) : View() {
                                 action {
                                     it.setter.call(item, textFormatter.value)
                                     valueText.text = it.call(item).toString()
-                                    waypoints.toTrajectory(constraints.value)
-                                        ?.let { renderer.trajectory = it }
+                                    renderer.trajectory = WaypointTrajectory(
+                                        renderer.waypoints,
+                                        renderer.constraints.value
+                                    )
                                     commitEdit(item)
                                 }
                             }
@@ -118,46 +110,50 @@ internal class TrajectoryEditor(val renderer: TrajectoryRenderer) : View() {
                             it.addClass(Theme.editorText)
                         }
                         contextmenu {
-                            var index = waypoints.indexOf(it) + 1
-                            var (lastPose, lastTangent) = waypoints.getLast()
+                            var index = renderer.waypoints.indexOf(it) + 1
+                            var (lastPose, lastTangent) = renderer.waypoints.mapPose().last().second
 
                             fun update() {
-                                index = waypoints.indexOf(it) + 1
-                                val (newPose, newTangent) = waypoints.getLast()
+                                index = renderer.waypoints.indexOf(it) + 1
+                                val (newPose, newTangent) = renderer.waypoints.mapPose()
+                                    .last().second
                                 lastPose = newPose
                                 lastTangent = newTangent
                             }
                             menu("_New") {
                                 item("Wait").action {
                                     update()
-                                    waypoints.add(index, Wait())
+                                    renderer.waypoints.add(index, Wait())
                                 }
                                 item("Turn").action {
                                     update()
-                                    waypoints.add(index, Turn())
+                                    renderer.waypoints.add(index, Turn())
                                 }
                                 menu("Spline") {
                                     item("SplineTo").action {
                                         update()
-                                        waypoints.add(index, SplineTo(lastPose.vec(), lastTangent))
+                                        renderer.waypoints.add(
+                                            index,
+                                            SplineTo(lastPose.vec(), lastTangent)
+                                        )
                                     }
                                     item("SplineToConstantHeading").action {
                                         update()
-                                        waypoints.add(
+                                        renderer.waypoints.add(
                                             index,
                                             SplineToConstantHeading(lastPose.vec(), lastTangent)
                                         )
                                     }
                                     item("SplineToLinearHeading").action {
                                         update()
-                                        waypoints.add(
+                                        renderer.waypoints.add(
                                             index,
                                             SplineToLinearHeading(lastPose, lastTangent)
                                         )
                                     }
                                     item("SplineToSplineHeading").action {
                                         update()
-                                        waypoints.add(
+                                        renderer.waypoints.add(
                                             index,
                                             SplineToSplineHeading(lastPose, lastTangent)
                                         )
@@ -166,54 +162,63 @@ internal class TrajectoryEditor(val renderer: TrajectoryRenderer) : View() {
                                 menu("Line") {
                                     item("StrafeTo").action {
                                         update()
-                                        waypoints.add(index, StrafeTo(lastPose.vec()))
+                                        renderer.waypoints.add(index, StrafeTo(lastPose.vec()))
                                     }
                                     item("Forward").action {
                                         update()
-                                        waypoints.add(index, Forward())
+                                        renderer.waypoints.add(index, Forward())
                                     }
                                     item("Back").action {
                                         update()
-                                        waypoints.add(index, Back())
+                                        renderer.waypoints.add(index, Back())
                                     }
                                     item("StrafeLeft").action {
                                         update()
-                                        waypoints.add(index, StrafeLeft())
+                                        renderer.waypoints.add(index, StrafeLeft())
                                     }
                                     item("StrafeRight").action {
                                         update()
-                                        waypoints.add(index, StrafeRight())
+                                        renderer.waypoints.add(index, StrafeRight())
                                     }
                                     item("LineTo").action {
                                         update()
-                                        waypoints.add(index, LineTo(lastPose.vec()))
+                                        renderer.waypoints.add(index, LineTo(lastPose.vec()))
                                     }
                                     item("LineToConstantHeading").action {
                                         update()
-                                        waypoints.add(index, LineToConstantHeading(lastPose.vec()))
+                                        renderer.waypoints.add(
+                                            index,
+                                            LineToConstantHeading(lastPose.vec())
+                                        )
                                     }
                                     item("LineToLinearHeading").action {
                                         update()
-                                        waypoints.add(index, LineToLinearHeading(lastPose))
+                                        renderer.waypoints.add(index, LineToLinearHeading(lastPose))
                                     }
                                     item("LineToSplineHeading").action {
                                         update()
-                                        waypoints.add(index, LineToSplineHeading(lastPose))
+                                        renderer.waypoints.add(index, LineToSplineHeading(lastPose))
                                     }
                                 }
                             }
                             separator()
                             if (it !is Start) {
                                 item("_Delete").action {
-                                    waypoints.remove(it)
-//                                    if (waypoints.size > 1) {
-//                                        renderer.trajectory = waypoints.toTrajectory().first
-//                                    }
+                                    renderer.waypoints.remove(it)
+                                    if (renderer.waypoints.size > 1) {
+                                        renderer.trajectory = WaypointTrajectory(
+                                            renderer.waypoints,
+                                            renderer.constraints.value
+                                        )
+                                    }
                                 }
                             } else {
                                 item("_Delete All").action {
-                                    waypoints.removeIf { it !is Start }
-//                                    renderer.trajectory = waypoints.toTrajectory().first
+                                    renderer.waypoints.removeIf { it !is Start }
+                                    renderer.trajectory = WaypointTrajectory(
+                                        renderer.waypoints,
+                                        renderer.constraints.value
+                                    )
                                 }
                             }
                         }
@@ -228,15 +233,15 @@ internal class TrajectoryEditor(val renderer: TrajectoryRenderer) : View() {
                         createSymbols = false
                         legendSide = Side.TOP
                         fun update() {
-                            if (waypoints.isNotEmpty()) {
-                                val trajectory = waypoints.toTrajectory(constraints.value)
+                            if (renderer.waypoints.isNotEmpty()) {
+                                val trajectory = renderer.trajectory.trajectory
                                 if (trajectory != null) {
                                     data.clear()
                                     val progression =
                                         DoubleProgression.fromClosedInterval(
                                             0.0,
                                             trajectory.duration(),
-                                            1000
+                                            (trajectory.duration() / 0.1).toInt()
                                         )
                                     multiseries("ẋ", "ẏ", "ω") {
                                         progression.forEach {
@@ -247,45 +252,47 @@ internal class TrajectoryEditor(val renderer: TrajectoryRenderer) : View() {
                                 }
                             }
                         }
-                        waypoints.onChange { update() }
-                        constraints.onChange { update() }
+                        renderer.trajectoryRenderer.trajectoryProperty.onChange {
+                            if (!renderer.trajectoryRenderer.beingDragged)
+                                update()
+                        }
                         line {
                             stroke = renderer.theme.value.text
                             renderer.theme.onChange {
                                 stroke = it?.text
                             }
-                            renderer.timeProperty.onChange {
-                                val xPos = this.parent.sceneToLocal(
-                                    xAxis.localToScene(
-                                        xAxis.getDisplayPosition(it),
-                                        0.0
-                                    )
-                                ).x
-                                val top = this.parent.sceneToLocal(
-                                    yAxis.localToScene(
-                                        0.0,
-                                        yAxis.boundsInLocal.maxY
-                                    )
-                                ).y
-                                val bottom = this.parent.sceneToLocal(
-                                    yAxis.localToScene(
-                                        0.0,
-                                        yAxis.boundsInLocal.minY
-                                    )
-                                ).y
-                                startX = xPos
-                                endX = xPos
-                                startY = top
-                                endY = bottom
-                            }
-                            waypoints.onChange {
+//                            renderer.timeProperty.onChange {
+//                                val xPos = this.parent.sceneToLocal(
+//                                    xAxis.localToScene(
+//                                        xAxis.getDisplayPosition(it),
+//                                        0.0
+//                                    )
+//                                ).x
+//                                val top = this.parent.sceneToLocal(
+//                                    yAxis.localToScene(
+//                                        0.0,
+//                                        yAxis.boundsInLocal.maxY
+//                                    )
+//                                ).y
+//                                val bottom = this.parent.sceneToLocal(
+//                                    yAxis.localToScene(
+//                                        0.0,
+//                                        yAxis.boundsInLocal.minY
+//                                    )
+//                                ).y
+//                                startX = xPos
+//                                endX = xPos
+//                                startY = top
+//                                endY = bottom
+//                            }
+                            renderer.waypoints.onChange {
                                 isVisible = it.list.size > 1
                             }
                         }
                     }
                     form {
                         fieldset("Constraints", labelPosition = Orientation.VERTICAL) {
-                            val type = SimpleObjectProperty(constraints.value.type)
+                            val type = SimpleObjectProperty(renderer.constraints.value.type)
 
                             combobox<TrajectoryConstraints.DriveType>(
                                 type,
@@ -301,14 +308,29 @@ internal class TrajectoryEditor(val renderer: TrajectoryRenderer) : View() {
                             val maxAccel =
                                 SimpleDoubleProperty(30.0)
                             val maxAngVel =
-                                SimpleObjectProperty(Degree(constraints.value.maxAngVel, false))
+                                SimpleObjectProperty(
+                                    Degree(
+                                        renderer.constraints.value.maxAngVel,
+                                        false
+                                    )
+                                )
                             val maxAngAccel =
-                                SimpleObjectProperty(Degree(constraints.value.maxAngAccel, false))
+                                SimpleObjectProperty(
+                                    Degree(
+                                        renderer.constraints.value.maxAngAccel,
+                                        false
+                                    )
+                                )
                             val maxAngJerk =
-                                SimpleObjectProperty(Degree(constraints.value.maxAngJerk, false))
+                                SimpleObjectProperty(
+                                    Degree(
+                                        renderer.constraints.value.maxAngJerk,
+                                        false
+                                    )
+                                )
 
-                            constraints.onChange {
-                                val current = constraints.value
+                            renderer.constraints.onChange {
+                                val current = renderer.constraints.value
                                 type.set(current.type)
                                 when (current) {
                                     is GenericConstraints -> {
@@ -338,7 +360,7 @@ internal class TrajectoryEditor(val renderer: TrajectoryRenderer) : View() {
                             }
 
                             fun update() {
-                                constraints.set(
+                                renderer.constraints.set(
                                     when (type.value) {
                                         TrajectoryConstraints.DriveType.GENERIC, null -> GenericConstraints(
                                             maxVel.value,
@@ -516,7 +538,10 @@ internal class TrajectoryEditor(val renderer: TrajectoryRenderer) : View() {
         chooser.initialFileName = "untitled_trajectory.yaml"
         chooser.title = "Save Trajectory"
         val file = chooser.showSaveDialog(null)
-        TrajectoryConfigManager.saveConfig(waypoints.toConfig(constraints.value), file)
+        TrajectoryConfigManager.saveConfig(
+            renderer.waypoints.toConfig(renderer.constraints.value),
+            file
+        )
         alert(
             Alert.AlertType.INFORMATION,
             "Trajectory successfully saved as ${file.name}!",
@@ -526,13 +551,14 @@ internal class TrajectoryEditor(val renderer: TrajectoryRenderer) : View() {
     }
 
     fun saveToJava() {
+        val start = renderer.trajectory.waypoints[0] as Start
         var string = """new TrajectoryBuilder(
                         |   ${start.pose.toJava()},
                         |   ${start.tangent.radians},
-                        |   ${constraints.value.toJava()}
+                        |   ${renderer.constraints.value.toJava()}
                         |)
                     """.trimMargin()
-        waypoints.filter { it !is Start }.forEach { waypoint ->
+        renderer.waypoints.filter { it !is Start }.forEach { waypoint ->
             string += "\n.${waypoint.toJava()}"
         }
         string += "\n.build();"
@@ -549,13 +575,14 @@ internal class TrajectoryEditor(val renderer: TrajectoryRenderer) : View() {
     }
 
     fun saveToKotlin() {
+        val start = renderer.trajectory.waypoints[0] as Start
         var string = """TrajectoryBuilder(
                         |   ${start.pose.toKotlin()},
                         |   ${start.tangent.radians},
-                        |   ${constraints.value.toKotlin()}
+                        |   ${renderer.constraints.value.toKotlin()}
                         |)
                     """.trimMargin()
-        waypoints.filter { it !is Start }.forEach { waypoint ->
+        renderer.waypoints.filter { it !is Start }.forEach { waypoint ->
             string += "\n.${waypoint.toKotlin()}"
         }
         string += "\n.build()"
@@ -587,9 +614,9 @@ internal class TrajectoryEditor(val renderer: TrajectoryRenderer) : View() {
             null
         }
         if (config != null) {
-            waypoints.clear()
-            waypoints += config.toWaypoints()
-            renderer.trajectory = config.toTrajectory()
+            renderer.waypoints.setAll(config.toWaypoints())
+            renderer.constraints.set(config.constraints)
+            renderer.trajectory = WaypointTrajectory(renderer.waypoints, config.constraints)
         } else alert(
             Alert.AlertType.ERROR,
             "Unable to load ${file.name}.", null,

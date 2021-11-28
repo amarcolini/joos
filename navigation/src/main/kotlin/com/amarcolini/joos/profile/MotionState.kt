@@ -1,5 +1,7 @@
 package com.amarcolini.joos.profile
 
+import org.apache.commons.math3.util.FastMath
+
 /**
  * Kinematic state of a motion profile at any given time.
  */
@@ -15,8 +17,8 @@ class MotionState @JvmOverloads constructor(
      */
     operator fun get(t: Double) =
         MotionState(
-            x + v * t + a / 2 * t * t + j / 6 * t * t * t,
-            v + a * t + j / 2 * t * t,
+            x + v * t + a / 2 * FastMath.pow(t, 2) + j / 6 * FastMath.pow(t, 3),
+            v + a * t + j / 2 * FastMath.pow(t, 2),
             a + j * t,
             j
         )

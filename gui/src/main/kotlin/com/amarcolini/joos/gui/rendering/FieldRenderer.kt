@@ -5,8 +5,6 @@ import javafx.scene.image.Image
 import javafx.scene.transform.Affine
 import kotlin.math.min
 
-private val FIELD_IMAGE = Image("generic.png")
-
 internal fun getFieldTransform(width: Double, height: Double): Affine {
     val fieldSize = min(width, height)
 
@@ -18,9 +16,9 @@ internal fun getFieldTransform(width: Double, height: Double): Affine {
     return affine
 }
 
-internal class FieldRenderer : Canvas() {
+internal class FieldRenderer(var background: Image) : Canvas() {
     init {
-        graphicsContext2D.globalAlpha = 0.8
+        graphicsContext2D.globalAlpha = 1.0
         draw(width, height)
     }
 
@@ -30,12 +28,12 @@ internal class FieldRenderer : Canvas() {
         draw(width, height)
     }
 
-    private fun draw(width: Double, height: Double) {
+    fun draw(width: Double, height: Double) {
         graphicsContext2D.clearRect(0.0, 0.0, width, height)
         val fieldSize = min(width, height)
         val offsetX = (width - fieldSize) / 2.0
         val offsetY = (height - fieldSize) / 2.0
-        graphicsContext2D.drawImage(FIELD_IMAGE, offsetX, offsetY, fieldSize, fieldSize)
+        graphicsContext2D.drawImage(background, offsetX, offsetY, fieldSize, fieldSize)
     }
 
     override fun minHeight(width: Double) = 50.0

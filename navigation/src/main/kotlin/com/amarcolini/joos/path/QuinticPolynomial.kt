@@ -30,28 +30,49 @@ class QuinticPolynomial(
         FastMath.pow(1 - t, 5) * p0 + 5 * FastMath.pow(1 - t, 4) * t * p1 + 10 * FastMath.pow(
             1 - t,
             3
-        ) * t * t * p2 + 10 * FastMath.pow(
+        ) * FastMath.pow(t, 2) * p2 + 10 * FastMath.pow(
             1 - t,
             2
-        ) * t * t * t * p3 + 5 * (1 - t) * t * t * t * t * p4 + t * t * t * t * t * p5
+        ) * FastMath.pow(t, 3) * p3 + 5 * (1 - t) * FastMath.pow(t, 4) * p4 + FastMath.pow(
+            t,
+            5
+        ) * p5
 
     /**
      * Returns the derivative of the polynomial at `t`.
      */
     fun deriv(t: Double): Double =
-        5 * ((p5 - 5 * p4 + 10 * p3 - 10 * p2 + 5 * p1 - p0) * t * t * t * t + (4 * p4 - 16 * p3 + 24 * p2 - 16 * p1 + 4 * p0) * t * t * t + (6 * p3 - 18 * p2 + 18 * p1 - 6 * p0) * t * t + (4 * p2 - 8 * p1 + 4 * p0) * t + p1 - p0)
+        5 * ((p5 - 5 * p4 + 10 * p3 - 10 * p2 + 5 * p1 - p0) * FastMath.pow(
+            t,
+            4
+        ) + (4 * p4 - 16 * p3 + 24 * p2 - 16 * p1 + 4 * p0) * FastMath.pow(
+            t,
+            3
+        ) + (6 * p3 - 18 * p2 + 18 * p1 - 6 * p0) * FastMath.pow(
+            t,
+            2
+        ) + (4 * p2 - 8 * p1 + 4 * p0) * t + p1 - p0)
 
     /**
      * Returns the second derivative of the polynomial at `t`.
      */
     fun secondDeriv(t: Double): Double =
-        20 * ((p5 - 5 * p4 + 10 * p3 - 10 * p2 + 5 * p1 - p0) * t * t * t + (3 * p4 - 12 * p3 + 18 * p2 - 12 * p1 + 3 * p0) * t * t + (3 * p3 - 9 * p2 + 9 * p1 - 3 * p0) * t + p2 - 2 * p1 + p0)
+        20 * ((p5 - 5 * p4 + 10 * p3 - 10 * p2 + 5 * p1 - p0) * FastMath.pow(
+            t,
+            3
+        ) + (3 * p4 - 12 * p3 + 18 * p2 - 12 * p1 + 3 * p0) * FastMath.pow(
+            t,
+            2
+        ) + (3 * p3 - 9 * p2 + 9 * p1 - 3 * p0) * t + p2 - 2 * p1 + p0)
 
     /**
      * Returns the third derivative of the polynomial at `t`.
      */
     fun thirdDeriv(t: Double): Double =
-        60 * ((p5 - 5 * p4 + 10 * p3 - 10 * p2 + 5 * p1 - p0) * t * t + (2 * p4 - 8 * p3 + 12 * p2 - 8 * p1 + 2 * p0) * t + p3 - 3 * p2 + 3 * p1 - p0)
+        60 * ((p5 - 5 * p4 + 10 * p3 - 10 * p2 + 5 * p1 - p0) * FastMath.pow(
+            t,
+            2
+        ) + (2 * p4 - 8 * p3 + 12 * p2 - 8 * p1 + 2 * p0) * t + p3 - 3 * p2 + 3 * p1 - p0)
 
 
     override fun toString(): String =

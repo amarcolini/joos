@@ -1,8 +1,6 @@
 package com.amarcolini.joos.path
 
 import com.amarcolini.joos.geometry.Vector2d
-import org.apache.commons.math3.geometry.euclidean.twod.Vector2D
-import org.apache.commons.math3.geometry.euclidean.twod.hull.MonotoneChain
 
 /**
  * Quintic Bezier Spline
@@ -24,9 +22,9 @@ class QuinticSpline(
     private val y: QuinticPolynomial =
         QuinticPolynomial(start.y, start.dy, start.d2y, end.y, end.dy, end.d2y)
 
-    private val convexHull =
-        MonotoneChain(false).findHullVertices(x.controlPoints.mapIndexed { i, d -> Vector2D(d, y.controlPoints[i]) })
-            .map { Vector2d(it.x, it.y) }
+//    private val convexHull =
+//        MonotoneChain(false).findHullVertices(x.controlPoints.mapIndexed { i, d -> Vector2D(d, y.controlPoints[i]) })
+//            .map { Vector2d(it.x, it.y) }
 
     /**
      * Class for representing the end points of interpolated quintic splines.

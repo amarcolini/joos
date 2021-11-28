@@ -2,10 +2,13 @@ package com.amarcolini.joos.gui.trajectory
 
 import com.amarcolini.joos.geometry.Pose2d
 import com.amarcolini.joos.geometry.Vector2d
+import com.amarcolini.joos.trajectory.config.GenericConstraints
+import com.amarcolini.joos.trajectory.config.TrajectoryConstraints
 
 class WaypointBuilder(
     startPose: Pose2d = Pose2d(),
     startTangent: Double = startPose.heading,
+    private val constraints: TrajectoryConstraints = GenericConstraints()
 ) {
     private val waypoints: ArrayList<Waypoint> =
         arrayListOf(Start(startPose, Degree(startTangent, false)))
@@ -75,5 +78,5 @@ class WaypointBuilder(
         return this
     }
 
-    fun build() = Waypoints(waypoints)
+    fun build() = WaypointTrajectory(waypoints, constraints)
 }

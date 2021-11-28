@@ -2,7 +2,6 @@ package com.amarcolini.joos.path
 
 import com.amarcolini.joos.geometry.Vector2d
 import org.apache.commons.math3.util.FastMath
-import kotlin.math.pow
 
 /**
  * Parametric curve with two components (x and y). These curves are reparameterized from an internal parameter (t) to
@@ -33,7 +32,7 @@ abstract class ParametricCurve {
         val secondDeriv = internalSecondDeriv(t)
 
         return ((secondDeriv * (deriv dot deriv)) - (deriv * (secondDeriv dot deriv))) /
-                deriv.norm().pow(4)
+                FastMath.pow(deriv.norm(), 4)
     }
 
     /**
@@ -47,7 +46,7 @@ abstract class ParametricCurve {
 
         val pt1 = (thirdDeriv * (deriv dot deriv)) - (deriv * (deriv dot thirdDeriv))
         val pt2 = (secondDeriv * (secondDeriv dot deriv)) - (deriv * (secondDeriv dot secondDeriv))
-        return (pt1 + pt2) / deriv.norm().pow(9)
+        return (pt1 + pt2) / FastMath.pow(deriv.norm(), 9)
     }
 
     /**
@@ -151,10 +150,6 @@ abstract class ParametricCurve {
         maxDeltaK: Double = 0.01
     ) {
         fun parameterize(tLo: Double, tHi: Double, depth: Int) {
-            if (depth >= maxDepth) {
-                return
-            }
-
             val tMid = (tLo + tHi) * 0.5
             val vLo = internalGet(tLo)
             val vHi = internalGet(tHi)
@@ -162,7 +157,7 @@ abstract class ParametricCurve {
             val deltaK = FastMath.abs(FastMath.abs(curvature(tLo)) - FastMath.abs(curvature(tHi)))
             val segmentLength = (vLo distTo vMid) + (vMid distTo vHi)
 
-            if (deltaK > maxDeltaK || segmentLength > maxSegmentLength) {
+            if (depth < maxDepth && (deltaK > maxDeltaK || segmentLength > maxSegmentLength)) {
                 parameterize(tLo, tMid, depth + 1)
                 parameterize(tMid, tHi, depth + 1)
             } else {

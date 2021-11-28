@@ -7,7 +7,9 @@ import javafx.util.StringConverter
 val doublePattern = "-?\\d+\\.?\\d*".toRegex()
 
 internal class Vector2dStringConverter : StringConverter<Vector2d>() {
-    override fun toString(`object`: Vector2d?) = `object`.toString()
+    override fun toString(`object`: Vector2d?) =
+        String.format("(%.1f, %.1f)", `object`?.x, `object`?.y)
+
     override fun fromString(string: String?): Vector2d {
         if (string == null) return Vector2d()
         val doubles = doublePattern.findAll(string).map {
@@ -20,7 +22,10 @@ internal class Vector2dStringConverter : StringConverter<Vector2d>() {
 }
 
 internal class Pose2dStringConverter : StringConverter<Pose2d>() {
-    override fun toString(`object`: Pose2d?) = `object`.toString()
+    override fun toString(`object`: Pose2d?) =
+        String.format("(%.1f, %.1f, %.1f°)", `object`?.x, `object`?.y,
+            `object`?.heading?.let { Math.toDegrees(it) })
+
     override fun fromString(string: String?): Pose2d {
         if (string == null) return Pose2d()
         val doubles = doublePattern.findAll(string).map {
@@ -37,7 +42,7 @@ internal class Pose2dStringConverter : StringConverter<Pose2d>() {
 internal class Degree(value: Double = 0.0, inDegrees: Boolean = true) {
     val radians = if (inDegrees) Math.toRadians(value) else value
     val value = if (inDegrees) value else Math.toDegrees(value)
-    override fun toString() = String.format("%.3f°", value)
+    override fun toString() = String.format("%.1f°", value)
 }
 
 internal class DegreeStringConverter : StringConverter<Degree>() {
@@ -49,7 +54,7 @@ internal class DegreeStringConverter : StringConverter<Degree>() {
 }
 
 internal class DoubleStringConverter : StringConverter<Number>() {
-    override fun toString(`object`: Number?) = String.format("%.3f", `object`)
+    override fun toString(`object`: Number?) = String.format("%.1f", `object`)
     override fun fromString(string: String?) =
         string?.let { doublePattern.find(it)?.value?.toDouble() }
 }

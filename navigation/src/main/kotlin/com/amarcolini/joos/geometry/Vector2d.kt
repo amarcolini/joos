@@ -2,7 +2,7 @@ package com.amarcolini.joos.geometry
 
 import com.amarcolini.joos.util.Angle
 import com.amarcolini.joos.util.epsilonEquals
-import kotlin.math.*
+import org.apache.commons.math3.util.FastMath
 
 /**
  * Class for representing 2D vectors (x and y).
@@ -16,23 +16,25 @@ data class Vector2d @JvmOverloads constructor(
          * Returns a vector in Cartesian coordinates `(x, y)` from one in polar coordinates `(r, theta)`.
          */
         @JvmStatic
-        fun polar(r: Double, theta: Double) = Vector2d(r * cos(theta), r * sin(theta))
+        fun polar(r: Double, theta: Double) =
+            Vector2d(r * FastMath.cos(theta), r * FastMath.sin(theta))
     }
 
     /**
      * Returns the magnitude of this vector.
      */
-    fun norm() = sqrt(x * x + y * y)
+    fun norm() = FastMath.sqrt(FastMath.pow(x, 2) + FastMath.pow(y, 2))
 
     /**
      * Returns the angle of this vector.
      */
-    fun angle() = Angle.norm(atan2(y, x))
+    fun angle() = Angle.norm(FastMath.atan2(y, x))
 
     /**
      * Calculates the angle between two vectors.
      */
-    infix fun angleBetween(other: Vector2d) = acos((this dot other) / (norm() * other.norm()))
+    infix fun angleBetween(other: Vector2d) =
+        FastMath.acos((this dot other) / (norm() * other.norm()))
 
     /**
      * Adds two vectors.
@@ -76,14 +78,17 @@ data class Vector2d @JvmOverloads constructor(
      */
     infix fun distTo(other: Vector2d) = (this - other).norm()
 
+    /**
+     * Returns the projection of one vector onto another.
+     */
     infix fun projectOnto(other: Vector2d) = other * (this dot other) / (other dot other)
 
     /**
      * Rotates this vector by [angle].
      */
     fun rotated(angle: Double): Vector2d {
-        val newX = x * cos(angle) - y * sin(angle)
-        val newY = x * sin(angle) + y * cos(angle)
+        val newX = x * FastMath.cos(angle) - y * FastMath.sin(angle)
+        val newY = x * FastMath.sin(angle) + y * FastMath.cos(angle)
         return Vector2d(newX, newY)
     }
 

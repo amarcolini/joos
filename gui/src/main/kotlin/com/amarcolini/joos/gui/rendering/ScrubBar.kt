@@ -1,18 +1,19 @@
 package com.amarcolini.joos.gui.rendering
 
 import com.amarcolini.joos.gui.style.Theme
+import javafx.beans.property.Property
 import javafx.beans.property.SimpleDoubleProperty
-import javafx.beans.property.SimpleObjectProperty
 import javafx.geometry.VPos
 import javafx.scene.canvas.Canvas
 import javafx.scene.text.TextAlignment
-import tornadofx.*
+import tornadofx.onChange
 
 internal class ScrubBar(
-    private val theme: SimpleObjectProperty<Theme>,
+    private val theme: Property<Theme>,
     private var prefHeight: Double = 50.0
 ) : Canvas() {
     var time = 0.0
+        get() = timeProperty.get().coerceIn(0.0, duration)
         set(value) {
             timeProperty.set(value)
             field = value

@@ -2,19 +2,12 @@ package com.amarcolini.joos.gui.trajectory
 
 import com.amarcolini.joos.geometry.Pose2d
 import com.amarcolini.joos.geometry.Vector2d
-import com.amarcolini.joos.path.Path
-import com.amarcolini.joos.path.PathBuilder
-import com.amarcolini.joos.path.PathBuilderException
-import com.amarcolini.joos.trajectory.*
-import com.amarcolini.joos.trajectory.config.GenericConstraints
+import com.amarcolini.joos.trajectory.Trajectory
+import com.amarcolini.joos.trajectory.TrajectoryBuilder
 import com.amarcolini.joos.trajectory.config.TrajectoryConfig
 import com.amarcolini.joos.trajectory.config.TrajectoryConstraints
-import com.amarcolini.joos.trajectory.constraints.UnsatisfiableConstraint
-import java.lang.IllegalStateException
 import kotlin.math.PI
-import kotlin.reflect.full.createType
 import kotlin.reflect.full.declaredMemberProperties
-import kotlin.reflect.full.primaryConstructor
 
 internal fun Pose2d.toKotlin(): String = String.format("Pose2d(%.2f, %.2f, %.5f)", x, y, heading)
 internal fun Pose2d.toJava(): String = String.format("new Pose2d(%.2f, %.2f, %.5f)", x, y, heading)
@@ -169,7 +162,7 @@ internal fun Collection<Waypoint>.toTrajectory(
     constraints: TrajectoryConstraints,
     resolution: Double = 0.25,
 ): Trajectory? {
-    val first = this.first()
+    val first = this.firstOrNull()
     val start =
         if (first is Start) {
             first
@@ -222,19 +215,22 @@ internal fun Collection<Waypoint>.toTrajectory(
     return try {
         builder.build()
     } catch (e: Exception) {
-        last().error.value = e.message ?: e::class.simpleName
+        lastOrNull()?.error?.value = e.message ?: e::class.simpleName
         null
     }
 }
 
-internal fun Collection<Waypoint>.getLast(): Pair<Pose2d, Degree> {
-    val first = this.first()
+internal fun Collection<Waypoint>.mapPose(): List<Pair<Waypoint, Pair<Pose2d, Degree>>> {
+    val first = this.firstOrNull()
     val start =
         if (first is Start) {
             first
         } else Start(Pose2d(), Degree(0.0))
     var pose = start.pose
-    var tangent = start.tangent.value
+    var tangent = start.tangent.radians
+
+    val list = ArrayList<Pair<Waypoint, Pair<Pose2d, Degree>>>()
+    list += start to (pose to Degree(tangent))
 
     this.forEach {
         when (it) {
@@ -256,43 +252,54 @@ internal fun Collection<Waypoint>.getLast(): Pair<Pose2d, Degree> {
             }
             is SplineTo -> {
                 pose = Pose2d(it.pos, it.tangent.radians)
-                tangent = it.tangent.value
+                tangent = it.tangent.radians
             }
             is SplineToConstantHeading -> {
                 pose = Pose2d(it.pos, pose.heading)
-                tangent = it.tangent.value
+                tangent = it.tangent.radians
             }
             is SplineToLinearHeading -> {
                 pose = it.pose
-                tangent = it.tangent.value
+                tangent = it.tangent.radians
             }
             is SplineToSplineHeading -> {
                 pose = it.pose
-                tangent = it.tangent.value
+                tangent = it.tangent.radians
             }
             is Back -> {
-                pose += Pose2d(Vector2d.polar(-it.distance, pose.heading), pose.heading)
+                pose = Pose2d(pose.vec() + Vector2d.polar(-it.distance, pose.heading), pose.heading)
                 tangent = pose.heading
             }
             is Forward -> {
-                pose += Pose2d(Vector2d.polar(it.distance, pose.heading), pose.heading)
+                pose = Pose2d(pose.vec() + Vector2d.polar(it.distance, pose.heading), pose.heading)
                 tangent = pose.heading
             }
             is StrafeLeft -> {
-                pose += Pose2d(Vector2d.polar(it.distance, pose.heading + PI / 2), pose.heading)
+                pose = Pose2d(
+                    pose.vec() + Vector2d.polar(it.distance, pose.heading + PI / 2),
+                    pose.heading
+                )
                 tangent = pose.heading
             }
             is StrafeRight -> {
-                pose += Pose2d(Vector2d.polar(-it.distance, pose.heading + PI / 2), pose.heading)
+                pose = Pose2d(
+                    pose.vec() + Vector2d.polar(-it.distance, pose.heading + PI / 2),
+                    pose.heading
+                )
                 tangent = pose.heading
             }
             is StrafeTo -> {
                 pose = Pose2d(it.pos, pose.heading)
                 tangent = pose.heading
             }
+            is Turn -> {
+                pose = Pose2d(pose.vec(), pose.heading + it.angle.radians)
+                tangent = pose.heading
+            }
             else -> {
             }
         }
+        list += it to (pose to Degree(tangent, false))
     }
-    return pose to Degree(tangent)
+    return list
 }

@@ -1,13 +1,14 @@
 package com.amarcolini.joos.gui
 
-import com.fasterxml.jackson.databind.json.JsonMapper
-import com.fasterxml.jackson.module.kotlin.registerKotlinModule
-import com.amarcolini.joos.gui.rendering.TrajectoryRenderer
+import com.amarcolini.joos.gui.rendering.Background
+import com.amarcolini.joos.gui.rendering.Renderer
 import com.amarcolini.joos.gui.style.Dark
 import com.amarcolini.joos.gui.style.Light
 import com.amarcolini.joos.gui.trajectory.TrajectoryEditor
-import com.amarcolini.joos.gui.trajectory.Waypoints
+import com.amarcolini.joos.gui.trajectory.WaypointTrajectory
 import com.amarcolini.joos.trajectory.config.TrajectoryConstraints
+import com.fasterxml.jackson.databind.json.JsonMapper
+import com.fasterxml.jackson.module.kotlin.registerKotlinModule
 import javafx.beans.property.SimpleObjectProperty
 import javafx.scene.control.TabPane
 import javafx.scene.layout.Priority
@@ -47,20 +48,25 @@ internal class MainView : View() {
             else -> Dark()
         }
     )
-    val editor = TrajectoryEditor(TrajectoryRenderer(theme))
+    val background = when (app.parameters.named["background"]?.lowercase()) {
+        "freightfrenzy" -> Background.FreightFrenzy.image
+        "ultimategoal" -> Background.UltimateGoal.image
+        else -> Background.Generic.image
+    }
+    val editor = TrajectoryEditor(Renderer(theme, background))
 
     init {
         val mapper = JsonMapper()
         mapper.registerKotlinModule()
         try {
             val trajectory =
-                mapper.readValue(app.parameters.named["trajectory"], Waypoints::class.java)
-            editor.waypoints.setAll(trajectory.waypoints)
+                mapper.readValue(app.parameters.named["trajectory"], WaypointTrajectory::class.java)
+            editor.renderer.waypoints.setAll(trajectory.waypoints)
         } catch (e: Exception) {
 
         }
         try {
-            editor.constraints.set(
+            editor.renderer.constraints.set(
                 mapper.readValue(
                     app.parameters.named["constraints"],
                     TrajectoryConstraints::class.java
@@ -85,6 +91,26 @@ internal class MainView : View() {
                     scene.stylesheets.clear()
                     importStylesheet(light.base64URL.toExternalForm())
                     theme.set(light)
+                }
+            }
+            menu("_Background") {
+                item("_Generic").action {
+                    val field = editor.renderer.fieldRenderer
+                    field.background =
+                        Background.Generic.image
+                    field.draw(field.width, field.height)
+                }
+                item("_Freight Frenzy").action {
+                    val field = editor.renderer.fieldRenderer
+                    field.background =
+                        Background.FreightFrenzy.image
+                    field.draw(field.width, field.height)
+                }
+                item("_Ultimate Goal").action {
+                    val field = editor.renderer.fieldRenderer
+                    field.background =
+                        Background.UltimateGoal.image
+                    field.draw(field.width, field.height)
                 }
             }
         }

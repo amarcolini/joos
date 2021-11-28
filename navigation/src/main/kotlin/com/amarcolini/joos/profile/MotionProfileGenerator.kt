@@ -1,9 +1,13 @@
 package com.amarcolini.joos.profile
 
-import com.amarcolini.joos.util.*
+import com.amarcolini.joos.util.DoubleProgression
 import com.amarcolini.joos.util.MathUtil.solveQuadratic
 import com.amarcolini.joos.util.epsilonEquals
-import kotlin.math.*
+import com.amarcolini.joos.util.minus
+import org.apache.commons.math3.util.FastMath
+import kotlin.math.abs
+import kotlin.math.ceil
+import kotlin.math.sqrt
 
 /**
  * Motion profile generator with arbitrary start and end motion states and either dynamic constraints or jerk limiting.
@@ -523,7 +527,7 @@ object MotionProfileGenerator {
                     // compute the final velocity assuming max accel
                     val finalVel =
                         accelerationConstraint[displacement - dx, displacement, lastState.v, abs(dx)]
-                    val accel = (finalVel * finalVel - lastState.v * lastState.v) /
+                    val accel = (FastMath.pow(finalVel, 2) - FastMath.pow(lastState.v, 2)) /
                             (2 * dx)
                     if (finalVel <= maxVel) {
                         // we're still under max vel so we're good
@@ -532,7 +536,8 @@ object MotionProfileGenerator {
                         afterDisplacement(state, dx)
                     } else {
                         // we went over max vel so now we split the segment
-                        val accelDx = (maxVel * maxVel - lastState.v * lastState.v) / (2 * accel)
+                        val accelDx =
+                            (FastMath.pow(maxVel, 2) - FastMath.pow(lastState.v, 2)) / (2 * accel)
                         val accelState = MotionState(displacement, lastState.v, accel)
                         val coastState = MotionState(displacement + accelDx, maxVel, 0.0)
                         forwardStates.add(Pair(accelState, accelDx))
@@ -546,7 +551,7 @@ object MotionProfileGenerator {
     }
 
     private fun afterDisplacement(state: MotionState, dx: Double): MotionState {
-        val discriminant = state.v * state.v + 2 * state.a * dx
+        val discriminant = FastMath.pow(state.v, 2) + 2 * state.a * dx
         return if (discriminant epsilonEquals 0.0) {
             MotionState(state.x + dx, 0.0, state.a)
         } else {
@@ -555,6 +560,9 @@ object MotionProfileGenerator {
     }
 
     private fun intersection(state1: MotionState, state2: MotionState): Double {
-        return (state1.v * state1.v - state2.v * state2.v) / (2 * state2.a - 2 * state1.a)
+        return (FastMath.pow(state1.v, 2) - FastMath.pow(
+            state2.v,
+            2
+        )) / (2 * state2.a - 2 * state1.a)
     }
 }

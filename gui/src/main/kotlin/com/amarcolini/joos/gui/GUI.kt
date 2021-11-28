@@ -1,12 +1,12 @@
 package com.amarcolini.joos.gui
 
+import com.amarcolini.joos.gui.rendering.Background
+import com.amarcolini.joos.gui.style.Themes
+import com.amarcolini.joos.gui.trajectory.WaypointTrajectory
+import com.amarcolini.joos.trajectory.config.TrajectoryConstraints
 import com.fasterxml.jackson.databind.SerializationFeature
 import com.fasterxml.jackson.databind.json.JsonMapper
 import com.fasterxml.jackson.module.kotlin.registerKotlinModule
-import com.amarcolini.joos.gui.style.Theme
-import com.amarcolini.joos.gui.style.Themes
-import com.amarcolini.joos.gui.trajectory.Waypoints
-import com.amarcolini.joos.trajectory.config.TrajectoryConstraints
 import tornadofx.launch
 
 /**
@@ -25,7 +25,7 @@ class GUI {
     /**
      * Sets the trajectory to be opened on startup.
      */
-    fun followTrajectory(trajectory: Waypoints): GUI {
+    fun followTrajectory(trajectory: WaypointTrajectory): GUI {
         val string = mapper.writeValueAsString(trajectory)
         args["trajectory"] = string
         return this
@@ -43,6 +43,12 @@ class GUI {
     fun setTheme(theme: Themes): GUI {
         val string = theme.name.lowercase()
         args["theme"] = string
+        return this
+    }
+
+    fun setBackground(background: Background): GUI {
+        val string = background.name.lowercase()
+        args["background"] = string
         return this
     }
 
