@@ -3,7 +3,6 @@ package com.amarcolini.joos.gui.rendering
 import com.amarcolini.joos.geometry.Pose2d
 import com.amarcolini.joos.geometry.Vector2d
 import com.amarcolini.joos.gui.style.Theme
-import com.amarcolini.joos.gui.trajectory.WaypointBuilder
 import com.amarcolini.joos.gui.trajectory.WaypointTrajectory
 import javafx.animation.AnimationTimer
 import javafx.beans.property.Property
@@ -72,11 +71,6 @@ internal class Renderer(val theme: Property<Theme>, background: Image) : StackPa
         robot.timeProperty.onChange {
             scrubBar.node.time = it
         }
-
-        trajectoryRenderer.trajectory = WaypointBuilder(Pose2d(10.0, 10.0))
-            .splineTo(Vector2d(30.0, -30.0), 0.0)
-            .forward(10.0)
-            .build()
 
         var dragging = false
         setOnDragDetected {

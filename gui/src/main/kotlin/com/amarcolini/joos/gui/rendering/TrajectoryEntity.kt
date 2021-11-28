@@ -21,7 +21,7 @@ import kotlin.math.*
 
 private const val SPATIAL_RESOLUTION = 1.0
 
-class TrajectoryEntity : Entity() {
+internal class TrajectoryEntity : Entity() {
     private val path: Path = Path()
     override val node: Group = Group(path)
     override var pose: Pose2d = Pose2d()

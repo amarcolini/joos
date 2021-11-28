@@ -11,7 +11,7 @@ import tornadofx.lineTo
 import tornadofx.moveTo
 import kotlin.math.min
 
-class Robot : Entity() {
+internal class Robot : Entity() {
     override var pose: Pose2d = Pose2d()
     var dimensions: Vector2d = Vector2d(18.0, 18.0)
         set(value) {

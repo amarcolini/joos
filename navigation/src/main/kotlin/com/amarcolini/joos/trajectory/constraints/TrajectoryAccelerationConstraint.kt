@@ -1,8 +1,7 @@
 package com.amarcolini.joos.trajectory.constraints
 
-import com.fasterxml.jackson.annotation.JsonTypeInfo
-import com.amarcolini.joos.geometry.Pose2d
 import com.amarcolini.joos.path.Path
+import com.fasterxml.jackson.annotation.JsonTypeInfo
 
 /**
  * Motion profile acceleration constraint.
@@ -11,7 +10,7 @@ import com.amarcolini.joos.path.Path
 fun interface TrajectoryAccelerationConstraint {
 
     /**
-     * Returns the maximum profile acceleration.
+     * Returns the maximum profile velocity allowed by this acceleration constraint.
      *
      * @param lastS previous path displacement
      * @param s path displacement

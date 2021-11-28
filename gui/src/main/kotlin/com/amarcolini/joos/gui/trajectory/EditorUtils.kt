@@ -170,6 +170,7 @@ internal fun Collection<Waypoint>.toTrajectory(
     val builder = TrajectoryBuilder(
         start.pose, start.tangent.radians, constraints, resolution
     )
+    builder.wait(0.0)
 
     this.forEach {
         try {

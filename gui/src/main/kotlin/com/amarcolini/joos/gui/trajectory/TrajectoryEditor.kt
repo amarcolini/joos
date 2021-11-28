@@ -261,30 +261,30 @@ internal class TrajectoryEditor(val renderer: Renderer) : View() {
                             renderer.theme.onChange {
                                 stroke = it?.text
                             }
-//                            renderer.timeProperty.onChange {
-//                                val xPos = this.parent.sceneToLocal(
-//                                    xAxis.localToScene(
-//                                        xAxis.getDisplayPosition(it),
-//                                        0.0
-//                                    )
-//                                ).x
-//                                val top = this.parent.sceneToLocal(
-//                                    yAxis.localToScene(
-//                                        0.0,
-//                                        yAxis.boundsInLocal.maxY
-//                                    )
-//                                ).y
-//                                val bottom = this.parent.sceneToLocal(
-//                                    yAxis.localToScene(
-//                                        0.0,
-//                                        yAxis.boundsInLocal.minY
-//                                    )
-//                                ).y
-//                                startX = xPos
-//                                endX = xPos
-//                                startY = top
-//                                endY = bottom
-//                            }
+                            renderer.robot.timeProperty.onChange {
+                                val xPos = this.parent.sceneToLocal(
+                                    xAxis.localToScene(
+                                        xAxis.getDisplayPosition(it),
+                                        0.0
+                                    )
+                                ).x
+                                val top = this.parent.sceneToLocal(
+                                    yAxis.localToScene(
+                                        0.0,
+                                        yAxis.boundsInLocal.maxY
+                                    )
+                                ).y
+                                val bottom = this.parent.sceneToLocal(
+                                    yAxis.localToScene(
+                                        0.0,
+                                        yAxis.boundsInLocal.minY
+                                    )
+                                ).y
+                                startX = xPos
+                                endX = xPos
+                                startY = top
+                                endY = bottom
+                            }
                             renderer.waypoints.onChange {
                                 isVisible = it.list.size > 1
                             }

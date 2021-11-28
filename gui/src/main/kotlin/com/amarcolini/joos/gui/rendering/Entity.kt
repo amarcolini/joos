@@ -5,7 +5,7 @@ import com.amarcolini.joos.gui.style.Theme
 import javafx.geometry.Pos
 import javafx.scene.Node
 
-abstract class Entity {
+internal abstract class Entity {
     abstract val node: Node
     abstract val pose: Pose2d
     open val alignment: Pos = Pos.CENTER

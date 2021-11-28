@@ -12,7 +12,7 @@ import tornadofx.box
 import tornadofx.em
 import tornadofx.style
 
-class PosIndicator : Entity() {
+internal class PosIndicator : Entity() {
     private val converter = Vector2dStringConverter()
     var pos = Vector2d()
         set(value) {
@@ -34,7 +34,8 @@ class PosIndicator : Entity() {
             fontFamily = "Jetbrains Mono"
             backgroundColor += theme.background
             borderColor += box(theme.editor)
-            borderRadius += box(0.2.em)
+            borderRadius += box(0.3.em)
+            backgroundRadius += box(0.3.em)
             borderWidth += box(0.13.em)
             fontWeight = FontWeight.EXTRA_BOLD
             textFill = theme.text
