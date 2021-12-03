@@ -5,7 +5,10 @@ import com.amarcolini.joos.geometry.Vector2d
 import com.amarcolini.joos.localization.Localizer
 import com.qualcomm.hardware.bosch.BNO055IMU
 import com.qualcomm.robotcore.hardware.HardwareMap
-import org.firstinspires.ftc.robotcore.external.navigation.*
+import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit
+import org.firstinspires.ftc.robotcore.external.navigation.AxesOrder
+import org.firstinspires.ftc.robotcore.external.navigation.AxesReference
+import org.firstinspires.ftc.robotcore.external.navigation.DistanceUnit
 import kotlin.math.abs
 
 /**
@@ -15,6 +18,14 @@ import kotlin.math.abs
  */
 //TODO: Test Imu on actual hardware to test if it works.
 class Imu constructor(val imu: BNO055IMU) {
+
+    /**
+     * @param hMap the hardware map from the OpMode
+     * @param id the device id from the RC config
+     */
+    constructor(hMap: HardwareMap, id: String) : this(
+        hMap.get(BNO055IMU::class.java, id)
+    )
 
     enum class Axis {
         X, Y, Z
@@ -56,14 +67,6 @@ class Imu constructor(val imu: BNO055IMU) {
     }
 
     /**
-     * @param hMap the hardware map from the OpMode
-     * @param id the device id from the RC config
-     */
-    constructor(hMap: HardwareMap, id: String) : this(
-        hMap.get(BNO055IMU::class.java, id)
-    )
-
-    /**
      * Returns the heading of the IMU using the gyroscope.
      */
     val heading
@@ -85,9 +88,7 @@ class Imu constructor(val imu: BNO055IMU) {
      */
     fun autoDetectUpAxis(): Axis? {
         val gravity = imu.gravity
-        val result = listOf(gravity.xAccel, gravity.yAccel, gravity.zAccel).zip(Axis.values())
+        return listOf(gravity.xAccel, gravity.yAccel, gravity.zAccel).zip(Axis.values())
             .maxByOrNull { abs(it.first) }?.second
-//        if (result != null) upAxis = result
-        return result
     }
 }

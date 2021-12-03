@@ -8,9 +8,9 @@ import org.apache.commons.math3.util.FastMath
  * Class for representing 2D robot poses (x, y, and heading) and their derivatives.
  */
 data class Pose2d @JvmOverloads constructor(
-    val x: Double = 0.0,
-    val y: Double = 0.0,
-    val heading: Double = 0.0
+    @JvmField val x: Double = 0.0,
+    @JvmField val y: Double = 0.0,
+    @JvmField val heading: Double = 0.0
 ) {
     constructor(pos: Vector2d, heading: Double = 0.0) : this(pos.x, pos.y, heading)
 

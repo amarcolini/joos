@@ -1,6 +1,8 @@
 package com.amarcolini.joos.hardware.drive
 
-import com.amarcolini.joos.command.*
+import com.amarcolini.joos.command.Command
+import com.amarcolini.joos.command.Component
+import com.amarcolini.joos.command.FunctionalCommand
 import com.amarcolini.joos.drive.Drive
 import com.amarcolini.joos.drive.DriveSignal
 import com.amarcolini.joos.followers.TrajectoryFollower
@@ -23,17 +25,19 @@ abstract class DriveComponent : Drive(), Component {
         updatePoseEstimate()
     }
 
+    @JvmOverloads
     fun trajectoryBuilder(
         startPose: Pose2d = poseEstimate,
-        startHeading: Double = startPose.heading
+        startTangent: Double = startPose.heading
     ) = TrajectoryBuilder(
         startPose,
-        startHeading,
+        startTangent,
         constraints.velConstraint,
         constraints.accelConstraint,
         constraints.maxAngVel, constraints.maxAngAccel, constraints.maxAngJerk
     )
 
+    @JvmOverloads
     fun trajectoryBuilder(
         startPose: Pose2d = poseEstimate,
         reversed: Boolean

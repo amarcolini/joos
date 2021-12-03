@@ -8,8 +8,8 @@ import org.apache.commons.math3.util.FastMath
  * Class for representing 2D vectors (x and y).
  */
 data class Vector2d @JvmOverloads constructor(
-    val x: Double = 0.0,
-    val y: Double = 0.0
+    @JvmField val x: Double = 0.0,
+    @JvmField val y: Double = 0.0
 ) {
     companion object {
         /**

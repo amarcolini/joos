@@ -22,14 +22,14 @@ class TankDrive @JvmOverloads constructor(
     private val right: Motor,
     override val imu: Imu? = null,
     override val constraints: TankConstraints = TankConstraints(min(left.maxRPM, right.maxRPM)),
-    translationalPID: PIDCoefficients = PIDCoefficients(4.0, 0.0, 0.5),
+    axialPID: PIDCoefficients = PIDCoefficients(4.0, 0.0, 0.5),
     headingPID: PIDCoefficients = PIDCoefficients(4.0, 0.0, 0.5)
 ) : DriveComponent() {
 
     private val motors = listOf(left, right)
 
     override val trajectoryFollower: TrajectoryFollower = TankPIDVAFollower(
-        translationalPID, headingPID, Pose2d(0.5, 0.5, Math.toRadians(5.0)), 0.5
+        axialPID, headingPID, Pose2d(0.5, 0.5, Math.toRadians(5.0)), 0.5
     )
     override var localizer: Localizer = TankLocalizer(
         { listOf(left.distance, right.distance) },
