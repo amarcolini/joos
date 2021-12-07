@@ -17,7 +17,7 @@ abstract class PathFollower @JvmOverloads constructor(
     protected val clock: NanoClock = NanoClock.system()
 ) {
     private var startTimestamp: Double = 0.0
-    private var admissible = false
+    private var admissible = true
 
     /**
      * Path being followed if [isFollowing] is true.
