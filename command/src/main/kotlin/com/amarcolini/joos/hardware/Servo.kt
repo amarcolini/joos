@@ -4,6 +4,8 @@ import com.amarcolini.joos.command.Component
 import com.amarcolini.joos.util.Angle
 import com.qualcomm.robotcore.hardware.HardwareMap
 import com.qualcomm.robotcore.hardware.Servo
+import kotlin.math.max
+import kotlin.math.min
 
 /**
  * A wrapper for the [Servo] object in the FTC SDK.
@@ -15,8 +17,8 @@ import com.qualcomm.robotcore.hardware.Servo
  */
 class Servo @JvmOverloads constructor(
     private val servo: Servo,
-    val startAngle: Double = 0.0,
-    val endAngle: Double = 180.0,
+    startAngle: Double = 0.0,
+    endAngle: Double = 180.0,
     val gearRatio: Double = 1.0
 ) : Component {
     /**
@@ -42,6 +44,9 @@ class Servo @JvmOverloads constructor(
         FORWARD(1),
         REVERSE(-1)
     }
+
+    val startAngle = min(startAngle, endAngle)
+    val endAngle = max(startAngle, endAngle)
 
     /**
      * The logical direction in which this servo operates.

@@ -6,7 +6,7 @@ package com.amarcolini.joos.command
 class ParallelCommand @JvmOverloads constructor(
     override val isInterruptable: Boolean = true,
     vararg commands: Command
-) : CommandGroup(*commands) {
+) : CommandGroup(commands = commands) {
     val commands = LinkedHashMap<Command, Boolean>()
 
     init {

@@ -1,12 +1,11 @@
 package com.amarcolini.joos.gui.style
 
-import com.fasterxml.jackson.annotation.*
+import com.fasterxml.jackson.annotation.JsonIncludeProperties
 import javafx.scene.effect.DropShadow
 import javafx.scene.layout.BorderStrokeStyle
 import javafx.scene.paint.Color
 import javafx.scene.text.FontWeight
 import tornadofx.*
-import kotlin.reflect.jvm.internal.impl.metadata.ProtoBuf
 
 /**
  * Class defining the style of the application.
@@ -76,8 +75,10 @@ sealed class Theme : Stylesheet() {
             baseColor = base
             text {
                 fill = text
+                fontFamily = "serif"
                 fontWeight = FontWeight.EXTRA_LIGHT
             }
+            fontFamily = "serif"
             faintFocusColor = Color.TRANSPARENT
             focusColor = Color.TRANSPARENT
             backgroundColor = multi(background)
@@ -222,7 +223,7 @@ sealed class Theme : Stylesheet() {
             backgroundColor += background
             padding = box(0.percent)
             effect = DropShadow(0.0, Color.TRANSPARENT)
-            fontFamily = "Segoe UI"
+            fontFamily = "serif"
             separator {
                 backgroundColor += controlBorder
                 fill = controlBorder

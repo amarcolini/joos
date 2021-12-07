@@ -70,7 +70,8 @@ object Kinematics {
             .map { (vel, accel) -> calculateMotorFeedforward(vel, accel, coeffs) }
 
     /**
-     * Computes the motor feedforward (i.e., open loop power) for the given set of coefficients.
+     * Computes the motor feedforward (i.e., open loop power) for the given set of coefficients
+     * on top of the given base output.
      */
     @JvmStatic
     @JvmOverloads

@@ -6,7 +6,7 @@ package com.amarcolini.joos.command
 class RaceCommand @JvmOverloads constructor(
     override val isInterruptable: Boolean = true,
     private vararg val commands: Command
-) : CommandGroup(*commands) {
+) : CommandGroup(commands = commands) {
 
     override fun init() {
         commands.forEach { it.init() }

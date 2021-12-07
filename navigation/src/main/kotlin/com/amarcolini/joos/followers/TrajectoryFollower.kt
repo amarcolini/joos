@@ -60,7 +60,8 @@ abstract class TrajectoryFollower @JvmOverloads constructor(
     /**
      * Returns true if the current trajectory is currently executing.
      */
-    fun isFollowing() = !executedFinalUpdate || internalIsFollowing()
+    fun isFollowing() =
+        ::trajectory.isInitialized && (!executedFinalUpdate || internalIsFollowing())
 
     /**
      * Returns the elapsed time since the last [followTrajectory] call.

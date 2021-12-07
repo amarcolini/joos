@@ -10,24 +10,30 @@ import kotlin.math.sign
  * control (the most common kind of feedforward in FTC). [kF] provides a custom feedforward term for other plants.
  *
  * @param pid traditional PID coefficients
- * @param feedforward motor feedforward coefficients
+ * @param feedforward optional motor feedforward coefficients
  * @param kF custom feedforward that depends on position and/or velocity (e.g., a gravity term for arms)
  * @param clock clock
  */
 class PIDFController @JvmOverloads constructor(
-    var pid: PIDCoefficients,
+    pid: PIDCoefficients,
     var feedforward: FeedforwardCoefficients = FeedforwardCoefficients(),
-    private val kF: (Double, Double?) -> Double = { _, _ -> 0.0 },
+    var kF: (Double, Double?) -> Double = { _, _ -> 0.0 },
     private val clock: NanoClock = NanoClock.system()
 ) {
+    var pid: PIDCoefficients = pid
+        set(value) {
+            if (field != value) reset()
+            field = value
+        }
+
     private var errorSum: Double = 0.0
     private var lastUpdateTimestamp: Double = Double.NaN
 
-    private var inputBounded: Boolean = false
+    var inputBounded: Boolean = false
     private var minInput: Double = 0.0
     private var maxInput: Double = 0.0
 
-    private var outputBounded: Boolean = false
+    var outputBounded: Boolean = false
     private var minOutput: Double = 0.0
     private var maxOutput: Double = 0.0
 
@@ -61,6 +67,20 @@ class PIDFController @JvmOverloads constructor(
      * Returns whether the controller is at the target position.
      */
     fun isAtSetPoint() = abs(lastError) <= tolerance
+
+    /**
+     * Sets the target position, velocity, and acceleration.
+     */
+    @JvmOverloads
+    fun setTarget(
+        targetPosition: Double,
+        targetVelocity: Double = this.targetVelocity,
+        targetAcceleration: Double = this.targetAcceleration
+    ) {
+        this.targetPosition = targetPosition
+        this.targetVelocity = targetVelocity
+        this.targetAcceleration = targetAcceleration
+    }
 
     /**
      * Sets bound on the input of the controller. The min and max values are considered modularly-equivalent (that is,
@@ -121,7 +141,8 @@ class PIDFController @JvmOverloads constructor(
             0.0
         } else {
             val dt = currentTimestamp - lastUpdateTimestamp
-            errorSum += 0.5 * (error + lastError) * dt
+            val newError = 0.5 * (error + lastError) * dt
+            errorSum += newError
             val errorDeriv =
                 (measuredVelocity?.let { targetVelocity - it } ?: (error - lastError) / dt)
             val filteredDeriv = (errorDeriv * pid.N) / (errorDeriv + pid.N)
@@ -129,7 +150,7 @@ class PIDFController @JvmOverloads constructor(
             lastError = error
             lastUpdateTimestamp = currentTimestamp
 
-            val pidOutput = pid.kP * error + pid.kI * errorSum +
+            val baseOutput = pid.kP * error + pid.kI * errorSum +
                     pid.kD * filteredDeriv + kF(
                 measuredPosition,
                 measuredVelocity
@@ -138,13 +159,13 @@ class PIDFController @JvmOverloads constructor(
                 targetVelocity,
                 targetAcceleration,
                 feedforward,
-                pidOutput
+                baseOutput
             )
 
             if (outputBounded) {
                 if (output != output.coerceIn(minOutput, maxOutput) && sign(error) == sign(output)
                 ) {
-                    errorSum -= 0.5 * (error + lastError) * dt
+                    errorSum -= newError
                 }
                 output.coerceIn(minOutput, maxOutput)
             } else {

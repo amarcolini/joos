@@ -68,8 +68,7 @@ class SwerveDrive @JvmOverloads constructor(
             )
         ).forEach { (motor, power) ->
             val (vel, accel) = power
-            motor.set(vel / (motor.distancePerPulse * motor.maxTPS))
-            motor.targetAcceleration = accel / motor.distancePerPulse
+            motor.setSpeed(vel, accel, Motor.RotationUnit.UPS)
         }
         servos.zip(
             SwerveKinematics.robotToModuleOrientations(
@@ -90,7 +89,7 @@ class SwerveDrive @JvmOverloads constructor(
                 constraints.trackWidth / avg,
                 constraints.wheelBase / avg,
             )
-        ).forEach { (motor, speed) -> motor.set(speed) }
+        ).forEach { (motor, speed) -> motor.setPower(speed) }
         servos.zip(
             SwerveKinematics.robotToModuleOrientations(
                 drivePower,
@@ -107,4 +106,9 @@ class SwerveDrive @JvmOverloads constructor(
     private fun getWheelVelocities(): List<Double> = motors.map { it.distanceVelocity }
 
     private fun getModuleOrientations(): List<Double> = servos.map { it.angle }
+
+    override fun update() {
+        super.update()
+        motors.forEach { it.update() }
+    }
 }

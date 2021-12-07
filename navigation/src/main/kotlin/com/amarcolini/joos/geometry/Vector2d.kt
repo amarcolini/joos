@@ -11,7 +11,7 @@ data class Vector2d @JvmOverloads constructor(
     @JvmField val x: Double = 0.0,
     @JvmField val y: Double = 0.0
 ) {
-    companion object {
+    companion object Static {
         /**
          * Returns a vector in Cartesian coordinates `(x, y)` from one in polar coordinates `(r, theta)`.
          */

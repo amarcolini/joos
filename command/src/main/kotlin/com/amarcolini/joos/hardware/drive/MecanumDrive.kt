@@ -71,8 +71,7 @@ class MecanumDrive @JvmOverloads constructor(
             )
         ).forEach { (motor, power) ->
             val (vel, accel) = power
-            motor.set(vel / (motor.distancePerPulse * motor.maxTPS))
-            motor.targetAcceleration = accel / motor.distancePerPulse
+            motor.setSpeed(vel, accel, Motor.RotationUnit.UPS)
         }
     }
 
@@ -84,7 +83,7 @@ class MecanumDrive @JvmOverloads constructor(
                 1.0,
                 constraints.lateralMultiplier
             )
-        ).forEach { (motor, speed) -> motor.set(speed) }
+        ).forEach { (motor, speed) -> motor.setPower(speed) }
     }
 
     fun setWeightedDrivePower(drivePower: Pose2d) {
@@ -94,5 +93,10 @@ class MecanumDrive @JvmOverloads constructor(
         if (denom > 1) vel /= (denom)
 
         setDrivePower(vel)
+    }
+
+    override fun update() {
+        super.update()
+        motors.forEach { it.update() }
     }
 }

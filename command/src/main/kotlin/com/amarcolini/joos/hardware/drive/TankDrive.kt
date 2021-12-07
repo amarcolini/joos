@@ -8,6 +8,7 @@ import com.amarcolini.joos.followers.TrajectoryFollower
 import com.amarcolini.joos.geometry.Pose2d
 import com.amarcolini.joos.hardware.Imu
 import com.amarcolini.joos.hardware.Motor
+import com.amarcolini.joos.hardware.MotorGroup
 import com.amarcolini.joos.kinematics.TankKinematics
 import com.amarcolini.joos.localization.Localizer
 import com.amarcolini.joos.localization.TankLocalizer
@@ -18,8 +19,8 @@ import kotlin.math.min
  * A [Component] implementation of a tank drive.
  */
 class TankDrive @JvmOverloads constructor(
-    private val left: Motor,
-    private val right: Motor,
+    private val left: MotorGroup,
+    private val right: MotorGroup,
     override val imu: Imu? = null,
     override val constraints: TankConstraints = TankConstraints(min(left.maxRPM, right.maxRPM)),
     axialPID: PIDCoefficients = PIDCoefficients(4.0, 0.0, 0.5),
@@ -51,14 +52,18 @@ class TankDrive @JvmOverloads constructor(
             )
         ).forEach { (motor, power) ->
             val (vel, accel) = power
-            motor.set(vel / (motor.distancePerPulse * motor.maxTPS))
-            motor.targetAcceleration = accel / motor.distancePerPulse
+            motor.setSpeed(vel, accel, Motor.RotationUnit.UPS)
         }
     }
 
     override fun setDrivePower(drivePower: Pose2d) {
         motors.zip(
             TankKinematics.robotToWheelVelocities(drivePower, 1.0)
-        ).forEach { (motor, speed) -> motor.set(speed) }
+        ).forEach { (motor, speed) -> motor.setPower(speed) }
+    }
+
+    override fun update() {
+        super.update()
+        motors.forEach { it.update() }
     }
 }

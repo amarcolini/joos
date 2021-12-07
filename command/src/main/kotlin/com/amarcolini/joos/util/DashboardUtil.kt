@@ -1,7 +1,6 @@
 package com.amarcolini.joos.util
 import com.acmerobotics.dashboard.canvas.Canvas
 import com.amarcolini.joos.geometry.Pose2d
-import com.amarcolini.joos.geometry.Vector2d
 import com.amarcolini.joos.path.Path
 import kotlin.math.ceil
 
@@ -16,9 +15,9 @@ object DashboardUtil {
     fun drawRobot(canvas: Canvas, pose: Pose2d) {
         canvas.strokeCircle(pose.x, pose.y, ROBOT_RADIUS)
         val (x, y) = pose.headingVec() * ROBOT_RADIUS
-        val x1: Double = pose.y + x / 2
+        val x1: Double = pose.x + x / 2
         val y1: Double = pose.y + y / 2
-        val x2: Double = pose.y + x
+        val x2: Double = pose.x + x
         val y2: Double = pose.y + y
         canvas.strokeLine(x1, y1, x2, y2)
     }
@@ -31,7 +30,7 @@ object DashboardUtil {
         val dx: Double = path.length() / (samples - 1)
         for (i in 0 until samples) {
             val displacement = i * dx
-            val (x, y) = path[displacement]
+            val (x, y, _) = path[displacement]
             xPoints[i] = x
             yPoints[i] = y
         }

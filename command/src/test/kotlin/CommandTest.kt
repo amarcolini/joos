@@ -101,8 +101,9 @@ class CommandTest {
     @Test
     fun testSequential() {
         println("   **testSequential**")
-        val cmd1 = RangeCommand("#1", 0, 5, true)
-        val cmd2 = RangeCommand("#2", 1, 7, false)
+        val component = DummyComponent("common")
+        val cmd1 = RangeCommand("#1", 0, 5, true, setOf(component))
+        val cmd2 = RangeCommand("#2", 1, 7, false, setOf(component))
         val group = cmd1 then cmd2
 
         scheduler.schedule(group)
