@@ -66,20 +66,37 @@ class Imu constructor(val imu: BNO055IMU) {
         override fun update() {}
     }
 
+    var axis: Axis = Axis.Y
+
     /**
      * Returns the heading of the IMU using the gyroscope.
      */
-    val heading
-        get() = imu.getAngularOrientation(
-            AxesReference.EXTRINSIC,
-            AxesOrder.ZYX,
-            AngleUnit.RADIANS
-        ).firstAngle.toDouble()
+    val heading: Double
+        get() {
+            val orientation = imu.getAngularOrientation(
+                AxesReference.INTRINSIC,
+                AxesOrder.XYZ,
+                AngleUnit.RADIANS
+            )
+            return when (axis) {
+                Axis.X -> orientation.firstAngle
+                Axis.Y -> orientation.secondAngle
+                Axis.Z -> orientation.thirdAngle
+            }.toDouble()
+        }
 
     /**
      * Returns the heading velocity of IMU using the gyroscope.
      */
-    val headingVelocity get() = imu.angularVelocity.toAngleUnit(AngleUnit.RADIANS).zRotationRate.toDouble()
+    val headingVelocity: Double
+        get() {
+            val velocity = imu.angularVelocity.toAngleUnit(AngleUnit.RADIANS)
+            return when (axis) {
+                Axis.X -> velocity.xRotationRate
+                Axis.Y -> velocity.yRotationRate
+                Axis.Z -> velocity.zRotationRate
+            }.toDouble()
+        }
 
     /**
      * Automatically sets the up axis of the IMU using the accelerometer.
@@ -88,7 +105,12 @@ class Imu constructor(val imu: BNO055IMU) {
      */
     fun autoDetectUpAxis(): Axis? {
         val gravity = imu.gravity
-        return listOf(gravity.xAccel, gravity.yAccel, gravity.zAccel).zip(Axis.values())
-            .maxByOrNull { abs(it.first) }?.second
+        return when (listOf(gravity.xAccel, gravity.yAccel, gravity.zAccel).zip(Axis.values())
+            .maxByOrNull { abs(it.first) }?.second) {
+            Axis.X -> Axis.Y
+            Axis.Y -> Axis.Z
+            Axis.Z -> Axis.X
+            null -> null
+        }
     }
 }

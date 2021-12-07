@@ -61,8 +61,8 @@ abstract class DriveComponent : Drive(), Component {
         } else Command.emptyCommand()
     }
 
-    final override val rawExternalHeading: Double
+    override val rawExternalHeading: Double
         get() = imu?.heading ?: NaN
 
-    final override fun getExternalHeadingVelocity() = imu?.headingVelocity
+    override fun getExternalHeadingVelocity() = imu?.headingVelocity
 }

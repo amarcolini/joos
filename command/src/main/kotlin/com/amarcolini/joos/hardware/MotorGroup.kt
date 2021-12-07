@@ -1,6 +1,7 @@
 package com.amarcolini.joos.hardware
 
 import com.amarcolini.joos.command.Component
+import com.qualcomm.robotcore.hardware.DcMotor
 
 /**
  * A class that runs multiple motors together as a unit.
@@ -9,11 +10,13 @@ class MotorGroup(private vararg val motors: Motor) : Component {
     /**
      * The maximum revolutions per minute that all motors in the group can achieve.
      */
+    @JvmField
     val maxRPM = motors.minOf { it.maxRPM }
 
     /**
      * The maximum ticks per second velocity that all motors in the group can achieve.
      */
+    @JvmField
     val maxTPS: Double = motors.minOf { it.maxTPS }
 
     /**
@@ -72,6 +75,12 @@ class MotorGroup(private vararg val motors: Motor) : Component {
      * *Note*: Since power is expressed as a percentage, motors may move at different speeds.
      */
     fun setPower(power: Double) = motors.forEach { it.setPower(power) }
+
+    var zeroPowerBehavior: Motor.ZeroPowerBehavior = Motor.ZeroPowerBehavior.FLOAT
+        set(value) {
+            motors.forEach { it.zeroPowerBehavior = value }
+            field = value
+        }
 
     override fun update() {
         motors.forEach { it.update() }

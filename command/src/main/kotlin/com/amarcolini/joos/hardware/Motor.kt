@@ -199,7 +199,7 @@ class Motor @JvmOverloads constructor(
          */
         val position: Int
             get() {
-                val currentPosition = if (reversed) -1 else 1 * (currentPosition - resetVal)
+                val currentPosition = if (reversed) -1 else 1 * (getPosition() - resetVal)
                 if (currentPosition != lastPosition) {
                     val currentTime = clock.seconds()
                     val dt = currentTime - lastTimeStamp
