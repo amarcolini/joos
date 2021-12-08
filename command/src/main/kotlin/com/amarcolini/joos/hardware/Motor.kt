@@ -96,13 +96,12 @@ class Motor @JvmOverloads constructor(
          *
          * @see veloCoefficients
          * @see feedforwardCoefficients
-         * @see targetAcceleration
          */
         RUN_USING_ENCODER,
 
         /**
          * Uses an encoder to move the motor to the desired setpoint. The speed of
-         * the motor is still affected by calls to [Motor.set].
+         * the motor is still affected by calls to [Motor.setPower] and [Motor.setSpeed].
          *
          * *Note*: PID gains have not been finely tuned, and may need to be set to ensure
          * consistent motor movement. Position tolerance may need to be tuned as well.
@@ -157,7 +156,7 @@ class Motor @JvmOverloads constructor(
      * @param getVelocity the position supplier which points to the
      * current velocity of the motor in ticks per second
      */
-    inner class Encoder constructor(
+    class Encoder constructor(
         private val TPR: Double,
         private val getPosition: () -> Int,
         private val getVelocity: () -> Double,

@@ -6,7 +6,7 @@ import com.fasterxml.jackson.annotation.JsonTypeInfo
 import kotlin.reflect.KClass
 
 /**
- * Configuration describing constraints and other robot-specific parameters that are shared by a group of trajectories.
+ * Configuration describing constraints and other robot-specific parameters.
  */
 @JsonIgnoreProperties("velConstraint", "accelConstraint", "type")
 @JsonTypeInfo(use = JsonTypeInfo.Id.NAME, include = JsonTypeInfo.As.PROPERTY, property = "type")
@@ -49,7 +49,12 @@ data class MecanumConstraints @JvmOverloads constructor(
             TranslationalVelocityConstraint(maxVel),
         )
     )
-    override val accelConstraint = TranslationalAccelerationConstraint(maxAccel)
+    override val accelConstraint = MinAccelerationConstraint(
+        listOf(
+            TranslationalAccelerationConstraint(maxAccel),
+            AngularAccelerationConstraint(maxAngAccel)
+        )
+    )
     override val type = TrajectoryConstraints.DriveType.MECANUM
 }
 

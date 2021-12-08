@@ -145,7 +145,7 @@ class PIDFController @JvmOverloads constructor(
             errorSum += newError
             val errorDeriv =
                 (measuredVelocity?.let { targetVelocity - it } ?: (error - lastError) / dt)
-            val filteredDeriv = (errorDeriv * pid.N) / (errorDeriv + pid.N)
+            val filteredDeriv = (errorDeriv * pid.N) / (errorSum + pid.N)
 
             lastError = error
             lastUpdateTimestamp = currentTimestamp

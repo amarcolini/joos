@@ -1,7 +1,10 @@
 package com.amarcolini.joos.hardware
 
+import com.amarcolini.joos.command.Command
 import com.amarcolini.joos.command.Component
-import com.qualcomm.robotcore.hardware.DcMotor
+import com.amarcolini.joos.control.FeedforwardCoefficients
+import com.amarcolini.joos.control.PIDCoefficients
+import com.amarcolini.joos.hardware.Motor.RunMode
 
 /**
  * A class that runs multiple motors together as a unit.
@@ -82,6 +85,81 @@ class MotorGroup(private vararg val motors: Motor) : Component {
             field = value
         }
 
+    var runMode: RunMode = RunMode.RUN_WITHOUT_ENCODER
+        set(value) {
+            motors.forEach { it.runMode = value }
+            field = value
+        }
+
+    /**
+     * PID coefficients used in [RunMode.RUN_USING_ENCODER].
+     */
+    var veloCoefficients = PIDCoefficients(1.0)
+        set(value) {
+            motors.forEach { it.veloCoefficients = value }
+            field = value
+        }
+
+    /**
+     * PID coefficients used in [RunMode.RUN_TO_POSITION].
+     */
+    var positionCoefficients = PIDCoefficients(1.0)
+        set(value) {
+            motors.forEach { it.positionCoefficients = value }
+            field = value
+        }
+
+    /**
+     * Feedforward coefficients used in both [RunMode.RUN_USING_ENCODER] and [RunMode.RUN_WITHOUT_ENCODER].
+     */
+    var feedforwardCoefficients = FeedforwardCoefficients(1.0)
+        set(value) {
+            motors.forEach { it.feedforwardCoefficients = value }
+            field = value
+        }
+
+    /**
+     * The target position used by [RunMode.RUN_TO_POSITION].
+     */
+    var targetPosition: Int = 0
+        set(value) {
+            motors.forEach { it.targetPosition = value }
+            field = value
+        }
+
+    /**
+     * The position error considered tolerable for [RunMode.RUN_TO_POSITION] to be considered at the set point.
+     */
+    var positionTolerance: Int = 10
+        set(value) {
+            motors.forEach { it.positionTolerance = value }
+            field = value
+        }
+
+    /**
+     * Returns a command that runs all the motors in the group until all of them have reached the desired position.
+     */
+    fun goToPosition(position: Int) = Command.of {
+        runMode = RunMode.RUN_TO_POSITION
+        targetPosition = position
+        update()
+    }
+        .onInit {
+            runMode = RunMode.RUN_TO_POSITION
+            targetPosition = position
+        }
+        .runUntil { !isBusy() }
+        .onEnd { _, _ -> setSpeed(0.0) }
+
+    /**
+     * Returns whether any of the motors in the group are currently moving towards the desired setpoint using [RunMode.RUN_TO_POSITION].
+     */
+    fun isBusy() = motors.any { it.isBusy() }
+
+    /**
+     * Updates both [RunMode.RUN_USING_ENCODER] and [RunMode.RUN_TO_POSITION]. Running this method is
+     * not necessary for [RunMode.RUN_WITHOUT_ENCODER].
+     */
     override fun update() {
         motors.forEach { it.update() }
     }

@@ -61,6 +61,12 @@ abstract class DriveComponent : Drive(), Component {
         } else Command.emptyCommand()
     }
 
+    /**
+     * Returns the trajectory currently being followed by this drive, if any.
+     */
+    fun getCurrentTrajectory(): Trajectory? =
+        if (trajectoryFollower.isFollowing()) trajectoryFollower.trajectory else null
+
     override val rawExternalHeading: Double
         get() = imu?.heading ?: NaN
 

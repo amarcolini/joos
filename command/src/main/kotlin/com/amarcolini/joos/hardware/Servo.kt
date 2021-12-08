@@ -40,23 +40,20 @@ class Servo @JvmOverloads constructor(
         startAngle, endAngle, gearRatio
     )
 
-    enum class Direction(val multiplier: Int) {
-        FORWARD(1),
-        REVERSE(-1)
-    }
-
     val startAngle = min(startAngle, endAngle)
     val endAngle = max(startAngle, endAngle)
 
     /**
-     * The logical direction in which this servo operates.
+     * The whether this servo is reversed.
      */
-    var direction: Direction = Direction.FORWARD
+    var reversed: Boolean = false
+        @JvmName("setReversed")
         set(value) {
             servo.direction =
-                if (value == Direction.FORWARD) Servo.Direction.FORWARD else Servo.Direction.REVERSE
+                if (value) Servo.Direction.REVERSE else Servo.Direction.FORWARD
             field = value
         }
+        @JvmName("isReversed") get
 
     /**
      * Angular representation of the servo's position in the range `[`[startAngle], [endAngle]`]`.
