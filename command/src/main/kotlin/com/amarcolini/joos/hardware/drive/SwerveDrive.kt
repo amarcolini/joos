@@ -12,17 +12,18 @@ import com.amarcolini.joos.kinematics.SwerveKinematics
 import com.amarcolini.joos.localization.Localizer
 import com.amarcolini.joos.localization.SwerveLocalizer
 import com.amarcolini.joos.trajectory.config.SwerveConstraints
+import kotlin.math.abs
 
 /**
  * A [Component] implementation of a swerve drive.
  */
-class SwerveDrive @JvmOverloads constructor(
+open class SwerveDrive @JvmOverloads constructor(
     private val frontLeft: Pair<Motor, Servo>,
     private val backLeft: Pair<Motor, Servo>,
     private val backRight: Pair<Motor, Servo>,
     private val frontRight: Pair<Motor, Servo>,
-    override val imu: Imu? = null,
-    override val constraints: SwerveConstraints = SwerveConstraints(
+    final override val imu: Imu? = null,
+    final override val constraints: SwerveConstraints = SwerveConstraints(
         listOf(
             frontLeft,
             backLeft,
@@ -30,8 +31,8 @@ class SwerveDrive @JvmOverloads constructor(
             frontRight
         ).minOf { it.first.maxRPM }
     ),
-    translationalPID: PIDCoefficients = PIDCoefficients(4.0, 0.0, 0.5),
-    headingPID: PIDCoefficients = PIDCoefficients(4.0, 0.0, 0.5)
+    translationalPID: PIDCoefficients = PIDCoefficients(1.0, 0.0, 0.5),
+    headingPID: PIDCoefficients = PIDCoefficients(1.0, 0.0, 0.5)
 ) : DriveComponent() {
     private val motors =
         listOf(frontLeft.first, backLeft.first, backRight.first, frontRight.first)
@@ -99,6 +100,23 @@ class SwerveDrive @JvmOverloads constructor(
         ).forEach { (servo, orientation) ->
             servo.angle = orientation
         }
+    }
+
+    override fun setWeightedDrivePower(drivePower: Pose2d) {
+        var vel = drivePower
+
+        val denom = abs(vel.x) + abs(vel.y) + abs(vel.heading)
+        if (denom > 1) vel /= (denom)
+
+        setDrivePower(vel)
+    }
+
+    override fun setRunMode(runMode: Motor.RunMode) {
+        motors.forEach { it.runMode = runMode }
+    }
+
+    override fun setZeroPowerBehavior(zeroPowerBehavior: Motor.ZeroPowerBehavior) {
+        motors.forEach { it.zeroPowerBehavior = zeroPowerBehavior }
     }
 
     private fun getWheelPositions(): List<Double> = motors.map { it.distance }

@@ -3,6 +3,7 @@ import com.amarcolini.joos.gamepad.Button
 import com.amarcolini.joos.util.NanoClock
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
+import kotlin.math.abs
 
 class CommandTest {
     private lateinit var scheduler: CommandScheduler
@@ -131,7 +132,8 @@ class CommandTest {
         val clock = NanoClock.system()
         val start = clock.seconds()
         cmd.run()
-        assert(clock.seconds() - start - 1.0 < 0.0001)
+        //Accurate to a thousandth of a second
+        assert(abs(clock.seconds() - start - 1.0) < 0.001)
     }
 
     @Test

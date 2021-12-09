@@ -2,9 +2,9 @@ package com.amarcolini.joos.command
 
 import com.acmerobotics.dashboard.FtcDashboard
 import com.acmerobotics.dashboard.telemetry.MultipleTelemetry
-import com.acmerobotics.dashboard.telemetry.TelemetryPacket
 import com.amarcolini.joos.gamepad.MultipleGamepad
 import com.qualcomm.robotcore.eventloop.opmode.OpMode
+import com.qualcomm.robotcore.hardware.HardwareMap
 
 /**
  * A class that makes any command-based robot code a lot smoother
@@ -18,16 +18,10 @@ abstract class Robot(opMode: OpMode) : CommandScheduler() {
      * The hardware map obtained from the opmode.
      */
     @JvmField
-    val hMap = opMode.hardwareMap
+    val hMap: HardwareMap = opMode.hardwareMap
 
     @JvmField
-    val dashboard = FtcDashboard.getInstance()
-
-    /**
-     * The telemetry packet to use with FtcDashboard. Is automatically sent every update cycle.
-     */
-    var packet: TelemetryPacket = TelemetryPacket()
-        private set
+    val dashboard: FtcDashboard = FtcDashboard.getInstance()
 
     /**
      * A telemetry for both FtcDashboard and the driver station. Automatically updates every update cycle.
@@ -36,14 +30,9 @@ abstract class Robot(opMode: OpMode) : CommandScheduler() {
     val telemetry = MultipleTelemetry(dashboard.telemetry, opMode.telemetry)
 
     init {
-        telemetry.isAutoClear = false
-        register(object : Component {
-            override fun update() {
-                telemetry.clear()
-                telemetry.update()
-                dashboard.sendTelemetryPacket(packet)
-                packet = TelemetryPacket()
-            }
+        register(Component.of {
+            telemetry.update()
+            telemetry.clear()
         }, gamepad)
     }
 }

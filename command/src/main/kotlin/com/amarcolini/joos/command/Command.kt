@@ -86,14 +86,22 @@ abstract class Command {
     fun isScheduled(): Boolean = scheduler?.isScheduled(this) == true
 
     /**
-     * Runs this command independently of a [CommandScheduler]. Initializes, executes and ends this command synchronously.
+     * Runs this command independently of a [CommandScheduler]. Initializes, executes and ends this command synchronously
+     * while also updating all of its required components and sending [CommandScheduler.packet].
      *
      * *Note*: If this command does not end by itself, this method will run continuously.
      */
     fun run() {
+        requirements.forEach { it.update() }
         init()
-        do execute() while (!isFinished())
+        CommandScheduler.sendPacket()
+        do {
+            requirements.forEach { it.update() }
+            execute()
+            CommandScheduler.sendPacket()
+        } while (!isFinished())
         end(false)
+        CommandScheduler.sendPacket()
     }
 
     //These are for chaining commands

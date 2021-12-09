@@ -5,11 +5,50 @@ import com.amarcolini.joos.command.Component
 import com.amarcolini.joos.control.FeedforwardCoefficients
 import com.amarcolini.joos.control.PIDCoefficients
 import com.amarcolini.joos.hardware.Motor.RunMode
+import com.qualcomm.robotcore.hardware.HardwareMap
 
 /**
  * A class that runs multiple motors together as a unit.
  */
 class MotorGroup(private vararg val motors: Motor) : Component {
+    /**
+     * Constructs a motor group out of several motor groups.
+     */
+    constructor(vararg motors: MotorGroup) :
+            this(*motors.flatMap { it.motors.asIterable() }.toTypedArray())
+
+    /**
+     * @param hMap the hardware map from the OpMode
+     * @param maxRPM the maximum revolutions per minute of the motor
+     * @param TPR the ticks per revolution of the motor
+     * @param ids the device ids from the RC config
+     */
+    @JvmOverloads
+    constructor(hMap: HardwareMap, maxRPM: Double, TPR: Double = 1.0, vararg ids: String) : this(
+        *ids.map { Motor(hMap, it, maxRPM, TPR) }.toTypedArray()
+    )
+
+
+    /**
+     * @param hMap the hardware map from the OpMode
+     * @param maxRPM the revolutions per minute of the motor
+     * @param TPR the ticks per revolution of the motor
+     * @param wheelRadius the radius of the wheel the motor is turning
+     * @param gearRatio the gear ratio from the output shaft to the wheel the motor is turning
+     * @param ids the device ids from the RC config
+     */
+    @JvmOverloads
+    constructor(
+        hMap: HardwareMap,
+        maxRPM: Double,
+        TPR: Double = 1.0,
+        wheelRadius: Double,
+        gearRatio: Double,
+        vararg ids: String,
+    ) : this(
+        *ids.map { Motor(hMap, it, maxRPM, TPR, wheelRadius, gearRatio) }.toTypedArray()
+    )
+
     /**
      * The maximum revolutions per minute that all motors in the group can achieve.
      */

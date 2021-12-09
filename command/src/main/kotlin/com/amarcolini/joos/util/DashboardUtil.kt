@@ -1,8 +1,11 @@
 package com.amarcolini.joos.util
+
 import com.acmerobotics.dashboard.canvas.Canvas
+import com.amarcolini.joos.command.CommandScheduler
 import com.amarcolini.joos.geometry.Pose2d
 import com.amarcolini.joos.path.Path
 import kotlin.math.ceil
+
 
 /**
  * Class containing various utilities for use with [FTC Dashboard](https://github.com/acmerobotics/ftc-dashboard).
@@ -12,7 +15,24 @@ object DashboardUtil {
     private const val DEFAULT_RESOLUTION = 2.0
 
     @JvmStatic
-    fun drawRobot(canvas: Canvas, pose: Pose2d) {
+    @JvmOverloads
+    fun drawPoseHistory(
+        canvas: Canvas = CommandScheduler.packet.fieldOverlay(),
+        poseHistory: List<Pose2d>
+    ) {
+        val xPoints = DoubleArray(poseHistory.size)
+        val yPoints = DoubleArray(poseHistory.size)
+        for (i in poseHistory.indices) {
+            val pose = poseHistory[i]
+            xPoints[i] = pose.x
+            yPoints[i] = pose.y
+        }
+        canvas.strokePolyline(xPoints, yPoints)
+    }
+
+    @JvmStatic
+    @JvmOverloads
+    fun drawRobot(canvas: Canvas = CommandScheduler.packet.fieldOverlay(), pose: Pose2d) {
         canvas.strokeCircle(pose.x, pose.y, ROBOT_RADIUS)
         val (x, y) = pose.headingVec() * ROBOT_RADIUS
         val x1: Double = pose.x + x / 2
@@ -23,7 +43,12 @@ object DashboardUtil {
     }
 
     @JvmStatic
-    fun drawSampledPath(canvas: Canvas, path: Path, resolution: Double = DEFAULT_RESOLUTION) {
+    @JvmOverloads
+    fun drawSampledPath(
+        canvas: Canvas = CommandScheduler.packet.fieldOverlay(),
+        path: Path,
+        resolution: Double = DEFAULT_RESOLUTION
+    ) {
         val samples = ceil(path.length() / resolution).toInt()
         val xPoints = DoubleArray(samples)
         val yPoints = DoubleArray(samples)

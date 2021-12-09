@@ -1,11 +1,36 @@
 package com.amarcolini.joos.command
 
+import com.acmerobotics.dashboard.FtcDashboard
+import com.acmerobotics.dashboard.telemetry.TelemetryPacket
 import java.util.function.BooleanSupplier
 
 /**
  * The main orchestrator for [Command]s and [Component]s.
  */
 open class CommandScheduler {
+
+    companion object Static {
+        /**
+         * The packet to use with FTC Dashboard to avoid conflicting packet sends. Is automatically sent
+         * every update cycle.
+         */
+        @JvmStatic
+        var packet = TelemetryPacket()
+            private set
+
+        /**
+         * Sends [packet]. Is automatically called every update cycle.
+         */
+        @JvmStatic
+        fun sendPacket() {
+            try {
+                FtcDashboard.getInstance().sendTelemetryPacket(packet)
+            } catch (e: Exception) {
+
+            }
+            packet = TelemetryPacket()
+        }
+    }
 
     private val scheduledCommands = LinkedHashSet<Command>()
 
@@ -72,6 +97,8 @@ open class CommandScheduler {
                 schedule(component.getDefaultCommand() ?: continue)
             }
         }
+
+        sendPacket()
     }
 
     /**

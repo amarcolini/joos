@@ -1,6 +1,7 @@
 /particle/
 /projectFilesBackup/
 /testRepo/
-build
+build/
 .gradle
 .idea
+local.properties

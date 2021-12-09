@@ -16,13 +16,13 @@ import kotlin.math.abs
 /**
  * A [Component] implementation of a mecanum drive.
  */
-class MecanumDrive @JvmOverloads constructor(
+open class MecanumDrive @JvmOverloads constructor(
     private val frontLeft: Motor,
     private val backLeft: Motor,
     private val backRight: Motor,
     private val frontRight: Motor,
-    override val imu: Imu? = null,
-    override val constraints: MecanumConstraints = MecanumConstraints(
+    final override val imu: Imu? = null,
+    final override val constraints: MecanumConstraints = MecanumConstraints(
         listOf(
             frontLeft,
             backLeft,
@@ -30,8 +30,8 @@ class MecanumDrive @JvmOverloads constructor(
             frontRight
         ).minOf { it.maxRPM }
     ),
-    translationalPID: PIDCoefficients = PIDCoefficients(4.0, 0.0, 0.5),
-    headingPID: PIDCoefficients = PIDCoefficients(4.0, 0.0, 0.5)
+    translationalPID: PIDCoefficients = PIDCoefficients(1.0, 0.0, 0.5),
+    headingPID: PIDCoefficients = PIDCoefficients(1.0, 0.0, 0.5)
 ) : DriveComponent() {
 
     private val motors = listOf(frontLeft, backLeft, backRight, frontRight)
@@ -86,13 +86,21 @@ class MecanumDrive @JvmOverloads constructor(
         ).forEach { (motor, speed) -> motor.setPower(speed) }
     }
 
-    fun setWeightedDrivePower(drivePower: Pose2d) {
+    override fun setWeightedDrivePower(drivePower: Pose2d) {
         var vel = drivePower
 
         val denom = abs(vel.x) + abs(vel.y) + abs(vel.heading)
         if (denom > 1) vel /= (denom)
 
         setDrivePower(vel)
+    }
+
+    override fun setRunMode(runMode: Motor.RunMode) {
+        motors.forEach { it.runMode = runMode }
+    }
+
+    override fun setZeroPowerBehavior(zeroPowerBehavior: Motor.ZeroPowerBehavior) {
+        motors.forEach { it.zeroPowerBehavior = zeroPowerBehavior }
     }
 
     override fun update() {

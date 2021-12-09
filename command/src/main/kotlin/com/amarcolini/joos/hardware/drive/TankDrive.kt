@@ -13,18 +13,25 @@ import com.amarcolini.joos.kinematics.TankKinematics
 import com.amarcolini.joos.localization.Localizer
 import com.amarcolini.joos.localization.TankLocalizer
 import com.amarcolini.joos.trajectory.config.TankConstraints
+import kotlin.math.abs
 import kotlin.math.min
+
 
 /**
  * A [Component] implementation of a tank drive.
  */
-class TankDrive @JvmOverloads constructor(
+open class TankDrive @JvmOverloads constructor(
     private val left: MotorGroup,
     private val right: MotorGroup,
-    override val imu: Imu? = null,
-    override val constraints: TankConstraints = TankConstraints(min(left.maxRPM, right.maxRPM)),
-    axialPID: PIDCoefficients = PIDCoefficients(4.0, 0.0, 0.5),
-    headingPID: PIDCoefficients = PIDCoefficients(4.0, 0.0, 0.5)
+    final override val imu: Imu? = null,
+    final override val constraints: TankConstraints = TankConstraints(
+        min(
+            left.maxRPM,
+            right.maxRPM
+        )
+    ),
+    axialPID: PIDCoefficients = PIDCoefficients(1.0, 0.0, 0.5),
+    headingPID: PIDCoefficients = PIDCoefficients(1.0, 0.0, 0.5)
 ) : DriveComponent() {
 
     private val motors = listOf(left, right)
@@ -60,6 +67,23 @@ class TankDrive @JvmOverloads constructor(
         motors.zip(
             TankKinematics.robotToWheelVelocities(drivePower, 1.0)
         ).forEach { (motor, speed) -> motor.setPower(speed) }
+    }
+
+    override fun setWeightedDrivePower(drivePower: Pose2d) {
+        var vel = Pose2d(drivePower.x, 0.0, drivePower.heading)
+
+        val denom = abs(vel.x) + abs(vel.heading)
+        if (denom > 1) vel /= (denom)
+
+        setDrivePower(vel)
+    }
+
+    override fun setRunMode(runMode: Motor.RunMode) {
+        motors.forEach { it.runMode = runMode }
+    }
+
+    override fun setZeroPowerBehavior(zeroPowerBehavior: Motor.ZeroPowerBehavior) {
+        motors.forEach { it.zeroPowerBehavior = zeroPowerBehavior }
     }
 
     override fun update() {
