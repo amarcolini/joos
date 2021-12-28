@@ -1,5 +1,5 @@
 
-![logo](temp_logo.svg)
+![logo](logo.svg)
 
 ---
 
