@@ -7,7 +7,7 @@ import com.amarcolini.joos.path.Path
 import com.amarcolini.joos.util.Angle
 import com.amarcolini.joos.util.GuidingVectorField
 import com.amarcolini.joos.util.NanoClock
-import kotlin.math.atan2
+import org.apache.commons.math3.util.FastMath
 import kotlin.math.sqrt
 
 /**
@@ -48,7 +48,7 @@ class GVFFollower @JvmOverloads constructor(
     override fun internalUpdate(currentPose: Pose2d): DriveSignal {
         val gvfResult = gvf.getExtended(currentPose.x, currentPose.y, lastProjDisplacement)
 
-        val desiredHeading = atan2(gvfResult.vector.y, gvfResult.vector.x)
+        val desiredHeading = FastMath.atan2(gvfResult.vector.y, gvfResult.vector.x)
         val headingError = Angle.normDelta(desiredHeading - currentPose.heading)
 
         // TODO: implement this or nah? ref eqs. (18), (23), and (24)

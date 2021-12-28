@@ -1,7 +1,7 @@
 package com.amarcolini.joos.hardware.drive
 
-import com.acmerobotics.dashboard.config.Config
 import com.amarcolini.joos.command.Command
+import com.amarcolini.joos.command.CommandScheduler
 import com.amarcolini.joos.command.Component
 import com.amarcolini.joos.command.FunctionalCommand
 import com.amarcolini.joos.drive.Drive
@@ -18,29 +18,38 @@ import kotlin.Double.Companion.NaN
 
 /**
  * A [Component] implementation of [Drive].
- *
- * @param useDashboard whether current drive pose, trajectory, and pose history are to be displayed
- * on FTC Dashboard.
  */
-@Config
-abstract class DriveComponent(private val useDashboard: Boolean = true) : Drive(), Component {
+abstract class DriveComponent : Drive(), Component {
     protected abstract val trajectoryFollower: TrajectoryFollower
     abstract val constraints: TrajectoryConstraints
     protected abstract val imu: Imu?
     private val poseHistory = ArrayList<Pose2d>()
+    var pathColor: String = "#4CAF50"
+    var turnColor: String = "#7c4dff"
+    var waitColor: String = "#dd2c00"
+    var robotColor: String = "#3F51B5"
 
-    companion object {
-        @JvmStatic
-        val POSE_HISTORY_LIMIT = 100
-    }
+    /**
+     * Whether current drive pose, trajectory, and pose history are to be displayed
+     * on FTC Dashboard.
+     */
+    var dashboardEnabled: Boolean = true
+    var poseHistoryLimit: Int = 100
 
     override fun update() {
         updatePoseEstimate()
-        getCurrentTrajectory()?.path?.let { DashboardUtil.drawSampledPath(path = it) }
-        if (trajectoryFollower.isFollowing()) poseHistory += poseEstimate
-        if (POSE_HISTORY_LIMIT > -1 && poseHistory.size > POSE_HISTORY_LIMIT) poseHistory.removeFirst()
-        if (trajectoryFollower.isFollowing()) DashboardUtil.drawPoseHistory(poseHistory = poseHistory)
-        DashboardUtil.drawRobot(pose = poseEstimate)
+        if (dashboardEnabled) {
+            val trajectory = getCurrentTrajectory()
+            if (trajectory != null) {
+                poseHistory.add(poseEstimate)
+                if (poseHistoryLimit > -1 && poseHistory.size > poseHistoryLimit)
+                    poseHistory.removeFirst()
+                DashboardUtil.drawSampledTrajectory(trajectory, pathColor, turnColor, waitColor)
+                DashboardUtil.drawPoseHistory(poseHistory, robotColor)
+            }
+            CommandScheduler.packet.fieldOverlay().setStrokeWidth(1)
+            DashboardUtil.drawRobot(poseEstimate, robotColor)
+        }
     }
 
     @JvmOverloads
@@ -68,6 +77,7 @@ abstract class DriveComponent(private val useDashboard: Boolean = true) : Drive(
     )
 
     fun followTrajectory(trajectory: Trajectory): Command {
+        poseHistory.clear()
         return if (!trajectoryFollower.isFollowing()) {
             FunctionalCommand(
                 init = { trajectoryFollower.followTrajectory(trajectory) },
@@ -90,7 +100,6 @@ abstract class DriveComponent(private val useDashboard: Boolean = true) : Drive(
 
     override fun getExternalHeadingVelocity() = imu?.headingVelocity
 
-    abstract fun setWeightedDrivePower(drivePower: Pose2d)
     abstract fun setRunMode(runMode: Motor.RunMode)
     abstract fun setZeroPowerBehavior(zeroPowerBehavior: Motor.ZeroPowerBehavior)
 }

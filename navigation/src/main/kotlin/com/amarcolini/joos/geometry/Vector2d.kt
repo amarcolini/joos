@@ -3,6 +3,10 @@ package com.amarcolini.joos.geometry
 import com.amarcolini.joos.util.Angle
 import com.amarcolini.joos.util.epsilonEquals
 import org.apache.commons.math3.util.FastMath
+import kotlin.math.acos
+import kotlin.math.cos
+import kotlin.math.sin
+import kotlin.math.sqrt
 
 /**
  * Class for representing 2D vectors (x and y).
@@ -17,24 +21,28 @@ data class Vector2d @JvmOverloads constructor(
          */
         @JvmStatic
         fun polar(r: Double, theta: Double) =
-            Vector2d(r * FastMath.cos(theta), r * FastMath.sin(theta))
+            Vector2d(r * cos(theta), r * sin(theta))
+
+        @JvmStatic
+        @JvmOverloads
+        fun of(x: Double = 0.0, y: Double = 0.0) = Vector2d(x, y)
     }
 
     /**
      * Returns the magnitude of this vector.
      */
-    fun norm() = FastMath.sqrt(FastMath.pow(x, 2) + FastMath.pow(y, 2))
+    fun norm() = sqrt(x * x + y * y)
 
     /**
-     * Returns the angle of this vector.
+     * Returns the angle of this vector (in radians).
      */
     fun angle() = Angle.norm(FastMath.atan2(y, x))
 
     /**
-     * Calculates the angle between two vectors.
+     * Calculates the angle between two vectors (in radians).
      */
     infix fun angleBetween(other: Vector2d) =
-        FastMath.acos((this dot other) / (norm() * other.norm()))
+        acos((this dot other) / (norm() * other.norm()))
 
     /**
      * Adds two vectors.
@@ -79,7 +87,7 @@ data class Vector2d @JvmOverloads constructor(
     infix fun distTo(other: Vector2d) = (this - other).norm()
 
     /**
-     * Returns the projection of one vector onto another.
+     * Returns the projection of this vector onto another.
      */
     infix fun projectOnto(other: Vector2d) = other * (this dot other) / (other dot other)
 
@@ -87,8 +95,8 @@ data class Vector2d @JvmOverloads constructor(
      * Rotates this vector by [angle].
      */
     fun rotated(angle: Double): Vector2d {
-        val newX = x * FastMath.cos(angle) - y * FastMath.sin(angle)
-        val newY = x * FastMath.sin(angle) + y * FastMath.cos(angle)
+        val newX = x * cos(angle) - y * sin(angle)
+        val newY = x * sin(angle) + y * cos(angle)
         return Vector2d(newX, newY)
     }
 

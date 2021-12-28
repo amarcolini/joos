@@ -23,7 +23,7 @@ shadowJar {
     destinationDirectory.set(buildDir)
     archiveBaseName.set("$rootProject.name-gui")
     archiveClassifier.set("all")
-    archiveVersion.set(project.version)
+    archiveVersion.set(lib_version)
 }
 
 dependencies {

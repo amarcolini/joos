@@ -2,6 +2,7 @@ package com.amarcolini.joos.path
 
 import com.amarcolini.joos.geometry.Vector2d
 import org.apache.commons.math3.util.FastMath
+import kotlin.math.abs
 
 /**
  * Parametric curve with two components (x and y). These curves are reparameterized from an internal parameter (t) to
@@ -146,15 +147,18 @@ abstract class ParametricCurve {
         tLo: Double,
         tHi: Double,
         maxSegmentLength: Double = 0.25,
-        maxDepth: Int = 30,
+        maxDepth: Int = 15,
         maxDeltaK: Double = 0.01
     ) {
+        var maxReachedDepth = 0
         fun parameterize(tLo: Double, tHi: Double, depth: Int) {
+            if (depth > maxReachedDepth) maxReachedDepth = depth
             val tMid = (tLo + tHi) * 0.5
             val vLo = internalGet(tLo)
-            val vHi = internalGet(tHi)
             val vMid = internalGet(tMid)
-            val deltaK = FastMath.abs(FastMath.abs(curvature(tLo)) - FastMath.abs(curvature(tHi)))
+            val vHi = internalGet(tHi)
+            val deltaK = abs(curvature(tLo) - curvature(tHi))
+            //TODO: more accurate length estimation?
             val segmentLength = (vLo distTo vMid) + (vMid distTo vHi)
 
             if (depth < maxDepth && (deltaK > maxDeltaK || segmentLength > maxSegmentLength)) {
@@ -167,6 +171,7 @@ abstract class ParametricCurve {
             }
         }
         parameterize(tLo, tHi, 0)
+        println(maxReachedDepth)
     }
 
     /**

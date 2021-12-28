@@ -9,7 +9,6 @@ import javafx.scene.shape.Path
 import tornadofx.closepath
 import tornadofx.lineTo
 import tornadofx.moveTo
-import kotlin.math.min
 
 internal class Robot : Entity() {
     override var pose: Pose2d = Pose2d()
@@ -49,7 +48,7 @@ internal class Robot : Entity() {
 
     override fun update(now: Long, theme: Theme) {
         val trajectory = trajectory ?: return
-        pose = trajectory[min(trajectory.duration(), t)]
+        pose = trajectory[t.coerceIn(0.0, trajectory.duration())]
         if (!running) return
         if (t >= trajectory.duration()) t = 0.0
 

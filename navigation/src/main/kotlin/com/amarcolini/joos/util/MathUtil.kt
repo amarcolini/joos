@@ -1,7 +1,7 @@
 package com.amarcolini.joos.util
 
-import org.apache.commons.math3.util.FastMath
 import kotlin.math.abs
+import kotlin.math.sqrt
 
 /**
  * Various math utilities.
@@ -13,12 +13,12 @@ object MathUtil {
      */
     @JvmStatic
     fun solveQuadratic(a: Double, b: Double, c: Double): List<Double> {
-        val disc = FastMath.pow(b, 2) - 4 * a * c
+        val disc = b * b - 4 * a * c
         return when {
             disc epsilonEquals 0.0 -> listOf(-b / (2 * a))
             disc > 0.0 -> listOf(
-                (-b + FastMath.sqrt(disc)) / (2 * a),
-                (-b - FastMath.sqrt(disc)) / (2 * a)
+                (-b + sqrt(disc)) / (2 * a),
+                (-b - sqrt(disc)) / (2 * a)
             )
             else -> emptyList()
         }

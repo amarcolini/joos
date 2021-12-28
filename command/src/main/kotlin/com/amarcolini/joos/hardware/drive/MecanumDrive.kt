@@ -83,14 +83,23 @@ open class MecanumDrive @JvmOverloads constructor(
                 1.0,
                 constraints.lateralMultiplier
             )
-        ).forEach { (motor, speed) -> motor.setPower(speed) }
+        ).forEach { (motor, speed) -> motor.power = speed }
     }
 
-    override fun setWeightedDrivePower(drivePower: Pose2d) {
+    @JvmOverloads
+    fun setWeightedDrivePower(
+        drivePower: Pose2d,
+        xWeight: Double = 1.0,
+        yWeight: Double = 1.0,
+        headingWeight: Double = 1.0
+    ) {
         var vel = drivePower
 
-        val denom = abs(vel.x) + abs(vel.y) + abs(vel.heading)
-        if (denom > 1) vel /= (denom)
+        if (abs(vel.x) + abs(vel.y) + abs(vel.heading) > 1) {
+            val denom =
+                xWeight * abs(vel.x) + yWeight * abs(vel.y) + headingWeight * abs(vel.heading)
+            vel = Pose2d(vel.x * xWeight, vel.y * yWeight, vel.heading * headingWeight) / denom
+        }
 
         setDrivePower(vel)
     }

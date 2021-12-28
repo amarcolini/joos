@@ -4,6 +4,7 @@ import com.fasterxml.jackson.annotation.JsonIncludeProperties
 import javafx.scene.effect.DropShadow
 import javafx.scene.layout.BorderStrokeStyle
 import javafx.scene.paint.Color
+import javafx.scene.text.Font
 import javafx.scene.text.FontWeight
 import tornadofx.*
 
@@ -75,10 +76,9 @@ sealed class Theme : Stylesheet() {
             baseColor = base
             text {
                 fill = text
-                fontFamily = "serif"
+                fontFamily = Font.getDefault().family
                 fontWeight = FontWeight.EXTRA_LIGHT
             }
-            fontFamily = "serif"
             faintFocusColor = Color.TRANSPARENT
             focusColor = Color.TRANSPARENT
             backgroundColor = multi(background)
@@ -223,7 +223,6 @@ sealed class Theme : Stylesheet() {
             backgroundColor += background
             padding = box(0.percent)
             effect = DropShadow(0.0, Color.TRANSPARENT)
-            fontFamily = "serif"
             separator {
                 backgroundColor += controlBorder
                 fill = controlBorder

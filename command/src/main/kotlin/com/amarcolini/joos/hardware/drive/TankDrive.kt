@@ -65,15 +65,25 @@ open class TankDrive @JvmOverloads constructor(
 
     override fun setDrivePower(drivePower: Pose2d) {
         motors.zip(
-            TankKinematics.robotToWheelVelocities(drivePower, 1.0)
+            TankKinematics.robotToWheelVelocities(
+                Pose2d(drivePower.x, 0.0, drivePower.heading), 1.0
+            )
         ).forEach { (motor, speed) -> motor.setPower(speed) }
     }
 
-    override fun setWeightedDrivePower(drivePower: Pose2d) {
-        var vel = Pose2d(drivePower.x, 0.0, drivePower.heading)
+    @JvmOverloads
+    fun setWeightedDrivePower(
+        drivePower: Pose2d,
+        xWeight: Double = 1.0,
+        headingWeight: Double = 1.0
+    ) {
+        var vel = drivePower
 
-        val denom = abs(vel.x) + abs(vel.heading)
-        if (denom > 1) vel /= (denom)
+        if (abs(vel.x) + abs(vel.heading) > 1) {
+            val denom =
+                xWeight * abs(vel.x) + headingWeight * abs(vel.heading)
+            vel = Pose2d(vel.x * xWeight, 0.0, vel.heading * headingWeight) / denom
+        }
 
         setDrivePower(vel)
     }

@@ -13,6 +13,7 @@ import com.qualcomm.robotcore.hardware.DcMotorSimple
 import com.qualcomm.robotcore.hardware.HardwareMap
 import kotlin.math.PI
 import kotlin.math.abs
+import kotlin.math.roundToInt
 import kotlin.math.sign
 
 
@@ -28,7 +29,8 @@ class Motor @JvmOverloads constructor(
     @JvmField
     val maxRPM: Double,
     @JvmField
-    val TPR: Double = 1.0
+    val TPR: Double = 1.0,
+    clock: NanoClock = NanoClock.system()
 ) : Component {
     /**
      * @param hMap the hardware map from the OpMode
@@ -37,10 +39,17 @@ class Motor @JvmOverloads constructor(
      * @param TPR the ticks per revolution of the motor
      */
     @JvmOverloads
-    constructor(hMap: HardwareMap, id: String, maxRPM: Double, TPR: Double = 1.0) : this(
+    constructor(
+        hMap: HardwareMap,
+        id: String,
+        maxRPM: Double,
+        TPR: Double = 1.0,
+        clock: NanoClock = NanoClock.system()
+    ) : this(
         hMap.get(DcMotorEx::class.java, id),
         maxRPM,
-        TPR
+        TPR,
+        clock
     )
 
     /**
@@ -57,7 +66,8 @@ class Motor @JvmOverloads constructor(
         TPR: Double = 1.0,
         wheelRadius: Double,
         gearRatio: Double,
-    ) : this(motor, maxRPM, TPR) {
+        clock: NanoClock = NanoClock.system()
+    ) : this(motor, maxRPM, TPR, clock) {
         distancePerRev = wheelRadius * 2 * PI * gearRatio
     }
 
@@ -77,8 +87,9 @@ class Motor @JvmOverloads constructor(
         maxRPM: Double,
         TPR: Double = 1.0,
         wheelRadius: Double,
-        gearRatio: Double
-    ) : this(hMap.get(DcMotorEx::class.java, id), maxRPM, TPR, wheelRadius, gearRatio)
+        gearRatio: Double,
+        clock: NanoClock = NanoClock.system()
+    ) : this(hMap.get(DcMotorEx::class.java, id), maxRPM, TPR, wheelRadius, gearRatio, clock)
 
     enum class RunMode {
         /**
@@ -101,7 +112,7 @@ class Motor @JvmOverloads constructor(
 
         /**
          * Uses an encoder to move the motor to the desired setpoint. The speed of
-         * the motor is still affected by calls to [Motor.setPower] and [Motor.setSpeed].
+         * the motor is still affected by calls to [Motor.power] and [Motor.setSpeed].
          *
          * *Note*: PID gains have not been finely tuned, and may need to be set to ensure
          * consistent motor movement. Position tolerance may need to be tuned as well.
@@ -219,7 +230,7 @@ class Motor @JvmOverloads constructor(
          * The velocity of the encoder in units per second computed using [distancePerRev].
          */
         val distanceVelocity: Double
-            get() = distancePerRev * velocity
+            get() = distancePerRev * (velocity / TPR)
 
         /**
          * Resets the encoder without having to stop the corresponding motor.
@@ -242,7 +253,7 @@ class Motor @JvmOverloads constructor(
     }
 
     @JvmField
-    val encoder = Encoder(TPR, motor::getCurrentPosition, motor::getVelocity)
+    val encoder = Encoder(TPR, motor::getCurrentPosition, motor::getVelocity, clock)
 
     var runMode: RunMode = RunMode.RUN_WITHOUT_ENCODER
     var zeroPowerBehavior: ZeroPowerBehavior = ZeroPowerBehavior.FLOAT
@@ -270,8 +281,10 @@ class Motor @JvmOverloads constructor(
 
     /**
      * Feedforward coefficients used in both [RunMode.RUN_USING_ENCODER] and [RunMode.RUN_WITHOUT_ENCODER].
+     * Note that these coefficients are applied to desired distance velocity, so not using feedforward means setting
+     * kV to 1 / maximum distance velocity.
      */
-    var feedforwardCoefficients = FeedforwardCoefficients(1.0)
+    var feedforwardCoefficients = FeedforwardCoefficients(1 / rpmToDistanceVelocity(maxRPM))
 
     /**
      * The target position used by [RunMode.RUN_TO_POSITION].
@@ -281,6 +294,8 @@ class Motor @JvmOverloads constructor(
             positionController.targetPosition = value.toDouble()
             field = value
         }
+    private var targetVel: Double = 0.0
+    private var targetAccel: Double = 0.0
 
     /**
      * Whether the motor is reversed.
@@ -309,8 +324,13 @@ class Motor @JvmOverloads constructor(
         }
 
 
-    private val veloController = PIDFController(veloCoefficients, feedforwardCoefficients)
-    private val positionController = PIDFController(positionCoefficients)
+    private val veloController = PIDFController(veloCoefficients, clock = clock)
+    private val positionController = PIDFController(positionCoefficients, clock = clock)
+
+    init {
+        veloController.setOutputBounds(-maxRPM, maxRPM)
+        positionController.setOutputBounds(-1.0, 1.0)
+    }
 
     private var speed: Double = 0.0
 
@@ -350,13 +370,18 @@ class Motor @JvmOverloads constructor(
         val vel = velocity * multiplier
         val accel = acceleration * multiplier
         speed = (vel / maxRPM).coerceIn(-1.0, 1.0)
+        targetVel = rpmToDistanceVelocity(vel)
+        targetAccel = rpmToDistanceVelocity(accel)
         when (runMode) {
             RunMode.RUN_USING_ENCODER -> {
                 veloController.pid = veloCoefficients
-                veloController.feedforward = feedforwardCoefficients
-                veloController.setTarget(vel, vel, accel)
-                motor.power =
+                veloController.setTarget(vel)
+                motor.power = Kinematics.calculateMotorFeedforward(
+                    rpmToDistanceVelocity(vel),
+                    rpmToDistanceVelocity(accel),
+                    feedforwardCoefficients,
                     veloController.update(this.velocity) / maxRPM
+                )
             }
             RunMode.RUN_TO_POSITION -> {
                 positionController.pid = positionCoefficients
@@ -365,18 +390,33 @@ class Motor @JvmOverloads constructor(
             }
             RunMode.RUN_WITHOUT_ENCODER -> {
                 motor.power = Kinematics.calculateMotorFeedforward(
-                    vel,
-                    accel,
+                    rpmToDistanceVelocity(vel),
+                    rpmToDistanceVelocity(accel),
                     feedforwardCoefficients
-                ) / maxRPM
+                )
             }
         }
     }
 
     /**
-     * Sets the percentage of power/velocity of the motor in the range `[-1.0, 1.0]`.
+     * The percentage of power/velocity of the motor in the range `[-1.0, 1.0]`.
      */
-    fun setPower(power: Double) = setSpeed(power * maxRPM, 0.0)
+    var power: Double = 0.0
+        set(value) {
+            setSpeed(value * maxRPM)
+            field = value
+        }
+        get() = speed
+
+    /**
+     * Converts from revolutions per minute to units per second.
+     */
+    fun rpmToDistanceVelocity(rpm: Double) = rpm / 60 * distancePerRev
+
+    /**
+     * Converts from units per second to revolutions per minute.
+     */
+    fun distanceVelocityToRPM(distanceVelocity: Double) = distanceVelocity / distancePerRev * 60
 
     /**
      * Updates both [RunMode.RUN_USING_ENCODER] and [RunMode.RUN_TO_POSITION]. Running this method is
@@ -384,10 +424,16 @@ class Motor @JvmOverloads constructor(
      */
     override fun update() {
         when (runMode) {
-            RunMode.RUN_USING_ENCODER -> motor.power =
-                veloController.update(velocity) / maxTPS
+            RunMode.RUN_USING_ENCODER -> {
+                motor.power = Kinematics.calculateMotorFeedforward(
+                    targetVel,
+                    targetAccel,
+                    feedforwardCoefficients,
+                    veloController.update(this.velocity) / maxRPM
+                )
+            }
             RunMode.RUN_TO_POSITION -> motor.power =
-                speed * positionController.update(encoder.position.toDouble())
+                speed * positionController.update(encoder.position.toDouble(), encoder.velocity)
             else -> return
         }
     }
@@ -395,7 +441,7 @@ class Motor @JvmOverloads constructor(
     /**
      * Returns a command that runs the motor until it has reached the desired position.
      */
-    fun goToPosition(position: Int) = Command.of {
+    fun goToPosition(position: Int): Command = Command.of {
         runMode = RunMode.RUN_TO_POSITION
         targetPosition = position
         update()
@@ -404,8 +450,15 @@ class Motor @JvmOverloads constructor(
             runMode = RunMode.RUN_TO_POSITION
             targetPosition = position
         }
+        .requires(this)
         .runUntil { !isBusy() }
         .onEnd { _, _ -> setSpeed(0.0) }
+
+    /**
+     * Returns a command that runs the motor until it has reached the desired distance.
+     */
+    fun goToDistance(distance: Double): Command =
+        goToPosition((distance / distancePerRev * TPR).roundToInt())
 
     /**
      * The distance per revolution travelled by the motor.
@@ -439,6 +492,17 @@ class Motor @JvmOverloads constructor(
         get() = encoder.velocity * 60 / TPR
 
     /**
+     * The velocity of the motor in the specified [units]. Computed using the encoder.
+     */
+    fun getVelocity(units: RotationUnit): Double = when (units) {
+        RotationUnit.RPM -> velocity
+        RotationUnit.TPS -> encoder.velocity
+        RotationUnit.UPS -> distanceVelocity
+        RotationUnit.DPS -> encoder.velocity / TPR * 360
+        RotationUnit.RPS -> encoder.velocity / TPR * 2 * PI
+    }
+
+    /**
      * The current position of the encoder.
      */
     val currentPosition
@@ -464,9 +528,4 @@ class Motor @JvmOverloads constructor(
      */
     val distanceVelocity
         get() = encoder.distanceVelocity
-
-    /**
-     * Returns the percentage of power currently set (in the range `[-1.0, 1.0]`).
-     */
-    fun get() = motor.power
 }

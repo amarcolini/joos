@@ -2,6 +2,7 @@ package com.amarcolini.joos.control
 
 import com.amarcolini.joos.kinematics.Kinematics
 import com.amarcolini.joos.util.NanoClock
+import com.amarcolini.joos.util.wrap
 import kotlin.math.abs
 import kotlin.math.sign
 
@@ -27,6 +28,7 @@ class PIDFController @JvmOverloads constructor(
         }
 
     private var errorSum: Double = 0.0
+    private var isIntegrating: Boolean = true
     private var lastUpdateTimestamp: Double = Double.NaN
 
     var inputBounded: Boolean = false
@@ -114,10 +116,7 @@ class PIDFController @JvmOverloads constructor(
     private fun getPositionError(measuredPosition: Double): Double {
         var error = targetPosition - measuredPosition
         if (inputBounded) {
-            val inputRange = maxInput - minInput
-            while (abs(error) > inputRange / 2.0) {
-                error -= sign(error) * inputRange
-            }
+            error = error.wrap(minInput, maxInput)
         }
         return error
     }
@@ -141,8 +140,12 @@ class PIDFController @JvmOverloads constructor(
             0.0
         } else {
             val dt = currentTimestamp - lastUpdateTimestamp
-            val newError = 0.5 * (error + lastError) * dt
-            errorSum += newError
+            if (isIntegrating) {
+                val newError = 0.5 * (error + lastError) * dt
+                errorSum += newError
+            } else {
+                errorSum = 0.0
+            }
             val errorDeriv =
                 (measuredVelocity?.let { targetVelocity - it } ?: (error - lastError) / dt)
             val filteredDeriv = (errorDeriv * pid.N) / (errorSum + pid.N)
@@ -163,12 +166,11 @@ class PIDFController @JvmOverloads constructor(
             )
 
             if (outputBounded) {
-                if (output != output.coerceIn(minOutput, maxOutput) && sign(error) == sign(output)
-                ) {
-                    errorSum -= newError
-                }
-                output.coerceIn(minOutput, maxOutput)
+                val clamped = output.coerceIn(minOutput, maxOutput)
+                isIntegrating = !(output != clamped && sign(error) == sign(output))
+                clamped
             } else {
+                isIntegrating = true
                 output
             }
         }
@@ -179,6 +181,7 @@ class PIDFController @JvmOverloads constructor(
      */
     fun reset() {
         errorSum = 0.0
+        isIntegrating = true
         lastError = 0.0
         lastUpdateTimestamp = Double.NaN
     }

@@ -58,14 +58,14 @@ abstract class BaseTrajectoryBuilder<T : BaseTrajectoryBuilder<T>> protected con
     }
 
     /**
-     * Adds a turn segment that turns [angle] radians.
+     * Adds a turn segment that turns [angle] degrees.
      *
-     * @param angle angle to turn (in radians)
+     * @param angle angle to turn (in degrees)
      */
     fun turn(angle: Double): T {
         pushPath()
         val start = if (segments.isEmpty()) startPose else segments.last().end()
-        addSegment(makeTurnSegment(start, angle))
+        addSegment(makeTurnSegment(start, Math.toRadians(angle)))
         pathBuilder = PathBuilder(segments.last().end())
 
         return this as T
@@ -186,10 +186,10 @@ abstract class BaseTrajectoryBuilder<T : BaseTrajectoryBuilder<T>> protected con
      * Adds a spline segment with tangent heading interpolation.
      *
      * @param endPosition end position
-     * @param endTangent end tangent
+     * @param endTangent end tangent, in degrees
      */
     fun splineTo(endPosition: Vector2d, endTangent: Double): T {
-        addPathSegment { pathBuilder.splineTo(endPosition, endTangent) }
+        addPathSegment { pathBuilder.splineTo(endPosition, Math.toRadians(endTangent)) }
 
         return this as T
     }
@@ -198,10 +198,15 @@ abstract class BaseTrajectoryBuilder<T : BaseTrajectoryBuilder<T>> protected con
      * Adds a spline segment with constant heading interpolation.
      *
      * @param endPosition end position
-     * @param endTangent end tangent
+     * @param endTangent end tangent, in degrees
      */
     fun splineToConstantHeading(endPosition: Vector2d, endTangent: Double): T {
-        addPathSegment { pathBuilder.splineToConstantHeading(endPosition, endTangent) }
+        addPathSegment {
+            pathBuilder.splineToConstantHeading(
+                endPosition,
+                Math.toRadians(endTangent)
+            )
+        }
 
         return this as T
     }
@@ -210,10 +215,10 @@ abstract class BaseTrajectoryBuilder<T : BaseTrajectoryBuilder<T>> protected con
      * Adds a spline segment with linear heading interpolation.
      *
      * @param endPose end pose
-     * @param endTangent end tangent
+     * @param endTangent end tangent, in degrees
      */
     fun splineToLinearHeading(endPose: Pose2d, endTangent: Double): T {
-        addPathSegment { pathBuilder.splineToLinearHeading(endPose, endTangent) }
+        addPathSegment { pathBuilder.splineToLinearHeading(endPose, Math.toRadians(endTangent)) }
 
         return this as T
     }
@@ -222,10 +227,10 @@ abstract class BaseTrajectoryBuilder<T : BaseTrajectoryBuilder<T>> protected con
      * Adds a spline segment with spline heading interpolation.
      *
      * @param endPose end pose
-     * @param endTangent end tangent
+     * @param endTangent end tangent, in degrees
      */
     fun splineToSplineHeading(endPose: Pose2d, endTangent: Double): T {
-        addPathSegment { pathBuilder.splineToSplineHeading(endPose, endTangent) }
+        addPathSegment { pathBuilder.splineToSplineHeading(endPose, Math.toRadians(endTangent)) }
 
         return this as T
     }

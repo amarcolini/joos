@@ -4,23 +4,28 @@ import com.amarcolini.joos.geometry.Pose2d
 import com.amarcolini.joos.geometry.Vector2d
 import com.amarcolini.joos.trajectory.Trajectory
 import com.amarcolini.joos.trajectory.TrajectoryBuilder
+import com.amarcolini.joos.trajectory.WaitSegment
 import com.amarcolini.joos.trajectory.config.TrajectoryConfig
 import com.amarcolini.joos.trajectory.config.TrajectoryConstraints
 import kotlin.math.PI
 import kotlin.reflect.full.declaredMemberProperties
 
-internal fun Pose2d.toKotlin(): String = String.format("Pose2d(%.2f, %.2f, %.5f)", x, y, heading)
-internal fun Pose2d.toJava(): String = String.format("new Pose2d(%.2f, %.2f, %.5f)", x, y, heading)
+internal fun Pose2d.toKotlin(): String =
+    String.format("Pose2d(%.2f, %.2f, %.2f.rad)", x, y, Math.toDegrees(heading))
+
+internal fun Pose2d.toJava(): String =
+    String.format("Pose2d.of(%.2f, %.2f, %.2f)", x, y, Math.toDegrees(heading))
+
 internal fun Vector2d.toKotlin(): String = String.format("Vector2d(%.2f, %.2f)", x, y)
-internal fun Vector2d.toJava(): String = String.format("new Vector2d(%.2f, %.2f)", x, y)
+internal fun Vector2d.toJava(): String = String.format("Vector2d.of(%.2f, %.2f)", x, y)
 internal fun Waypoint.toKotlin(): String {
     var string = (this::class.simpleName?.replaceFirstChar { it.lowercase() } ?: "") + "("
     this::class.declaredMemberProperties.forEach { prop ->
         when (val value = prop.call(this)) {
             is Pose2d -> string += value.toKotlin() + ", "
             is Vector2d -> string += value.toKotlin() + ", "
-            is Degree -> string += "Math.toRadians(${value.value}), "
-            is Double -> string += "$value, "
+            is Degree -> string += String.format("%.2f, ", value.value)
+            is Double -> string += String.format("%.2f, ", value)
         }
     }
     string = string.dropLast(2) + ")"
@@ -36,8 +41,8 @@ internal fun Waypoint.toJava(): String {
         when (val value = prop.call(this)) {
             is Pose2d -> string += value.toJava() + ", "
             is Vector2d -> string += value.toJava() + ", "
-            is Degree -> string += "Math.toRadians(${value.value}), "
-            is Double -> string += "$value, "
+            is Degree -> string += String.format("%.2f, ", value.value)
+            is Double -> string += String.format("%.2f, ", value)
         }
     }
     string = string.dropLast(2) + ")"
@@ -170,56 +175,56 @@ internal fun Collection<Waypoint>.toTrajectory(
     val builder = TrajectoryBuilder(
         start.pose, start.tangent.radians, constraints, resolution
     )
-    if (size < 2)
-        builder.wait(0.0)
 
-    this.forEach {
-        try {
-            when (it) {
-                is Turn -> builder.turn(it.angle.radians)
-                is Wait -> builder.wait(it.seconds)
-                is LineTo -> builder.lineTo(it.pos)
-                is LineToConstantHeading -> builder.lineToConstantHeading(it.pos)
-                is LineToLinearHeading -> builder.lineToLinearHeading(it.pose)
-                is LineToSplineHeading -> builder.lineToSplineHeading(it.pose)
-                is SplineTo -> builder.splineTo(it.pos, it.tangent.radians)
-                is SplineToConstantHeading -> builder.splineToConstantHeading(
-                    it.pos,
-                    it.tangent.radians
-                )
-                is SplineToLinearHeading -> builder.splineToLinearHeading(
-                    it.pose,
-                    it.tangent.radians
-                )
-                is SplineToSplineHeading -> builder.splineToSplineHeading(
-                    it.pose,
-                    it.tangent.radians
-                )
-                is Back -> builder.back(it.distance)
-                is Forward -> builder.forward(it.distance)
-                is StrafeLeft -> builder.strafeLeft(it.distance)
-                is StrafeRight -> builder.strafeRight(it.distance)
-                is StrafeTo -> builder.strafeTo(it.pos)
-                is Start -> {
+    if (this.size > 1) {
+        this.forEach {
+            try {
+                when (it) {
+                    is Turn -> builder.turn(it.angle.value)
+                    is Wait -> builder.wait(it.seconds)
+                    is LineTo -> builder.lineTo(it.pos)
+                    is LineToConstantHeading -> builder.lineToConstantHeading(it.pos)
+                    is LineToLinearHeading -> builder.lineToLinearHeading(it.pose)
+                    is LineToSplineHeading -> builder.lineToSplineHeading(it.pose)
+                    is SplineTo -> builder.splineTo(it.pos, it.tangent.value)
+                    is SplineToConstantHeading -> builder.splineToConstantHeading(
+                        it.pos,
+                        it.tangent.value
+                    )
+                    is SplineToLinearHeading -> builder.splineToLinearHeading(
+                        it.pose,
+                        it.tangent.value
+                    )
+                    is SplineToSplineHeading -> builder.splineToSplineHeading(
+                        it.pose,
+                        it.tangent.value
+                    )
+                    is Back -> builder.back(it.distance)
+                    is Forward -> builder.forward(it.distance)
+                    is StrafeLeft -> builder.strafeLeft(it.distance)
+                    is StrafeRight -> builder.strafeRight(it.distance)
+                    is StrafeTo -> builder.strafeTo(it.pos)
+                    is Start -> {
+                    }
                 }
-            }
-            it.error.value = null
-        } catch (e: Exception) {
-            it.error.value = e.message ?: e::class.simpleName
-            return try {
-                builder.build()
+                it.error.value = null
             } catch (e: Exception) {
                 it.error.value = e.message ?: e::class.simpleName
-                null
+                return try {
+                    builder.build()
+                } catch (e: Exception) {
+                    it.error.value = e.message ?: e::class.simpleName
+                    null
+                }
             }
         }
-    }
-    return try {
-        builder.build()
-    } catch (e: Exception) {
-        lastOrNull()?.error?.value = e.message ?: e::class.simpleName
-        null
-    }
+        return try {
+            builder.build()
+        } catch (e: Exception) {
+            lastOrNull()?.error?.value = e.message ?: e::class.simpleName
+            null
+        }
+    } else return Trajectory(WaitSegment(start.pose, 0.0))
 }
 
 internal fun Collection<Waypoint>.mapPose(): List<Pair<Waypoint, Pair<Pose2d, Degree>>> {

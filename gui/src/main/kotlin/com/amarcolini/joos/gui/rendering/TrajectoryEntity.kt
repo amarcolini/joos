@@ -21,15 +21,19 @@ import kotlin.math.*
 
 private const val SPATIAL_RESOLUTION = 1.0
 
-internal class TrajectoryEntity : Entity() {
+internal class TrajectoryEntity(private val getScale: () -> Double) : Entity() {
     private val path: Path = Path()
     override val node: Group = Group(path)
     override var pose: Pose2d = Pose2d()
         private set
 
     override fun update(now: Long, theme: Theme) {
-        val bounds = node.boundsInLocal
-        pose = Pose2d(bounds.centerX, bounds.centerY)
+        pose = if (trajectory.waypoints.size > 1) {
+            val bounds = node.boundsInLocal
+            Pose2d(bounds.centerX, bounds.centerY)
+        } else {
+            Pose2d((trajectory.waypoints.first() as Start).pose.vec())
+        }
     }
 
     init {
@@ -56,31 +60,33 @@ internal class TrajectoryEntity : Entity() {
                 it != path && it != moving
             }
 
-            val trajectory = value.trajectory ?: return
+            val trajectory = value.trajectory
 
-            // compute path samples
-            val displacementSamples =
-                (trajectory.length() / SPATIAL_RESOLUTION).roundToInt()
-            val displacements =
-                DoubleProgression.fromClosedInterval(
-                    0.0,
-                    trajectory.length(),
-                    displacementSamples
-                )
-            val poses = displacements.map { trajectory.path[it] }
-            val start = trajectory.start()
-            path.elements += MoveTo(start.x, start.y)
-            path.elements += poses.drop(1).map {
-                javafx.scene.shape.LineTo(it.x, it.y)
+            if (trajectory != null) {
+                // compute path samples
+                val displacementSamples =
+                    (trajectory.length() / SPATIAL_RESOLUTION).roundToInt()
+                val displacements =
+                    DoubleProgression.fromClosedInterval(
+                        0.0,
+                        trajectory.length(),
+                        displacementSamples
+                    )
+                val poses = displacements.map { trajectory.path[it] }
+                val start = trajectory.start()
+                path.elements += MoveTo(start.x, start.y)
+                path.elements += poses.drop(1).map {
+                    javafx.scene.shape.LineTo(it.x, it.y)
+                }
+                path.stroke = Color.GREEN
+                path.strokeWidth = 1.0
             }
-            path.stroke = Color.GREEN
-            path.strokeWidth = 1.0
 
             //render draggable waypoints
             waypoints.mapPose().zipWithNext { (_, last), (waypoint, current) ->
                 if (usedWaypoint == waypoint) return@zipWithNext
                 val (pose, tangent) = current
-                val (lastPose, lastTangent) = last
+                val (lastPose, _) = last
                 when (waypoint) {
                     is Turn -> {
                         val arrow = node.group()
@@ -203,9 +209,20 @@ internal class TrajectoryEntity : Entity() {
                         circle.isCache = true
                         circle.cacheHint = CacheHint.ROTATE
                         var currentWaypoint = waypoint
+                        lateinit var lastMouse: Vector2d
+                        circle.setOnMousePressed {
+                            val scale = getScale()
+                            lastMouse = Vector2d(it.sceneY / scale, it.sceneX / scale)
+                        }
                         circle.setOnMouseDragged {
+                            val scale = getScale()
+                            val mouse = Vector2d(it.sceneY / scale, it.sceneX / scale)
+                            val delta = (mouse - lastMouse)
+                            lastMouse = mouse
+                            val new = Vector2d(delta.x + circle.centerX, delta.y + circle.centerY)
                             var pos =
-                                Vector2d(it.x.coerceIn(-72.0, 72.0), it.y.coerceIn(-72.0, 72.0))
+                                Vector2d(new.x.coerceIn(-72.0, 72.0), new.y.coerceIn(-72.0, 72.0))
+                            println(pos)
                             val newWaypoint = when (waypoint) {
                                 is SplineTo -> SplineTo(pos, waypoint.tangent)
                                 is Start -> Start(

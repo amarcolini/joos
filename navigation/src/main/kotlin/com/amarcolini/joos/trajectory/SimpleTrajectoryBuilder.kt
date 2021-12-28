@@ -18,9 +18,9 @@ class SimpleTrajectoryBuilder private constructor(
     private val maxProfileVel: Double,
     private val maxProfileAccel: Double,
     private val maxProfileJerk: Double,
-    private val maxAngVel: Double,
-    private val maxAngAccel: Double,
-    private val maxAngJerk: Double,
+    maxAngVel: Double,
+    maxAngAccel: Double,
+    maxAngJerk: Double,
     private val start: MotionState
 ) : BaseTrajectoryBuilder<SimpleTrajectoryBuilder>(startPose, startDeriv, startSecondDeriv) {
     /**
@@ -109,6 +109,10 @@ class SimpleTrajectoryBuilder private constructor(
             maxProfileAccel,
             maxProfileJerk,
         )
+
+    private val maxAngVel = Math.toRadians(maxAngVel)
+    private val maxAngAccel = Math.toRadians(maxAngAccel)
+    private val maxAngJerk = Math.toRadians(maxAngJerk)
 
     override fun makeTurnSegment(pose: Pose2d, angle: Double) =
         TrajectoryGenerator.generateTurnSegment(

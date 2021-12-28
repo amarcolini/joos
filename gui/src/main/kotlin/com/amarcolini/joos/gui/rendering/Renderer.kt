@@ -15,7 +15,7 @@ import tornadofx.onLeftClick
 import kotlin.math.min
 
 internal class Renderer(val theme: Property<Theme>, background: Image) : StackPane() {
-    val trajectoryRenderer = TrajectoryEntity()
+    val trajectoryRenderer = TrajectoryEntity { -min(width, height) / 144 }
     val robot = Robot()
     val fieldRenderer = FieldRenderer(background)
     val scrubBar = ScrubBarEntity()

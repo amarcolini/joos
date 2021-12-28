@@ -4,6 +4,10 @@ import com.acmerobotics.dashboard.canvas.Canvas
 import com.amarcolini.joos.command.CommandScheduler
 import com.amarcolini.joos.geometry.Pose2d
 import com.amarcolini.joos.path.Path
+import com.amarcolini.joos.trajectory.PathTrajectorySegment
+import com.amarcolini.joos.trajectory.Trajectory
+import com.amarcolini.joos.trajectory.TurnSegment
+import com.amarcolini.joos.trajectory.WaitSegment
 import kotlin.math.ceil
 
 
@@ -17,8 +21,9 @@ object DashboardUtil {
     @JvmStatic
     @JvmOverloads
     fun drawPoseHistory(
-        canvas: Canvas = CommandScheduler.packet.fieldOverlay(),
-        poseHistory: List<Pose2d>
+        poseHistory: List<Pose2d>,
+        color: String,
+        canvas: Canvas = CommandScheduler.packet.fieldOverlay()
     ) {
         val xPoints = DoubleArray(poseHistory.size)
         val yPoints = DoubleArray(poseHistory.size)
@@ -27,12 +32,18 @@ object DashboardUtil {
             xPoints[i] = pose.x
             yPoints[i] = pose.y
         }
+        canvas.setStroke(color)
         canvas.strokePolyline(xPoints, yPoints)
     }
 
     @JvmStatic
     @JvmOverloads
-    fun drawRobot(canvas: Canvas = CommandScheduler.packet.fieldOverlay(), pose: Pose2d) {
+    fun drawRobot(
+        pose: Pose2d,
+        color: String,
+        canvas: Canvas = CommandScheduler.packet.fieldOverlay()
+    ) {
+        canvas.setStroke(color)
         canvas.strokeCircle(pose.x, pose.y, ROBOT_RADIUS)
         val (x, y) = pose.headingVec() * ROBOT_RADIUS
         val x1: Double = pose.x + x / 2
@@ -45,8 +56,9 @@ object DashboardUtil {
     @JvmStatic
     @JvmOverloads
     fun drawSampledPath(
-        canvas: Canvas = CommandScheduler.packet.fieldOverlay(),
         path: Path,
+        color: String,
+        canvas: Canvas = CommandScheduler.packet.fieldOverlay(),
         resolution: Double = DEFAULT_RESOLUTION
     ) {
         val samples = ceil(path.length() / resolution).toInt()
@@ -59,6 +71,38 @@ object DashboardUtil {
             xPoints[i] = x
             yPoints[i] = y
         }
+        canvas.setStroke(color)
         canvas.strokePolyline(xPoints, yPoints)
+    }
+
+    @JvmStatic
+    @JvmOverloads
+    fun drawSampledTrajectory(
+        trajectory: Trajectory,
+        pathColor: String = "#4CAF50",
+        turnColor: String = "#7c4dff",
+        waitColor: String = "#dd2c00",
+        canvas: Canvas = CommandScheduler.packet.fieldOverlay(),
+        resolution: Double = DEFAULT_RESOLUTION
+    ) {
+        trajectory.segments.forEach {
+            when (it) {
+                is PathTrajectorySegment -> {
+                    canvas.setStrokeWidth(1)
+                    drawSampledPath(it.path, pathColor, canvas, resolution)
+                }
+                is TurnSegment -> {
+                    val pose = it.start()
+                    canvas.setFill(turnColor)
+                    canvas.fillCircle(pose.x, pose.y, 2.0)
+                }
+                is WaitSegment -> {
+                    val pose = it.start()
+                    canvas.setStrokeWidth(1)
+                    canvas.setStroke(waitColor)
+                    canvas.strokeCircle(pose.x, pose.y, 3.0)
+                }
+            }
+        }
     }
 }

@@ -5,7 +5,10 @@ import com.amarcolini.joos.geometry.Vector2d
 import com.amarcolini.joos.localization.Localizer
 import com.qualcomm.hardware.bosch.BNO055IMU
 import com.qualcomm.robotcore.hardware.HardwareMap
-import org.firstinspires.ftc.robotcore.external.navigation.*
+import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit
+import org.firstinspires.ftc.robotcore.external.navigation.DistanceUnit
+import org.firstinspires.ftc.robotcore.external.navigation.Position
+import org.firstinspires.ftc.robotcore.external.navigation.Velocity
 import kotlin.math.abs
 
 /**
@@ -24,6 +27,21 @@ class Imu constructor(val imu: BNO055IMU) {
         hMap.get(BNO055IMU::class.java, id)
     )
 
+    /**
+     * The axes of the imu, where the Y axis points towards the motor ports,
+     * the X axis points towards the USB port(s), and the Z axis points up out of the REV Hub/Control Hub.
+     *
+     *                           | Z axis
+     *                           |
+     *     (Motor Port Side)     |   / X axis
+     *                       ____|__/____
+     *          Y axis     / *   | /    /|   (IO Side)
+     *          _________ /______|/    //      I2C
+     *                   /___________ //     Digital
+     *                  |____________|/      Analog
+     *
+     *                 (Servo Port Side)
+     */
     enum class Axis {
         X, Y, Z
     }
@@ -38,7 +56,7 @@ class Imu constructor(val imu: BNO055IMU) {
      * A localizer that only uses the IMU to calculate position and orientation.
      */
     val localizer: Localizer by lazy {
-        imu.startAccelerationIntegration(Position(), Velocity(), 10)
+        imu.startAccelerationIntegration(Position(), Velocity(), 100)
         object : Localizer {
             private var offset = Pose2d()
             override var poseEstimate: Pose2d = Pose2d()
@@ -66,6 +84,9 @@ class Imu constructor(val imu: BNO055IMU) {
         }
     }
 
+    /**
+     * The axis to be used as heading.
+     */
     var axis: Axis = Axis.Z
 
     /**
@@ -77,19 +98,7 @@ class Imu constructor(val imu: BNO055IMU) {
     /**
      * Returns the heading of the IMU using the gyroscope.
      */
-    val heading: Double
-        get() {
-            val orientation = imu.getAngularOrientation(
-                AxesReference.INTRINSIC,
-                AxesOrder.XYZ,
-                AngleUnit.RADIANS
-            )
-            return when (axis) {
-                Axis.X -> orientation.firstAngle
-                Axis.Y -> orientation.secondAngle
-                Axis.Z -> orientation.thirdAngle
-            } * if (reversed) -1.0 else 1.0
-        }
+    val heading: Double get() = imu.angularOrientation.firstAngle.toDouble()
 
     /**
      * Returns the heading velocity of IMU using the gyroscope.
@@ -98,9 +107,9 @@ class Imu constructor(val imu: BNO055IMU) {
         get() {
             val velocity = imu.angularVelocity.toAngleUnit(AngleUnit.RADIANS)
             return when (axis) {
-                Axis.X -> velocity.xRotationRate
+                Axis.X -> -velocity.zRotationRate
                 Axis.Y -> velocity.yRotationRate
-                Axis.Z -> velocity.zRotationRate
+                Axis.Z -> -velocity.xRotationRate
             } * if (reversed) -1.0 else 1.0
         }
 

@@ -1,5 +1,3 @@
-package com.amarcolini.joos
-
 import com.amarcolini.joos.path.ParametricCurve
 import com.amarcolini.joos.profile.MotionProfile
 import com.amarcolini.joos.util.DoubleProgression

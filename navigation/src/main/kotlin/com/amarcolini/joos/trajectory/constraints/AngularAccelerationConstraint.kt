@@ -1,7 +1,9 @@
 package com.amarcolini.joos.trajectory.constraints
 
 import com.amarcolini.joos.path.Path
-import org.apache.commons.math3.util.FastMath
+import kotlin.math.max
+import kotlin.math.pow
+import kotlin.math.sqrt
 
 /**
  * Constraint limiting angular acceleration.
@@ -11,12 +13,12 @@ class AngularAccelerationConstraint(val maxAngAccel: Double) : TrajectoryAcceler
         val currentCurvature = path.deriv(s).heading
         val lastCurvature = path.deriv(lastS).heading
 
-        val part1 = FastMath.pow((lastCurvature + currentCurvature) * lastVel, 2)
+        val part1 = ((lastCurvature + currentCurvature) * lastVel).pow(2)
         val part2 = 8 * currentCurvature * maxAngAccel * dx
 
-        val v1 = ((lastCurvature - currentCurvature) * lastVel + FastMath.sqrt(part1 + part2)) /
+        val v1 = ((lastCurvature - currentCurvature) * lastVel + sqrt(part1 + part2)) /
                 (2 * currentCurvature)
-        val v2star = (lastCurvature - currentCurvature) * lastVel - FastMath.sqrt(part1 - part2) /
+        val v2star = (lastCurvature - currentCurvature) * lastVel - sqrt(part1 - part2) /
                 (2 * currentCurvature)
         val v1hat = -(2 * dx * maxAngAccel) / (lastCurvature * lastVel) - lastVel
         val v2hat = (2 * dx * maxAngAccel) / (lastCurvature * lastVel) - lastVel
@@ -24,10 +26,10 @@ class AngularAccelerationConstraint(val maxAngAccel: Double) : TrajectoryAcceler
         return when {
             currentCurvature > 0 ->
                 if (part1 - part2 < 0) v1
-                else FastMath.max(v2star, v1)
+                else max(v2star, v1)
             currentCurvature < 0 ->
                 if (part1 + part2 < 0) v2star
-                else FastMath.max(v1, v2star)
+                else max(v1, v2star)
             else -> when {
                 lastCurvature > 0 -> v2hat
                 lastCurvature < 0 -> v1hat

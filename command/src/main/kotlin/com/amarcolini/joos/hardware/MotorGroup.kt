@@ -49,6 +49,8 @@ class MotorGroup(private vararg val motors: Motor) : Component {
         *ids.map { Motor(hMap, it, maxRPM, TPR, wheelRadius, gearRatio) }.toTypedArray()
     )
 
+    private val states = motors.map { it to it.reversed }.toMap()
+
     /**
      * The maximum revolutions per minute that all motors in the group can achieve.
      */
@@ -82,7 +84,7 @@ class MotorGroup(private vararg val motors: Motor) : Component {
         @JvmName("setReversed")
         set(value) {
             motors.forEach {
-                it.reversed = value
+                it.reversed = value != (states[it] == true)
             }
             field = value
         }
@@ -116,7 +118,7 @@ class MotorGroup(private vararg val motors: Motor) : Component {
      *
      * *Note*: Since power is expressed as a percentage, motors may move at different speeds.
      */
-    fun setPower(power: Double) = motors.forEach { it.setPower(power) }
+    fun setPower(power: Double) = motors.forEach { it.power = power }
 
     var zeroPowerBehavior: Motor.ZeroPowerBehavior = Motor.ZeroPowerBehavior.FLOAT
         set(value) {
@@ -187,8 +189,34 @@ class MotorGroup(private vararg val motors: Motor) : Component {
             runMode = RunMode.RUN_TO_POSITION
             targetPosition = position
         }
+        .requires(this)
         .runUntil { !isBusy() }
         .onEnd { _, _ -> setSpeed(0.0) }
+
+    /**
+     * Returns a command that runs all the motors in the group until all of them have reached the desired distance.
+     */
+    fun goToDistance(distance: Double) = Command.of {
+        runMode = RunMode.RUN_TO_POSITION
+        motors.forEach {
+            it.targetPosition = (distance / it.distancePerRev * it.TPR).toInt()
+        }
+        update()
+    }
+        .onInit {
+            runMode = RunMode.RUN_TO_POSITION
+            motors.forEach {
+                it.targetPosition = (distance / it.distancePerRev * it.TPR).toInt()
+            }
+        }
+        .requires(this)
+        .runUntil { !isBusy() }
+        .onEnd { _, _ -> setSpeed(0.0) }
+
+    /**
+     * Resets the encoders of all the motors in the group.
+     */
+    fun resetEncoder() = motors.forEach { it.resetEncoder() }
 
     /**
      * Returns whether any of the motors in the group are currently moving towards the desired setpoint using [RunMode.RUN_TO_POSITION].

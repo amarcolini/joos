@@ -11,20 +11,20 @@ class WaypointBuilder(
     private val constraints: TrajectoryConstraints = GenericConstraints()
 ) {
     private val waypoints: ArrayList<Waypoint> =
-        arrayListOf(Start(startPose, Degree(startTangent, false)))
+        arrayListOf(Start(startPose, Degree(startTangent, true)))
 
     fun splineTo(pos: Vector2d, tangent: Double): WaypointBuilder {
-        waypoints += SplineTo(pos, Degree(tangent, false))
+        waypoints += SplineTo(pos, Degree(tangent, true))
         return this
     }
 
     fun splineToConstantHeading(pos: Vector2d, tangent: Double): WaypointBuilder {
-        waypoints += SplineToConstantHeading(pos, Degree(tangent, false))
+        waypoints += SplineToConstantHeading(pos, Degree(tangent, true))
         return this
     }
 
     fun splineToSplineHeading(pose: Pose2d, tangent: Double): WaypointBuilder {
-        waypoints += SplineToSplineHeading(pose, Degree(tangent, false))
+        waypoints += SplineToSplineHeading(pose, Degree(tangent, true))
         return this
     }
 
@@ -69,7 +69,7 @@ class WaypointBuilder(
     }
 
     fun turn(angle: Double): WaypointBuilder {
-        waypoints += Turn(Degree(angle, false))
+        waypoints += Turn(Degree(angle, true))
         return this
     }
 

@@ -41,7 +41,7 @@ class TrajectoryBuilder private constructor(
         resolution: Double = 0.25
     ) : this(
         startPose,
-        Pose2d(Angle.vec(startTangent), 0.0),
+        Pose2d(Angle.vec(Math.toRadians(startTangent)), 0.0),
         Pose2d(),
         baseVelConstraint,
         baseAccelConstraint,
@@ -67,9 +67,9 @@ class TrajectoryBuilder private constructor(
         startTangent,
         constraints.velConstraint,
         constraints.accelConstraint,
-        constraints.maxAngVel,
-        constraints.maxAngAccel,
-        constraints.maxAngJerk,
+        Math.toRadians(constraints.maxAngVel),
+        Math.toRadians(constraints.maxAngAccel),
+        Math.toRadians(constraints.maxAngJerk),
         resolution
     )
 
@@ -113,9 +113,9 @@ class TrajectoryBuilder private constructor(
         reversed,
         constraints.velConstraint,
         constraints.accelConstraint,
-        constraints.maxAngVel,
-        constraints.maxAngAccel,
-        constraints.maxAngJerk,
+        Math.toRadians(constraints.maxAngVel),
+        Math.toRadians(constraints.maxAngAccel),
+        Math.toRadians(constraints.maxAngJerk),
         resolution
     )
 
@@ -210,12 +210,12 @@ class TrajectoryBuilder private constructor(
     @JvmOverloads
     fun setAngularConstraints(
         angVelOverride: Double,
-        angAccelOverride: Double = baseAngAccel,
-        angJerkOverride: Double = baseAngJerk
+        angAccelOverride: Double = Math.toDegrees(baseAngAccel),
+        angJerkOverride: Double = Math.toDegrees(baseAngJerk)
     ): TrajectoryBuilder {
-        currentAngVel = angVelOverride
-        currentAngAccel = angAccelOverride
-        currentAngJerk = angJerkOverride
+        currentAngVel = Math.toRadians(angVelOverride)
+        currentAngAccel = Math.toRadians(angAccelOverride)
+        currentAngJerk = Math.toRadians(angJerkOverride)
         return this
     }
 
@@ -239,16 +239,16 @@ class TrajectoryBuilder private constructor(
     }
 
     /**
-     * Adds a turn segment that turns [angle] radians.
+     * Adds a turn segment that turns [angle] degrees.
      *
-     * @param angle angle to turn (in radians)
+     * @param angle angle to turn (in degrees)
      * @param constraintsOverride segment-specific constraints
      */
     fun turn(
         angle: Double,
         angVelOverride: Double,
-        angAccelOverride: Double = baseAngAccel,
-        angJerkOverride: Double = baseAngJerk
+        angAccelOverride: Double = Math.toDegrees(baseAngAccel),
+        angJerkOverride: Double = Math.toDegrees(baseAngJerk)
     ): TrajectoryBuilder {
         setAngularConstraints(angVelOverride, angAccelOverride, angJerkOverride)
         turn(angle)
@@ -381,7 +381,7 @@ class TrajectoryBuilder private constructor(
      * Adds a spline segment with tangent heading interpolation.
      *
      * @param endPosition end position
-     * @param endTangent end tangent
+     * @param endTangent end tangent, in degrees
      * @param constraintsOverride segment-specific constraints
      */
     fun splineTo(
@@ -400,7 +400,7 @@ class TrajectoryBuilder private constructor(
      * Adds a spline segment with constant heading interpolation.
      *
      * @param endPosition end position
-     * @param endTangent end tangent
+     * @param endTangent end tangent, in degrees
      * @param constraintsOverride segment-specific constraints
      */
     fun splineToConstantHeading(
@@ -419,7 +419,7 @@ class TrajectoryBuilder private constructor(
      * Adds a spline segment with linear heading interpolation.
      *
      * @param endPose end pose
-     * @param endTangent end tangent
+     * @param endTangent end tangent, in degrees
      * @param constraintsOverride segment-specific constraints
      */
     fun splineToLinearHeading(
