@@ -3,6 +3,7 @@ package com.amarcolini.joos.gui.rendering
 import com.amarcolini.joos.geometry.Pose2d
 import com.amarcolini.joos.geometry.Vector2d
 import com.amarcolini.joos.gui.style.Theme
+import com.amarcolini.joos.gui.trajectory.Start
 import com.amarcolini.joos.gui.trajectory.WaypointTrajectory
 import javafx.animation.AnimationTimer
 import javafx.beans.property.Property
@@ -100,6 +101,8 @@ internal class Renderer(val theme: Property<Theme>, background: Image) : StackPa
                 (it.x - width / 2) / scale
             )
         }
+
+        trajectoryRenderer.trajectory = WaypointTrajectory(listOf(Start()))
 
         timer.start()
     }

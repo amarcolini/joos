@@ -45,8 +45,7 @@ sealed class Theme : Stylesheet() {
         val error by csspseudoclass()
         val errorText by cssclass()
         val padding by cssclass()
-        val mono =
-            loadFont(this::class.java.getResource("/JetBrainsMono[wght].ttf").path, 40)
+        val mono = loadFont("/fonts/JetBrainsMono[wght].ttf", 40)!!
     }
 
     abstract val base: Color

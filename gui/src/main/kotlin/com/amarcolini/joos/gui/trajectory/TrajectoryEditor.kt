@@ -91,6 +91,17 @@ internal class TrajectoryEditor(val renderer: Renderer) : View() {
                                 }
                                 removeWhen { editingProperty().not() }
                                 whenVisible { requestFocus() }
+                                focusedProperty().onChange { focused ->
+                                    if (!focused) {
+                                        it.setter.call(item, textFormatter.value)
+                                        valueText.text = it.call(item).toString()
+                                        renderer.trajectory = WaypointTrajectory(
+                                            renderer.waypoints,
+                                            renderer.constraints.value
+                                        )
+//                                        commitEdit(item)
+                                    }
+                                }
                                 action {
                                     it.setter.call(item, textFormatter.value)
                                     valueText.text = it.call(item).toString()
