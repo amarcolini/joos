@@ -222,7 +222,6 @@ internal class TrajectoryEntity(private val getScale: () -> Double) : Entity() {
                             val new = Vector2d(delta.x + circle.centerX, delta.y + circle.centerY)
                             var pos =
                                 Vector2d(new.x.coerceIn(-72.0, 72.0), new.y.coerceIn(-72.0, 72.0))
-                            println(pos)
                             val newWaypoint = when (waypoint) {
                                 is SplineTo -> SplineTo(pos, waypoint.tangent)
                                 is Start -> Start(

@@ -142,12 +142,17 @@ open class CommandScheduler {
     }
 
     /**
-     * Maps a condition to commands. If the condition returns true, the commands are scheduled. A command can be mapped to multiple conditions.
+     * Maps a condition to commands. If the condition returns true, the commands are scheduled.
+     * A command can be mapped to multiple conditions.
      */
     fun map(condition: BooleanSupplier, vararg commands: Command) {
         conditions[condition] = commands.toMutableSet()
     }
 
+    /**
+     * Maps a condition to commands. If the condition returns true, the commands are scheduled.
+     * A command can be mapped to multiple conditions.
+     */
     fun map(condition: BooleanSupplier, vararg commands: Runnable) {
         map(condition, *commands.map { Command.of(it) }.toTypedArray())
     }
@@ -156,7 +161,7 @@ open class CommandScheduler {
      * Removes commands from the list of mappings.
      */
     fun unmap(vararg commands: Command) {
-        conditions.values.forEach { it.removeAll(commands) }
+        conditions.values.forEach { it.removeAll(commands.toSet()) }
     }
 
     /**
@@ -174,9 +179,10 @@ open class CommandScheduler {
     }
 
     /**
-     * Resets this [CommandScheduler]. All commands, components, and conditions are cleared.
+     * Resets this [CommandScheduler]. All commands are cancelled, and all commands, components, and conditions are cleared.
      */
     fun reset() {
+        cancelAll()
         scheduledCommands.clear()
         components.clear()
         requirements.clear()

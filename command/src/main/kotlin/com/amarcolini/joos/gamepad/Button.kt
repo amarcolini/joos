@@ -1,5 +1,8 @@
 package com.amarcolini.joos.gamepad
 
+/**
+ * Represents the state of a button.
+ */
 class Button(
     state: Boolean = false,
 ) : Toggleable() {

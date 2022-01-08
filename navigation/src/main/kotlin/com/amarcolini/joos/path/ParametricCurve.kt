@@ -150,9 +150,7 @@ abstract class ParametricCurve {
         maxDepth: Int = 15,
         maxDeltaK: Double = 0.01
     ) {
-        var maxReachedDepth = 0
         fun parameterize(tLo: Double, tHi: Double, depth: Int) {
-            if (depth > maxReachedDepth) maxReachedDepth = depth
             val tMid = (tLo + tHi) * 0.5
             val vLo = internalGet(tLo)
             val vMid = internalGet(tMid)
@@ -171,7 +169,6 @@ abstract class ParametricCurve {
             }
         }
         parameterize(tLo, tHi, 0)
-        println(maxReachedDepth)
     }
 
     /**

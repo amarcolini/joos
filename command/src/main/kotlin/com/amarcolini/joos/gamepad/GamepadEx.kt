@@ -91,6 +91,14 @@ class GamepadEx(gamepad: Gamepad) : Component {
     @JvmField
     val y: Button = Button()
 
+    private var leftStick = getLeftStick()
+    private var rightStick = getRightStick()
+    var leftStickChanged: Boolean = false
+        private set
+        @JvmName("leftStickChanged") get
+    var rightStickChanged: Boolean = false
+        private set
+        @JvmName("rightStickChanged") get
 
     override fun update() {
         a.update(internal.a)
@@ -120,6 +128,10 @@ class GamepadEx(gamepad: Gamepad) : Component {
         triangle.update(internal.triangle)
         x.update(internal.x)
         y.update(internal.y)
+        leftStickChanged = getLeftStick() epsilonEquals leftStick
+        rightStickChanged = getRightStick() epsilonEquals rightStick
+        leftStick = getLeftStick()
+        rightStick = getRightStick()
     }
 
     fun getButton(button: GamepadButton): Toggleable = when (button) {
