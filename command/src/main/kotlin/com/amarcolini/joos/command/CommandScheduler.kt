@@ -25,10 +25,8 @@ open class CommandScheduler {
         fun sendPacket() {
             try {
                 FtcDashboard.getInstance().sendTelemetryPacket(packet)
-            } catch (e: Exception) {
-
-            }
-            packet = TelemetryPacket()
+                packet = TelemetryPacket()
+            } catch (_: Exception) {}
         }
     }
 
@@ -75,23 +73,31 @@ open class CommandScheduler {
     }
 
     fun update() {
+        //Updates all registered components
         components.forEach { it.update() }
 
-        for (command in scheduledCommands) {
-            command.execute()
-
-            if (command.isFinished()) {
-                scheduledCommands.remove(command)
-                requirements.keys.removeAll(command.requirements)
-                command.end(false)
-                command.scheduler = null
+        //The predicate for removeAll is applied to all commands, acting like a for loop
+        scheduledCommands.removeAll {
+            //Executes all scheduled commands
+            it.execute()
+            //Computes whether they are finished
+            val finished = it.isFinished()
+            //Ends and frees up their requirements if they are finished
+            if (finished) {
+                requirements.keys.removeAll(it.requirements)
+                it.end(false)
+                it.scheduler = null
             }
+            //Removes them if they are finished
+            finished
         }
 
+        //Schedules the necessary commands mapped to a condition
         conditions.filterKeys { it.asBoolean }.values.forEach { commands ->
             commands.forEach { schedule(it) }
         }
 
+        //Schedules default commands, if possible
         for (component in components) {
             if (!requirements.containsKey(component)) {
                 schedule(component.getDefaultCommand() ?: continue)

@@ -203,7 +203,7 @@ internal class TrajectoryEntity(private val getScale: () -> Double) : Entity() {
                         circle.isMouseTransparent = true
                     }
                     else -> {
-                        val circle = node.circle(pose.x, pose.y, 1.0) {
+                        val circle = node.circle(pose.x, pose.y, 1.5) {
                             fill = Color.DARKGREEN
                         }
                         circle.isCache = true

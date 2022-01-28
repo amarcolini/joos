@@ -5,6 +5,8 @@ import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import kotlin.math.abs
 
+private const val logOutput: Boolean = true
+
 class CommandTest {
     private lateinit var scheduler: CommandScheduler
 
@@ -15,9 +17,10 @@ class CommandTest {
 
     @Test
     fun testCommand() {
-        println("   **testCommand**")
+        if (logOutput) println("   **testCommand**")
         val command = RangeCommand("test", 0, 10, true)
-        scheduler.schedule(command)
+        val extraCommands = List(10) { i -> RangeCommand("extra #$i", 0, 0, true) }
+        scheduler.schedule(command, *extraCommands.toTypedArray())
         assert(command.isScheduled())
         assert(scheduler.isScheduled(command))
         assert(command.isInitialized)
@@ -30,8 +33,22 @@ class CommandTest {
     }
 
     @Test
+    fun testPerformance() {
+        if (logOutput) println("* Performance test cannot be done with log output turned on.")
+        else {
+            val commands = List(10000) { i -> Command.of { if (logOutput) println("command #$i") } }.toTypedArray()
+            scheduler.schedule(*commands)
+
+            val clock = NanoClock.system()
+            val now = clock.seconds()
+            repeat(3) { scheduler.update() }
+            println("performance: ${clock.seconds() - now}")
+        }
+    }
+
+    @Test
     fun testComponent() {
-        println("   **testComponent**")
+        if (logOutput) println("   **testComponent**")
         val component = DummyComponent("test")
         scheduler.register(component)
         scheduler.update()
@@ -43,7 +60,7 @@ class CommandTest {
 
     @Test
     fun testCancel() {
-        println("   **testCancel**")
+        if (logOutput) println("   **testCancel**")
         val command = RangeCommand("test", 0, 10, false)
         scheduler.schedule(command)
         assert(command.isScheduled())
@@ -61,7 +78,7 @@ class CommandTest {
 
     @Test
     fun testInterrupt() {
-        println("   **testInterrupt**")
+        if (logOutput) println("   **testInterrupt**")
         val component = DummyComponent("Bobby")
         val command = RangeCommand("test", 0, 10, true, setOf(component))
         scheduler.schedule(command)
@@ -81,7 +98,7 @@ class CommandTest {
 
     @Test
     fun testUninterruptible() {
-        println("   **testUninterruptible**")
+        if (logOutput) println("   **testUninterruptible**")
         val component = DummyComponent("Bobby")
         val command = RangeCommand("test", 0, 10, false, setOf(component))
         scheduler.schedule(command)
@@ -101,7 +118,7 @@ class CommandTest {
 
     @Test
     fun testSequential() {
-        println("   **testSequential**")
+        if (logOutput) println("   **testSequential**")
         val component = DummyComponent("common")
         val cmd1 = RangeCommand("#1", 0, 5, true, setOf(component))
         val cmd2 = RangeCommand("#2", 1, 7, false, setOf(component))
@@ -127,7 +144,7 @@ class CommandTest {
 
     @Test
     fun testWait() {
-        println("   **testWait**")
+        if (logOutput) println("   **testWait**")
         val cmd = WaitCommand(1.0)
         val clock = NanoClock.system()
         val start = clock.seconds()
@@ -138,7 +155,7 @@ class CommandTest {
 
     @Test
     fun testParallel() {
-        println("   **testParallel**")
+        if (logOutput) println("   **testParallel**")
         val a1 = RangeCommand("#A1", 0, 5)
         val a2 = RangeCommand("#A2", 0, 6)
         val cmd = a1 and a2
@@ -152,7 +169,7 @@ class CommandTest {
 
     @Test
     fun testRace() {
-        println("   **testRace**")
+        if (logOutput) println("   **testRace**")
         val a1 = RangeCommand("#A1", 0, 5)
         val a2 = RangeCommand("#A2", 0, 6)
         val cmd = a1 race a2
@@ -166,21 +183,21 @@ class CommandTest {
 
     @Test
     fun testPretty() {
-        println("   **testPretty**")
-        val cmd = Command.of { println("first") }
-            .then { println("second") }
+        if (logOutput) println("   **testPretty**")
+        val cmd = Command.of { if (logOutput) println("first") }
+            .then { if (logOutput) println("second") }
             .then(
-                Command.of { println("A1") } and { println("A2") }
+                Command.of { if (logOutput) println("A1") } and { if (logOutput) println("A2") }
             )
-            .then { println("third") }
+            .then { if (logOutput) println("third") }
             .wait(1.0)
-            .then { println("So cool!!") }
+            .then { if (logOutput) println("So cool!!") }
         cmd.run()
     }
 
     @Test
     fun testCondition() {
-        println("   **testCondition**")
+        if (logOutput) println("   **testCondition**")
         val btn1 = Button()
         val btn2 = Button()
         var runCount = 0
@@ -223,14 +240,14 @@ class CommandTest {
 
     @Test
     fun testSelect() {
-        println("   **testSelect**")
+        if (logOutput) println("   **testSelect**")
         var number = 0
-        println("number is $number.")
+        if (logOutput) println("number is $number.")
         val cmd = Command.select {
             val newNumber = number + 1
             Command.of {
                 number = newNumber
-                println("setting number to $newNumber.")
+                if (logOutput) println("setting number to $newNumber.")
             }
         }
         cmd.run()
@@ -253,18 +270,18 @@ class RangeCommand @JvmOverloads constructor(
     override fun init() {
         num = start
         isInitialized = true
-        println("Initializing $name at $start")
+        if (logOutput) println("Initializing $name at $start")
     }
 
     override fun execute() {
         num++
-        println("Running $name. Currently at $num.")
+        if (logOutput) println("Running $name. Currently at $num.")
     }
 
     override fun end(interrupted: Boolean) {
         hasEnded = true
         wasInterrupted = interrupted
-        println("Ending $name. $interrupted")
+        if (logOutput) println("Ending $name. $interrupted")
     }
 
     override fun isFinished() = num >= end
@@ -275,7 +292,7 @@ class DummyComponent(val name: String) : Component {
 
     override fun update() {
         updateCount++
-        println("Updating component $name: $updateCount")
+        if (logOutput) println("Updating component $name: $updateCount")
     }
 
     fun updateCount() = updateCount

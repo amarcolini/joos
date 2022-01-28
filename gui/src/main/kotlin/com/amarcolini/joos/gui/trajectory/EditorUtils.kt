@@ -57,28 +57,28 @@ fun TrajectoryConfig.toWaypoints(): List<Waypoint> {
             is TrajectoryConfig.Back -> list += Back(it.back)
             is TrajectoryConfig.Forward -> list += Forward(it.forward)
             is TrajectoryConfig.Line -> when (it.lineTo.interpolationType) {
-                TrajectoryConfig.HeadingInterpolationType.TANGENT -> list += LineTo(it.lineTo.pose.vec())
-                TrajectoryConfig.HeadingInterpolationType.CONSTANT -> list += LineToConstantHeading(
+                TrajectoryConfig.HeadingInterpolationType.Tangent -> list += LineTo(it.lineTo.pose.vec())
+                TrajectoryConfig.HeadingInterpolationType.Constant -> list += LineToConstantHeading(
                     it.lineTo.pose.vec()
                 )
-                TrajectoryConfig.HeadingInterpolationType.LINEAR -> list += LineToLinearHeading(
+                TrajectoryConfig.HeadingInterpolationType.Linear -> list += LineToLinearHeading(
                     it.lineTo.pose
                 )
-                TrajectoryConfig.HeadingInterpolationType.SPLINE -> list += LineToSplineHeading(
+                TrajectoryConfig.HeadingInterpolationType.Spline -> list += LineToSplineHeading(
                     it.lineTo.pose
                 )
             }
             is TrajectoryConfig.Spline -> when (it.splineTo.interpolationType) {
-                TrajectoryConfig.HeadingInterpolationType.TANGENT -> list += SplineTo(
+                TrajectoryConfig.HeadingInterpolationType.Tangent -> list += SplineTo(
                     it.splineTo.pose.vec(), Degree(it.splineTo.tangent, false)
                 )
-                TrajectoryConfig.HeadingInterpolationType.CONSTANT -> list += SplineToConstantHeading(
+                TrajectoryConfig.HeadingInterpolationType.Constant -> list += SplineToConstantHeading(
                     it.splineTo.pose.vec(), Degree(it.splineTo.tangent, false)
                 )
-                TrajectoryConfig.HeadingInterpolationType.LINEAR -> list += SplineToLinearHeading(
+                TrajectoryConfig.HeadingInterpolationType.Linear -> list += SplineToLinearHeading(
                     it.splineTo.pose, Degree(it.splineTo.tangent, false)
                 )
-                TrajectoryConfig.HeadingInterpolationType.SPLINE -> list += SplineToSplineHeading(
+                TrajectoryConfig.HeadingInterpolationType.Spline -> list += SplineToSplineHeading(
                     it.splineTo.pose, Degree(it.splineTo.tangent, false)
                 )
             }
@@ -107,25 +107,25 @@ fun Collection<Waypoint>.toConfig(constraints: TrajectoryConstraints): Trajector
                 is StrafeTo -> TrajectoryConfig.Line(
                     TrajectoryConfig.LineData(
                         Pose2d(it.pos),
-                        TrajectoryConfig.HeadingInterpolationType.CONSTANT
+                        TrajectoryConfig.HeadingInterpolationType.Constant
                     )
                 )
                 is LineToConstantHeading -> TrajectoryConfig.Line(
                     TrajectoryConfig.LineData(
                         Pose2d(it.pos),
-                        TrajectoryConfig.HeadingInterpolationType.CONSTANT
+                        TrajectoryConfig.HeadingInterpolationType.Constant
                     )
                 )
                 is LineToLinearHeading -> TrajectoryConfig.Line(
                     TrajectoryConfig.LineData(
                         it.pose,
-                        TrajectoryConfig.HeadingInterpolationType.LINEAR
+                        TrajectoryConfig.HeadingInterpolationType.Linear
                     )
                 )
                 is LineToSplineHeading -> TrajectoryConfig.Line(
                     TrajectoryConfig.LineData(
                         it.pose,
-                        TrajectoryConfig.HeadingInterpolationType.SPLINE
+                        TrajectoryConfig.HeadingInterpolationType.Spline
                     )
                 )
                 is SplineTo -> TrajectoryConfig.Spline(
@@ -138,21 +138,21 @@ fun Collection<Waypoint>.toConfig(constraints: TrajectoryConstraints): Trajector
                     TrajectoryConfig.SplineData(
                         Pose2d(it.pos),
                         it.tangent.radians,
-                        TrajectoryConfig.HeadingInterpolationType.CONSTANT
+                        TrajectoryConfig.HeadingInterpolationType.Constant
                     )
                 )
                 is SplineToLinearHeading -> TrajectoryConfig.Spline(
                     TrajectoryConfig.SplineData(
                         it.pose,
                         it.tangent.radians,
-                        TrajectoryConfig.HeadingInterpolationType.LINEAR
+                        TrajectoryConfig.HeadingInterpolationType.Linear
                     )
                 )
                 is SplineToSplineHeading -> TrajectoryConfig.Spline(
                     TrajectoryConfig.SplineData(
                         it.pose,
                         it.tangent.radians,
-                        TrajectoryConfig.HeadingInterpolationType.SPLINE
+                        TrajectoryConfig.HeadingInterpolationType.Spline
                     )
                 )
                 is Wait -> TrajectoryConfig.Wait(it.seconds)

@@ -34,6 +34,9 @@ dependencies {
     runtimeOnly "org.openjfx:javafx-controls:$javafx.version:win"
     runtimeOnly "org.openjfx:javafx-controls:$javafx.version:linux"
     runtimeOnly "org.openjfx:javafx-controls:$javafx.version:mac"
+    runtimeOnly "org.openjfx:javafx-base:$javafx.version:win"
+    runtimeOnly "org.openjfx:javafx-base:$javafx.version:linux"
+    runtimeOnly "org.openjfx:javafx-base:$javafx.version:mac"
 
     implementation "com.fasterxml.jackson.core:jackson-databind:2.12.5"
     implementation "com.fasterxml.jackson.module:jackson-module-kotlin:2.12.5"

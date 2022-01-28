@@ -5,7 +5,7 @@ import com.amarcolini.joos.geometry.Vector2d
 import com.amarcolini.joos.trajectory.config.GenericConstraints
 import com.amarcolini.joos.trajectory.config.TrajectoryConstraints
 
-class WaypointBuilder(
+class WaypointBuilder @JvmOverloads constructor(
     startPose: Pose2d = Pose2d(),
     startTangent: Double = startPose.heading,
     private val constraints: TrajectoryConstraints = GenericConstraints()

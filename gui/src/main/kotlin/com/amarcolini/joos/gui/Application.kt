@@ -62,9 +62,7 @@ internal class MainView : View() {
             val trajectory =
                 mapper.readValue(app.parameters.named["trajectory"], WaypointTrajectory::class.java)
             editor.renderer.waypoints.setAll(trajectory.waypoints)
-        } catch (e: Exception) {
-
-        }
+        } catch (_: Exception) {}
         try {
             editor.renderer.constraints.set(
                 mapper.readValue(
@@ -72,9 +70,7 @@ internal class MainView : View() {
                     TrajectoryConstraints::class.java
                 )
             )
-        } catch (e: Exception) {
-
-        }
+        } catch (_: Exception) {}
     }
 
     override val root = vbox {

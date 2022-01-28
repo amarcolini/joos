@@ -53,7 +53,7 @@ android {
         test.java.srcDirs += 'src/test/kotlin'
     }
     defaultConfig {
-        minSdkVersion 25
+        minSdkVersion 24
     }
 }
 

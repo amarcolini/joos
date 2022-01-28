@@ -1,13 +1,12 @@
 package com.amarcolini.joos.trajectory.config
 
+import com.amarcolini.joos.geometry.Pose2d
+import com.amarcolini.joos.trajectory.TrajectoryBuilder
 import com.fasterxml.jackson.annotation.JsonSubTypes
 import com.fasterxml.jackson.annotation.JsonTypeInfo
-import com.amarcolini.joos.geometry.Pose2d
-import com.amarcolini.joos.trajectory.BaseTrajectoryBuilder
-import com.amarcolini.joos.trajectory.TrajectoryBuilder
 
 /**
- * Configuration describing a basic trajectory (a simpler frontend alternative to [BaseTrajectoryBuilder]).
+ * Configuration describing a basic trajectory.
  */
 data class TrajectoryConfig(
     val startPose: Pose2d,
@@ -25,15 +24,10 @@ data class TrajectoryConfig(
      * Heading interpolation for a specific trajectory configuration step.
      */
     enum class HeadingInterpolationType {
-        TANGENT,
-        CONSTANT,
-        LINEAR,
-        SPLINE
-    }
-
-    enum class PathType {
-        LINE,
-        SPLINE
+        Tangent,
+        Constant,
+        Linear,
+        Spline
     }
 
     @JsonTypeInfo(use = JsonTypeInfo.Id.DEDUCTION)
@@ -59,12 +53,12 @@ data class TrajectoryConfig(
     data class SplineData(
         val pose: Pose2d,
         val tangent: Double = pose.heading,
-        val interpolationType: HeadingInterpolationType = HeadingInterpolationType.TANGENT
+        val interpolationType: HeadingInterpolationType = HeadingInterpolationType.Tangent
     )
 
     data class LineData(
         val pose: Pose2d,
-        val interpolationType: HeadingInterpolationType = HeadingInterpolationType.TANGENT
+        val interpolationType: HeadingInterpolationType = HeadingInterpolationType.Tangent
     )
 
     @Suppress("ComplexMethod")
@@ -85,16 +79,16 @@ data class TrajectoryConfig(
                 is Spline -> {
                     val (pose, tangent, interpolationType) = waypoint.splineTo
                     when (interpolationType) {
-                        HeadingInterpolationType.TANGENT -> builder.splineTo(pose.vec(), tangent)
-                        HeadingInterpolationType.CONSTANT -> builder.splineToConstantHeading(
+                        HeadingInterpolationType.Tangent -> builder.splineTo(pose.vec(), tangent)
+                        HeadingInterpolationType.Constant -> builder.splineToConstantHeading(
                             pose.vec(),
                             tangent
                         )
-                        HeadingInterpolationType.LINEAR -> builder.splineToLinearHeading(
+                        HeadingInterpolationType.Linear -> builder.splineToLinearHeading(
                             pose,
                             tangent
                         )
-                        HeadingInterpolationType.SPLINE -> builder.splineToSplineHeading(
+                        HeadingInterpolationType.Spline -> builder.splineToSplineHeading(
                             pose,
                             tangent
                         )
@@ -103,14 +97,14 @@ data class TrajectoryConfig(
                 is Line -> {
                     val (pose, interpolationType) = waypoint.lineTo
                     when (interpolationType) {
-                        HeadingInterpolationType.TANGENT -> builder.lineTo(pose.vec())
-                        HeadingInterpolationType.CONSTANT -> builder.lineToConstantHeading(
+                        HeadingInterpolationType.Tangent -> builder.lineTo(pose.vec())
+                        HeadingInterpolationType.Constant -> builder.lineToConstantHeading(
                             pose.vec(),
                         )
-                        HeadingInterpolationType.LINEAR -> builder.lineToLinearHeading(
+                        HeadingInterpolationType.Linear -> builder.lineToLinearHeading(
                             pose,
                         )
-                        HeadingInterpolationType.SPLINE -> builder.lineToSplineHeading(
+                        HeadingInterpolationType.Spline -> builder.lineToSplineHeading(
                             pose
                         )
                     }

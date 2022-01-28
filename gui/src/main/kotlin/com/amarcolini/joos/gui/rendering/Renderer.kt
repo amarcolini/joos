@@ -9,6 +9,7 @@ import javafx.animation.AnimationTimer
 import javafx.beans.property.Property
 import javafx.geometry.Pos
 import javafx.scene.image.Image
+import javafx.scene.input.KeyCode
 import javafx.scene.layout.StackPane
 import tornadofx.add
 import tornadofx.onChange
@@ -75,16 +76,22 @@ internal class Renderer(val theme: Property<Theme>, background: Image) : StackPa
 
         var dragging = false
         setOnDragDetected {
-            if (trajectoryRenderer.beingDragged) dragging = true
+            if (trajectoryRenderer.beingDragged) {
+                dragging = true
+            }
         }
         scrubBar.node.setOnMousePressed {
             robot.stop()
             dragging = true
         }
         onLeftClick {
+            requestFocus()
             if (!dragging)
                 robot.toggle()
             dragging = false
+        }
+        setOnKeyPressed {
+            if (it.code == KeyCode.SPACE) robot.toggle()
         }
 
         setOnMouseMoved {

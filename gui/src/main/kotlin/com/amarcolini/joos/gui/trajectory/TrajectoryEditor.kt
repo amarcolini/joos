@@ -15,6 +15,7 @@ import javafx.scene.control.Alert
 import javafx.scene.control.ButtonType
 import javafx.scene.control.TabPane
 import javafx.scene.control.TextFormatter
+import javafx.scene.input.KeyCode
 import javafx.stage.FileChooser
 import tornadofx.*
 import java.io.File
@@ -232,6 +233,17 @@ internal class TrajectoryEditor(val renderer: Renderer) : View() {
                                     )
                                 }
                             }
+                        }
+                    }
+                }
+                setOnKeyPressed {
+                    if ((it.code == KeyCode.BACK_SPACE || it.code == KeyCode.DELETE) && selectedItem !is Start && selectedItem != null) {
+                        renderer.waypoints.remove(selectedItem)
+                        if (renderer.waypoints.size > 1) {
+                            renderer.trajectory = WaypointTrajectory(
+                                renderer.waypoints,
+                                renderer.constraints.value
+                            )
                         }
                     }
                 }

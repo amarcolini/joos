@@ -6,7 +6,7 @@ import javafx.beans.property.SimpleDoubleProperty
 import javafx.geometry.VPos
 import javafx.scene.canvas.Canvas
 import javafx.scene.text.TextAlignment
-import tornadofx.onChange
+import tornadofx.*
 
 internal class ScrubBar(
     private val theme: Property<Theme>,
@@ -47,7 +47,7 @@ internal class ScrubBar(
         val g = graphicsContext2D
         g.clearRect(0.0, 0.0, width, height)
         g.fill = theme.value.editor
-        g.fillRect(0.0, 0.0, width, height)
+        g.fillRect(0.0, 0.0, width + 5, height + 5)
         g.fill = theme.value.propertyText
         g.fillRect(0.0, 0.0, (time / duration) * width, height)
         g.stroke = theme.value.text

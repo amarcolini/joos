@@ -37,7 +37,7 @@ abstract class Command {
     open val isInterruptable: Boolean = true
 
     /**
-     * The set of components that this Command uses.
+     * The set of components that this command uses.
      */
     open val requirements: Set<Component> = emptySet()
 
@@ -62,7 +62,7 @@ abstract class Command {
     }
 
     /**
-     * Runs once when this command finishes / is interrupted.
+     * Runs once when this command finishes or is interrupted.
      */
     open fun end(interrupted: Boolean) {
         if (!isScheduled()) return
