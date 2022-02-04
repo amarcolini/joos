@@ -7,6 +7,8 @@
 
 A comprehensive kotlin library designed for FTC. Based on [Road Runner](https://github.com/acmerobotics/road-runner).
 
+**Note**: This project is currently in its alpha stages. The API is subject to change.
+
 ### Features
 - Support for advanced trajectory planning and following
 - Command-based paradigm
