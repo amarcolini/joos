@@ -5,10 +5,13 @@ import com.amarcolini.joos.geometry.Vector2d
 import com.amarcolini.joos.path.Path
 import com.amarcolini.joos.profile.MotionState
 import com.amarcolini.joos.trajectory.config.TrajectoryConstraints
+import com.amarcolini.joos.trajectory.constraints.MinAccelerationConstraint
+import com.amarcolini.joos.trajectory.constraints.MinVelocityConstraint
 import com.amarcolini.joos.trajectory.constraints.TrajectoryAccelerationConstraint
 import com.amarcolini.joos.trajectory.constraints.TrajectoryVelocityConstraint
 import com.amarcolini.joos.util.Angle
 import kotlin.math.PI
+import kotlin.math.min
 
 /**
  * Builder for trajectories with *dynamic* constraints.
@@ -172,12 +175,11 @@ class TrajectoryBuilder private constructor(
     }
 
     /**
-     * Sets the constraints for the following segments.
+     * Sets the constraints for the following path segments.
      */
-    @JvmOverloads
     fun setConstraints(
-        velConstraintOverride: TrajectoryVelocityConstraint = baseVelConstraint,
-        accelConstraintOverride: TrajectoryAccelerationConstraint = baseAccelConstraint
+        velConstraintOverride: TrajectoryVelocityConstraint,
+        accelConstraintOverride: TrajectoryAccelerationConstraint
     ): TrajectoryBuilder {
         pushPath()
         currentVelConstraint = velConstraintOverride
@@ -186,17 +188,83 @@ class TrajectoryBuilder private constructor(
     }
 
     /**
-     * Sets the constraints for the following segments using the provided [config].
-     * Sets both the regular and angular constraints.
+     * Sets the velocity constraints for the following path segments.
      */
-    fun setConstraints(config: TrajectoryConstraints): TrajectoryBuilder {
-        setConstraints(config.velConstraint, config.accelConstraint)
-        setAngularConstraints(config.maxAngVel, config.maxAngAccel, config.maxAngJerk)
+    fun setVelocityConstraints(
+        velConstraintOverride: TrajectoryVelocityConstraint,
+    ): TrajectoryBuilder {
+        pushPath()
+        currentVelConstraint = velConstraintOverride
         return this
     }
 
     /**
-     * Resets the constraints to the default constructor-provided values.
+     * Sets the acceleration constraints for the following path segments.
+     */
+    fun setAccelConstraints(
+        accelConstraintOverride: TrajectoryAccelerationConstraint
+    ): TrajectoryBuilder {
+        pushPath()
+        currentAccelConstraint = accelConstraintOverride
+        return this
+    }
+
+    /**
+     * Sets the constraints for the following segments using the provided [constraints].
+     * Sets both the path and angular constraints.
+     */
+    fun setConstraints(constraints: TrajectoryConstraints): TrajectoryBuilder {
+        setConstraints(constraints.velConstraint, constraints.accelConstraint)
+        setAngularConstraints(constraints.maxAngVel, constraints.maxAngAccel, constraints.maxAngJerk)
+        return this
+    }
+
+    /**
+     * Adds the provided constraints for the following path segments.
+     */
+    fun addConstraints(
+        velConstraint: TrajectoryVelocityConstraint,
+        accelConstraint: TrajectoryAccelerationConstraint
+    ): TrajectoryBuilder {
+        pushPath()
+        currentVelConstraint = MinVelocityConstraint(currentVelConstraint, velConstraint)
+        currentAccelConstraint = MinAccelerationConstraint(currentAccelConstraint, accelConstraint)
+        return this
+    }
+
+    /**
+     * Adds the provided velocity constraints for the following path segments.
+     */
+    fun addVelocityConstraints(
+        velConstraint: TrajectoryVelocityConstraint,
+    ): TrajectoryBuilder {
+        pushPath()
+        currentVelConstraint = MinVelocityConstraint(currentVelConstraint, velConstraint)
+        return this
+    }
+
+    /**
+     * Adds the provided acceleration constraints for the following path segments.
+     */
+    fun addAccelConstraints(
+        accelConstraint: TrajectoryAccelerationConstraint
+    ): TrajectoryBuilder {
+        pushPath()
+        currentAccelConstraint = MinAccelerationConstraint(currentAccelConstraint, accelConstraint)
+        return this
+    }
+
+    /**
+     * Adds the provided constraints to the following path and turn segments.
+     */
+    fun addConstraints(constraints: TrajectoryConstraints): TrajectoryBuilder {
+        setConstraints(constraints.velConstraint, constraints.accelConstraint)
+        setAngularConstraints(constraints.maxAngVel, constraints.maxAngAccel, constraints.maxAngJerk)
+        return this
+    }
+
+    /**
+     * Resets the path constraints to the default constructor-provided values.
      */
     fun resetConstraints(): TrajectoryBuilder {
         currentVelConstraint = baseVelConstraint
@@ -220,6 +288,21 @@ class TrajectoryBuilder private constructor(
     }
 
     /**
+     * Adds the provided angular constraints for the following turn segments.
+     */
+    @JvmOverloads
+    fun addAngularConstraints(
+        angVel: Double,
+        angAccel: Double = Double.POSITIVE_INFINITY,
+        angJerk: Double = Double.POSITIVE_INFINITY
+    ): TrajectoryBuilder {
+        currentAngVel = min(currentAngVel, Math.toRadians(angVel))
+        currentAngAccel = min(currentAngAccel, Math.toRadians(angAccel))
+        currentAngJerk = min(currentAngJerk, Math.toRadians(angJerk))
+        return this
+    }
+
+    /**
      * Resets the angular constraints to the default constructor-provided values.
      */
     fun resetAngularConstraints(): TrajectoryBuilder {
@@ -230,7 +313,7 @@ class TrajectoryBuilder private constructor(
     }
 
     /**
-     * Resets all constraints.
+     * Resets all constraints to the default constructor-provided values.
      */
     fun resetAllConstraints(): TrajectoryBuilder {
         resetConstraints()

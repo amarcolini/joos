@@ -47,7 +47,7 @@ abstract class DriveComponent : Drive(), Component {
                 DashboardUtil.drawSampledTrajectory(trajectory, pathColor, turnColor, waitColor)
                 DashboardUtil.drawPoseHistory(poseHistory, robotColor)
             }
-            CommandScheduler.packet.fieldOverlay().setStrokeWidth(1)
+            CommandScheduler.telemetry.fieldOverlay().setStrokeWidth(1)
             DashboardUtil.drawRobot(poseEstimate, robotColor)
         }
     }

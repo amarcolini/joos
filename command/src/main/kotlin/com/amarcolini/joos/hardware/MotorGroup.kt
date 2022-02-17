@@ -183,7 +183,6 @@ class MotorGroup(private vararg val motors: Motor) : Component {
     fun goToPosition(position: Int) = Command.of {
         runMode = RunMode.RUN_TO_POSITION
         targetPosition = position
-        update()
     }
         .onInit {
             runMode = RunMode.RUN_TO_POSITION
@@ -191,7 +190,7 @@ class MotorGroup(private vararg val motors: Motor) : Component {
         }
         .requires(this)
         .runUntil { !isBusy() }
-        .onEnd { _, _ -> setSpeed(0.0) }
+        .onEnd { setSpeed(0.0) }
 
     /**
      * Returns a command that runs all the motors in the group until all of them have reached the desired distance.
@@ -201,7 +200,6 @@ class MotorGroup(private vararg val motors: Motor) : Component {
         motors.forEach {
             it.targetPosition = (distance / it.distancePerRev * it.TPR).toInt()
         }
-        update()
     }
         .onInit {
             runMode = RunMode.RUN_TO_POSITION
@@ -211,7 +209,7 @@ class MotorGroup(private vararg val motors: Motor) : Component {
         }
         .requires(this)
         .runUntil { !isBusy() }
-        .onEnd { _, _ -> setSpeed(0.0) }
+        .onEnd { setSpeed(0.0) }
 
     /**
      * Resets the encoders of all the motors in the group.

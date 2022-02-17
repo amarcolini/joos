@@ -23,7 +23,7 @@ object DashboardUtil {
     fun drawPoseHistory(
         poseHistory: List<Pose2d>,
         color: String,
-        canvas: Canvas = CommandScheduler.packet.fieldOverlay()
+        canvas: Canvas = CommandScheduler.telemetry.fieldOverlay()
     ) {
         val xPoints = DoubleArray(poseHistory.size)
         val yPoints = DoubleArray(poseHistory.size)
@@ -41,7 +41,7 @@ object DashboardUtil {
     fun drawRobot(
         pose: Pose2d,
         color: String,
-        canvas: Canvas = CommandScheduler.packet.fieldOverlay()
+        canvas: Canvas = CommandScheduler.telemetry.fieldOverlay()
     ) {
         canvas.setStroke(color)
         canvas.strokeCircle(pose.x, pose.y, ROBOT_RADIUS)
@@ -58,7 +58,7 @@ object DashboardUtil {
     fun drawSampledPath(
         path: Path,
         color: String,
-        canvas: Canvas = CommandScheduler.packet.fieldOverlay(),
+        canvas: Canvas = CommandScheduler.telemetry.fieldOverlay(),
         resolution: Double = DEFAULT_RESOLUTION
     ) {
         val samples = ceil(path.length() / resolution).toInt()
@@ -82,7 +82,7 @@ object DashboardUtil {
         pathColor: String = "#4CAF50",
         turnColor: String = "#7c4dff",
         waitColor: String = "#dd2c00",
-        canvas: Canvas = CommandScheduler.packet.fieldOverlay(),
+        canvas: Canvas = CommandScheduler.telemetry.fieldOverlay(),
         resolution: Double = DEFAULT_RESOLUTION
     ) {
         trajectory.segments.forEach {

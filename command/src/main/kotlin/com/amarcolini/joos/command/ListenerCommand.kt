@@ -6,34 +6,34 @@ import java.util.function.Consumer
 /**
  * A command useful for adding listeners to other commands.
  * @param command the command to be run.
- * @param onInit the action to run when this command initializes. Takes in [command] as a parameter.
- * @param onExecute the action to run whenever this command updates. Takes in [command] as a parameter.
- * @param onEnd the action to run when this command is ended. Takes in [command] and whether it was interrupted as parameters.
+ * @param onInit the action to run when this command initializes.
+ * @param onExecute the action to run whenever this command updates.
+ * @param onEnd the action to run when this command is ended. Takes in whether it was interrupted as a parameter.
  */
 class ListenerCommand @JvmOverloads constructor(
     val command: Command = emptyCommand(),
-    private val onInit: Consumer<Command> = Consumer {},
-    private val onExecute: Consumer<Command> = Consumer {},
-    private val onEnd: BiConsumer<Command, Boolean> = BiConsumer<Command, Boolean> { _: Command, _: Boolean -> }
+    private val onInit: Runnable = Runnable {},
+    private val onExecute: Runnable = Runnable {},
+    private val onEnd: Consumer<Boolean> = Consumer<Boolean> {}
 ) : Command() {
-    override val requirements = command.requirements
+    override val requirements: Set<Component> = command.requirements
 
-    override val isInterruptable = command.isInterruptable
+    override val isInterruptable: Boolean = command.isInterruptable
 
     override fun init() {
         command.init()
-        onInit.accept(command)
+        onInit.run()
     }
 
     override fun execute() {
         command.execute()
-        onExecute.accept(command)
+        onExecute.run()
     }
 
     override fun end(interrupted: Boolean) {
         command.end(interrupted)
-        onEnd.accept(command, interrupted)
+        onEnd.accept(interrupted)
     }
 
-    override fun isFinished() = command.isFinished()
+    override fun isFinished(): Boolean = command.isFinished()
 }

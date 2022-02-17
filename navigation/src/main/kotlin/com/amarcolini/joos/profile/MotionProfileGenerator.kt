@@ -6,6 +6,7 @@ import com.amarcolini.joos.util.epsilonEquals
 import com.amarcolini.joos.util.minus
 import kotlin.math.abs
 import kotlin.math.ceil
+import kotlin.math.max
 import kotlin.math.sqrt
 
 /**
@@ -323,7 +324,6 @@ object MotionProfileGenerator {
             }
         }
 
-    //TODO: add rotational acceleration constraint and make constraints more straightforward
     /**
      * Generates a motion profile with dynamic maximum velocity and acceleration. Uses the algorithm described in
      * section 3.2 of [Sprunk2008.pdf](http://www2.informatik.uni-freiburg.de/~lau/students/Sprunk2008.pdf). Warning:
@@ -358,7 +358,7 @@ object MotionProfileGenerator {
 
         val length = goal.x - start.x
         // dx is an adjusted resolution that fits nicely within length
-        val samples = ceil(length / resolution).toInt()
+        val samples = max(2, ceil(length / resolution).toInt())
 
         val s = DoubleProgression.fromClosedInterval(0.0, length, samples)
         val velocityConstraints =
