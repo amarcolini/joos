@@ -7,6 +7,8 @@
 
 A comprehensive kotlin library designed for FTC. Based on [Road Runner](https://github.com/acmerobotics/road-runner).
 
+**Note**: This project is currently in its alpha stages. The API is subject to change.
+
 ### Features
 - Support for advanced trajectory planning and following
 - Command-based paradigm
@@ -22,6 +24,6 @@ repositories {
   maven { url 'https://jitpack.io' }
 }
 dependencies {
-  implementation "com.github.amarcolini.joos:$module:0.2.0-alpha"
+  implementation "com.github.amarcolini.joos:$module:0.2.1-alpha"
 }
 ```
