@@ -21,13 +21,13 @@ import kotlin.math.*
 
 private const val SPATIAL_RESOLUTION = 1.0
 
-internal class TrajectoryEntity(private val getScale: () -> Double) : Entity() {
+internal class TrajectoryEntity(private val getScale: () -> Double) : FieldEntity() {
     private val path: Path = Path()
     override val node: Group = Group(path)
     override var pose: Pose2d = Pose2d()
         private set
 
-    override fun update(now: Long, theme: Theme) {
+    override fun update(now: Long) {
         pose = if (trajectory.waypoints.size > 1) {
             val bounds = node.boundsInLocal
             Pose2d(bounds.centerX, bounds.centerY)

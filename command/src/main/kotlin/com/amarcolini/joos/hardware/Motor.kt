@@ -444,7 +444,6 @@ class Motor @JvmOverloads constructor(
     fun goToPosition(position: Int): Command = Command.of {
         runMode = RunMode.RUN_TO_POSITION
         targetPosition = position
-        update()
     }
         .onInit {
             runMode = RunMode.RUN_TO_POSITION
@@ -452,7 +451,7 @@ class Motor @JvmOverloads constructor(
         }
         .requires(this)
         .runUntil { !isBusy() }
-        .onEnd { _, _ -> setSpeed(0.0) }
+        .onEnd { setSpeed(0.0) }
 
     /**
      * Returns a command that runs the motor until it has reached the desired distance.

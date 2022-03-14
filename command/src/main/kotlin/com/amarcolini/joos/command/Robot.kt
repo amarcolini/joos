@@ -41,17 +41,9 @@ abstract class Robot(opMode: OpMode) : CommandScheduler() {
     @JvmField
     val dashboard: FtcDashboard = FtcDashboard.getInstance()
 
-    /**
-     * A telemetry for both FtcDashboard and the driver station. Automatically updates every update cycle.
-     */
-    @JvmField
-    val telemetry = MultipleTelemetry(dashboard.telemetry, opMode.telemetry)
-
     init {
-        register(Component.of {
-            telemetry.update()
-            telemetry.clear()
-        }, gamepad)
+        register(gamepad)
+        telemetry.register(opMode.telemetry)
     }
 
     /**

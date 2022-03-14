@@ -1,15 +1,13 @@
 package com.amarcolini.joos.gui.rendering
 
-import com.amarcolini.joos.gui.style.Theme
-import javafx.beans.property.Property
+import com.amarcolini.joos.gui.Global
 import javafx.beans.property.SimpleDoubleProperty
 import javafx.geometry.VPos
 import javafx.scene.canvas.Canvas
 import javafx.scene.text.TextAlignment
-import tornadofx.*
+import tornadofx.onChange
 
 internal class ScrubBar(
-    private val theme: Property<Theme>,
     private var prefHeight: Double = 50.0
 ) : Canvas() {
     var time = 0.0
@@ -17,13 +15,13 @@ internal class ScrubBar(
         set(value) {
             timeProperty.set(value)
             field = value
-            update()
+            draw()
         }
     val timeProperty = SimpleDoubleProperty()
     var duration = 0.0
         set(value) {
             field = value
-            update()
+            draw()
         }
 
     init {
@@ -31,26 +29,24 @@ internal class ScrubBar(
         graphicsContext2D.textBaseline = VPos.CENTER
         setOnMousePressed {
             time = (it.x / width).coerceIn(0.0..1.0) * duration
-            update()
+            draw()
         }
         setOnMouseDragged {
             time = (it.x / width).coerceIn(0.0..1.0) * duration
-            update()
+            draw()
         }
-        theme.onChange {
-            update()
-        }
-        update()
+        Global.theme.onChange { draw() }
+        draw()
     }
 
-    private fun update() {
+    private fun draw() {
         val g = graphicsContext2D
         g.clearRect(0.0, 0.0, width, height)
-        g.fill = theme.value.editor
+        g.fill = Global.theme.value.editor
         g.fillRect(0.0, 0.0, width + 5, height + 5)
-        g.fill = theme.value.propertyText
+        g.fill = Global.theme.value.propertyText
         g.fillRect(0.0, 0.0, (time / duration) * width, height)
-        g.stroke = theme.value.text
+        g.stroke = Global.theme.value.text
         g.strokeText(
             String.format("%.2f / %.2f", time, duration),
             width / 2,
@@ -63,7 +59,7 @@ internal class ScrubBar(
     override fun resize(width: Double, height: Double) {
         super.setWidth(width)
         super.setHeight(height)
-        update()
+        draw()
     }
 
     override fun minHeight(width: Double) = prefHeight

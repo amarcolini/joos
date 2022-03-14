@@ -1,20 +1,22 @@
 package com.amarcolini.joos.gui
 
-import com.amarcolini.joos.gui.rendering.Background
-import com.amarcolini.joos.gui.rendering.Renderer
+import com.amarcolini.joos.gui.rendering.Backgrounds
 import com.amarcolini.joos.gui.style.Dark
 import com.amarcolini.joos.gui.style.Light
 import com.amarcolini.joos.gui.trajectory.TrajectoryEditor
-import com.amarcolini.joos.gui.trajectory.WaypointTrajectory
-import com.amarcolini.joos.trajectory.config.TrajectoryConstraints
-import com.fasterxml.jackson.databind.json.JsonMapper
-import com.fasterxml.jackson.module.kotlin.registerKotlinModule
-import javafx.beans.property.SimpleObjectProperty
+import javafx.scene.control.MenuItem
 import javafx.scene.control.TabPane
+import javafx.scene.control.TextInputDialog
+import javafx.scene.image.Image
 import javafx.scene.layout.Priority
+import javafx.scene.shape.Path
+import javafx.stage.FileChooser
+import javafx.stage.Modality
 import javafx.stage.Screen
 import javafx.stage.Stage
 import tornadofx.*
+import java.io.File
+import java.nio.file.Paths
 
 internal class MainApp : App(MainView::class, Dark::class) {
     init {
@@ -30,83 +32,101 @@ internal class MainApp : App(MainView::class, Dark::class) {
         stage.width = Screen.getPrimary().visualBounds.width
         stage.height = Screen.getPrimary().visualBounds.height
         when (parameters.named["theme"]?.lowercase()) {
-            "light" -> {
-                importStylesheet<Light>()
-            }
+            "light" -> Global.theme.value = Light()
             else -> {
-                importStylesheet<Dark>()
             }
         }
+        importStylesheet(Global.theme.value::class)
         super.start(stage)
     }
 }
 
 internal class MainView : View() {
-    val theme = SimpleObjectProperty(
-        when (app.parameters.named["theme"]?.lowercase()) {
-            "light" -> Light()
-            else -> Dark()
-        }
-    )
     val background = when (app.parameters.named["background"]?.lowercase()) {
-        "freightfrenzy" -> Background.FreightFrenzy.image
-        "ultimategoal" -> Background.UltimateGoal.image
-        else -> Background.Generic.image
+        "freightfrenzy" -> Backgrounds.FreightFrenzy.image
+        "ultimategoal" -> Backgrounds.UltimateGoal.image
+        else -> Global.background
     }
-    val editor = TrajectoryEditor(Renderer(theme, background))
+    private val editor = TrajectoryEditor()
 
     init {
-        val mapper = JsonMapper()
-        mapper.registerKotlinModule()
-        try {
-            val trajectory =
-                mapper.readValue(app.parameters.named["trajectory"], WaypointTrajectory::class.java)
-            editor.renderer.waypoints.setAll(trajectory.waypoints)
-        } catch (_: Exception) {}
-        try {
-            editor.renderer.constraints.set(
-                mapper.readValue(
-                    app.parameters.named["constraints"],
-                    TrajectoryConstraints::class.java
-                )
-            )
-        } catch (_: Exception) {}
+        editor.renderer.trajectory = Global.trajectory
+        editor.renderer.constraints.set(Global.constraints)
+        Global.background = background
     }
 
     override val root = vbox {
         menubar {
             menu("_Theme") {
                 item("_Dark").action {
-                    val dark = Dark()
+                    Global.theme.value = Dark()
                     scene.stylesheets.clear()
-                    importStylesheet(dark.base64URL.toExternalForm())
-                    theme.set(dark)
+                    importStylesheet(Global.theme.value.externalForm)
                 }
                 item("_Light").action {
-                    val light = Light()
+                    Global.theme.value = Light()
                     scene.stylesheets.clear()
-                    importStylesheet(light.base64URL.toExternalForm())
-                    theme.set(light)
+                    importStylesheet(Global.theme.value.externalForm)
+                }
+                for (item in Global.extraThemes) {
+                    item(item.key).action {
+                        Global.theme.value = item.value
+                        scene.stylesheets.clear()
+                        importStylesheet(item.value.externalForm)
+                    }
                 }
             }
             menu("_Background") {
                 item("_Generic").action {
                     val field = editor.renderer.fieldRenderer
-                    field.background =
-                        Background.Generic.image
+                    Global.background = Backgrounds.Generic.image
                     field.draw(field.width, field.height)
                 }
                 item("_Freight Frenzy").action {
                     val field = editor.renderer.fieldRenderer
-                    field.background =
-                        Background.FreightFrenzy.image
+                    Global.background = Backgrounds.FreightFrenzy.image
                     field.draw(field.width, field.height)
                 }
                 item("_Ultimate Goal").action {
                     val field = editor.renderer.fieldRenderer
-                    field.background =
-                        Background.UltimateGoal.image
+                    Global.background = Backgrounds.UltimateGoal.image
                     field.draw(field.width, field.height)
+                }
+                for (item in Global.extraBackgrounds) {
+                    item(item.key).action {
+                        val field = editor.renderer.fieldRenderer
+                        Global.background = lazy { item.value }
+                        field.draw(field.width, field.height)
+                    }
+                }
+                item("_New +").action {
+                    val file = chooseFile(
+                        "Choose a Background",
+                        arrayOf(
+                            FileChooser.ExtensionFilter(
+                                "Image Files (*.png, *.jpg, *.jpeg, *.gif, *.tif, *.tiff)",
+                                "*.png", "*.jpg", "*.jpeg", "*.gif", "*.tif", "*.tiff"
+                            )
+                        ), File(Paths.get("").toAbsolutePath().toUri()), FileChooserMode.Single, currentWindow
+                    )
+                    if (file.isEmpty()) return@action
+                    val image = Image(file[0].toURI().toString())
+                    val dialog = TextInputDialog(file[0].nameWithoutExtension)
+                    dialog.title = "New Background"
+                    dialog.headerText = "Choose a name for this background"
+                    dialog.dialogPane.stylesheets += scene.stylesheets
+                    dialog.dialogPane.graphic = Path()
+                    val name = dialog.showAndWait()
+                    if (!name.isPresent) return@action
+                    Global.extraBackgrounds[name.get()] = image
+                    val item = MenuItem()
+                    item.text = name.get()
+                    item.setOnAction {
+                        val field = editor.renderer.fieldRenderer
+                        Global.background = lazy { image }
+                        field.draw(field.width, field.height)
+                    }
+                    items.add(items.size - 1, item)
                 }
             }
         }

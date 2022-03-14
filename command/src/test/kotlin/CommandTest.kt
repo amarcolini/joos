@@ -47,6 +47,25 @@ class CommandTest {
     }
 
     @Test
+    fun testConcurrent() {
+        var result = false
+        val cmd = Command.emptyCommand().runUntil(false)
+            .onEnd {
+                result = true
+            }
+        repeat(3) {
+            scheduler.schedule(Command.emptyCommand())
+        }
+        scheduler.schedule(Command.of {
+            scheduler.schedule(Command.of { scheduler.cancel(cmd) })
+        }, cmd)
+        repeat(10) {
+            scheduler.update()
+        }
+        assert(result)
+    }
+
+    @Test
     fun testComponent() {
         if (logOutput) println("   **testComponent**")
         val component = DummyComponent("test")

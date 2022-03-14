@@ -5,12 +5,15 @@ import com.amarcolini.joos.geometry.Vector2d
 import com.amarcolini.joos.gui.style.Theme
 import com.amarcolini.joos.trajectory.Trajectory
 import javafx.beans.property.SimpleDoubleProperty
+import javafx.scene.Node
+import javafx.scene.image.Image
+import javafx.scene.image.ImageView
 import javafx.scene.shape.Path
 import tornadofx.closepath
 import tornadofx.lineTo
 import tornadofx.moveTo
 
-internal class Robot : Entity() {
+internal class Robot : FieldEntity() {
     override var pose: Pose2d = Pose2d()
     var dimensions: Vector2d = Vector2d(18.0, 18.0)
         set(value) {
@@ -45,8 +48,11 @@ internal class Robot : Entity() {
             field = value
             timeProperty.set(value)
         }
+    init {
+        node.isMouseTransparent = true
+    }
 
-    override fun update(now: Long, theme: Theme) {
+    override fun update(now: Long) {
         val trajectory = trajectory ?: return
         pose = trajectory[t.coerceIn(0.0, trajectory.duration())]
         if (!running) return
