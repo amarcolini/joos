@@ -1,6 +1,7 @@
 package com.amarcolini.joos.command
 
 import com.qualcomm.robotcore.eventloop.opmode.*
+import java.util.function.BooleanSupplier
 import kotlin.reflect.KClass
 import kotlin.reflect.full.createInstance
 import kotlin.reflect.full.hasAnnotation
@@ -54,4 +55,9 @@ abstract class RobotOpMode<T : Robot> : OpMode() {
     protected inline fun <reified B : T> initialize() {
         initialize(B::class.primaryConstructor?.call(this) ?: return)
     }
+
+    abstract fun scheduleCommands()
+    fun schedule(vararg commands: Command) = robot.schedule(*commands)
+    fun map(condition: BooleanSupplier, vararg commands: Command) = robot.map(condition, *commands)
+    fun map(condition: BooleanSupplier, vararg commands: Runnable) = robot.map(condition, *commands)
 }
