@@ -1,12 +1,12 @@
 package com.amarcolini.joos.gui
 
-import com.amarcolini.joos.gui.rendering.Background
+import com.amarcolini.joos.gui.rendering.Backgrounds
+import com.amarcolini.joos.gui.style.Theme
 import com.amarcolini.joos.gui.style.Themes
 import com.amarcolini.joos.gui.trajectory.WaypointTrajectory
 import com.amarcolini.joos.trajectory.config.TrajectoryConstraints
-import com.fasterxml.jackson.databind.SerializationFeature
-import com.fasterxml.jackson.databind.json.JsonMapper
-import com.fasterxml.jackson.module.kotlin.registerKotlinModule
+import javafx.scene.image.Image
+import javafx.scene.layout.Pane
 import tornadofx.launch
 
 /**
@@ -14,11 +14,8 @@ import tornadofx.launch
  */
 class GUI {
     private val args = HashMap<String, String>()
-    private val mapper = JsonMapper()
 
     init {
-        mapper.registerKotlinModule()
-        mapper.configure(SerializationFeature.FAIL_ON_EMPTY_BEANS, false)
         args["add-modules"] = "javafx.controls,javafx.fxml"
     }
 
@@ -26,8 +23,7 @@ class GUI {
      * Sets the trajectory to be opened on startup.
      */
     fun followTrajectory(trajectory: WaypointTrajectory): GUI {
-        val string = mapper.writeValueAsString(trajectory)
-        args["trajectory"] = string
+        Global.trajectory = trajectory
         return this
     }
 
@@ -35,20 +31,29 @@ class GUI {
      * Sets the constraints to be obeyed on startup.
      */
     fun setConstraints(constraints: TrajectoryConstraints): GUI {
-        val string = mapper.writeValueAsString(constraints)
-        args["constraints"] = string
+        Global.constraints = constraints
+        return this
+    }
+
+    fun setTheme(name: String, theme: Theme): GUI {
+        Global.theme.value = theme
+        Global.extraThemes[name] = theme
         return this
     }
 
     fun setTheme(theme: Themes): GUI {
-        val string = theme.name.lowercase()
-        args["theme"] = string
+        Global.theme.value = theme.style
         return this
     }
 
-    fun setBackground(background: Background): GUI {
-        val string = background.name.lowercase()
-        args["background"] = string
+    fun setBackground(background: Backgrounds): GUI {
+        Global.background = background.image
+        return this
+    }
+
+    fun setBackground(name: String, background: Image): GUI {
+        Global.background = lazy { background }
+        Global.extraBackgrounds[name] = background
         return this
     }
 

@@ -11,23 +11,13 @@ open class CommandScheduler {
 
     companion object Static {
         /**
-         * The packet to use with FTC Dashboard to avoid conflicting packet sends. Is automatically sent
-         * every update cycle.
+         * The global telemetry object used for both FtcDashboard and the Driver Station.
          */
-        @JvmStatic
-        var packet = TelemetryPacket()
-            private set
+        @JvmField
+        val telemetry = SuperTelemetry()
 
-        /**
-         * Sends [packet]. Is automatically called every update cycle.
-         */
         @JvmStatic
-        fun sendPacket() {
-            try {
-                FtcDashboard.getInstance().sendTelemetryPacket(packet)
-                packet = TelemetryPacket()
-            } catch (_: Exception) {}
-        }
+        fun resetTelemetry() = telemetry.reset()
     }
 
     private val scheduledCommands = LinkedHashSet<Command>()
@@ -37,6 +27,16 @@ open class CommandScheduler {
     private val requirements = LinkedHashMap<Component, Command>()
 
     private val conditions = LinkedHashMap<BooleanSupplier, MutableSet<Command>>()
+
+    private val scheduleCache = LinkedHashSet<Command>()
+
+    private val cancelCache = HashSet<Command>()
+
+    /**
+     * Command scheduling policy. If true, all commands which cannot currently be scheduled will be scheduled as soon as
+     * they can be schedule. If false (default behavior), all commands which cannot currently be scheduled will not be scheduled.
+     */
+    var schedulePolicy: Boolean = false
 
     /**
      * Returns whether a command can currently be scheduled.
@@ -53,10 +53,20 @@ open class CommandScheduler {
     }
 
     /**
-     * Schedules commands for execution. Returns whether all the commands were successfully scheduled.
+     * Schedules commands for execution.
+     *
+     * @return `true` if all commands were successfully scheduled immediately, and `false` if they were not. Note that if
+     * the scheduler is currently updating, this method will return `false`, but the scheduler will attempt to
+     * schedule them when it can. If [schedulePolicy] is `true`, all commands will be successfully scheduled.
+     *
+     * @see schedulePolicy
      */
     fun schedule(vararg commands: Command): Boolean {
         var success = true
+        if (isBusy) {
+            scheduleCache += commands
+            return false
+        }
         for (command in commands) {
             success = success && if (!command.isScheduled() && isAvailable(command)) {
                 requirements.filterKeys { key -> command.requirements.contains(key) }
@@ -72,12 +82,18 @@ open class CommandScheduler {
         return success
     }
 
+    private var isBusy = false
     fun update() {
+        //Schedules all commands which were unable to be scheduled previously.
+        scheduleCache.removeIf {
+            schedule(it) || !schedulePolicy
+        }
         //Updates all registered components
         components.forEach { it.update() }
 
-        //The predicate for removeAll is applied to all commands, acting like a for loop
-        scheduledCommands.removeAll {
+        //The predicate for removeIf is applied to all commands, acting like a for loop
+        isBusy = true
+        scheduledCommands.removeIf {
             //Executes all scheduled commands
             it.execute()
             //Computes whether they are finished
@@ -91,6 +107,10 @@ open class CommandScheduler {
             //Removes them if they are finished
             finished
         }
+        isBusy = false
+
+        //Cancels all commands which were attempted to be cancelled while the scheduler was busy.
+        cancel(*cancelCache.toTypedArray())
 
         //Schedules the necessary commands mapped to a condition
         conditions.filterKeys { it.asBoolean }.values.forEach { commands ->
@@ -104,7 +124,7 @@ open class CommandScheduler {
             }
         }
 
-        sendPacket()
+        telemetry.update()
     }
 
     /**
@@ -137,6 +157,10 @@ open class CommandScheduler {
      * Cancels commands. Ignores whether a command is interruptable.
      */
     fun cancel(vararg commands: Command) {
+        if (isBusy) {
+            cancelCache += commands
+            return
+        }
         for (command in commands) {
             if (isScheduled(command)) {
                 scheduledCommands.remove(command)
@@ -185,7 +209,7 @@ open class CommandScheduler {
     }
 
     /**
-     * Resets this [CommandScheduler]. All commands are cancelled, and all commands, components, and conditions are cleared.
+     * Resets this [CommandScheduler]. The telemetry is reset, all commands are cancelled, and all commands, components, and conditions are cleared.
      */
     fun reset() {
         cancelAll()
@@ -193,6 +217,7 @@ open class CommandScheduler {
         components.clear()
         requirements.clear()
         conditions.clear()
+        resetTelemetry()
     }
 
     /**

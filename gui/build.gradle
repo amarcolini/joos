@@ -16,7 +16,7 @@ application {
 
 javafx {
     version = "11.0.2"
-    modules = ['javafx.controls', 'javafx.graphics']
+    modules = ['javafx.controls', 'javafx.graphics', 'javafx.swing']
 }
 
 shadowJar {
@@ -37,9 +37,6 @@ dependencies {
     runtimeOnly "org.openjfx:javafx-base:$javafx.version:win"
     runtimeOnly "org.openjfx:javafx-base:$javafx.version:linux"
     runtimeOnly "org.openjfx:javafx-base:$javafx.version:mac"
-
-    implementation "com.fasterxml.jackson.core:jackson-databind:2.12.5"
-    implementation "com.fasterxml.jackson.module:jackson-module-kotlin:2.12.5"
 }
 
 java {

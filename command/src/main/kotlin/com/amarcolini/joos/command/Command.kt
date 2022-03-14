@@ -42,7 +42,7 @@ abstract class Command {
     open val requirements: Set<Component> = emptySet()
 
     /**
-     * An internal property which stores this command's current [CommandScheduler]. This is useful when using multiple [CommandScheduler]s.
+     * An internal property which stores this command's current [CommandScheduler].
      */
     var scheduler: CommandScheduler? = null
         internal set
@@ -87,21 +87,21 @@ abstract class Command {
 
     /**
      * Runs this command independently of a [CommandScheduler]. Initializes, executes and ends this command synchronously
-     * while also updating all of its required components and sending [CommandScheduler.packet].
+     * while also updating all of its required components and updating [CommandScheduler.telemetry].
      *
      * *Note*: If this command does not end by itself, this method will run continuously.
      */
     fun run() {
         requirements.forEach { it.update() }
         init()
-        CommandScheduler.sendPacket()
+        CommandScheduler.telemetry.update()
         do {
             requirements.forEach { it.update() }
             execute()
-            CommandScheduler.sendPacket()
+            CommandScheduler.telemetry.update()
         } while (!isFinished())
         end(false)
-        CommandScheduler.sendPacket()
+        CommandScheduler.telemetry.update()
     }
 
     //These are for chaining commands
@@ -183,19 +183,19 @@ abstract class Command {
     /**
      * Returns a [ListenerCommand] that runs the specified action when this command initializes.
      */
-    fun onInit(action: Consumer<Command>) =
-        ListenerCommand(this, action, {}, { _, _ -> })
+    fun onInit(action: Runnable) =
+        ListenerCommand(this, action, {}, {})
 
     /**
      * Returns a [ListenerCommand] that runs the specified action whenever this command updates.
      */
-    fun onExecute(action: Consumer<Command>) =
-        ListenerCommand(this, {}, action, { _, _ -> })
+    fun onExecute(action: Runnable) =
+        ListenerCommand(this, {}, action, {})
 
     /**
      * Returns a [ListenerCommand] that runs the specified action when this command is ended.
      */
-    fun onEnd(action: BiConsumer<Command, Boolean>) =
+    fun onEnd(action: Consumer<Boolean>) =
         ListenerCommand(this, {}, {}, action)
 
     /**

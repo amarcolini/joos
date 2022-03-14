@@ -1,6 +1,5 @@
 package com.amarcolini.joos.gui.style
 
-import com.fasterxml.jackson.annotation.JsonIncludeProperties
 import javafx.scene.effect.DropShadow
 import javafx.scene.layout.BorderStrokeStyle
 import javafx.scene.paint.Color
@@ -14,29 +13,6 @@ import tornadofx.*
  * @see Dark
  * @see Light
  */
-@JsonIncludeProperties(
-    "base",
-    "background",
-    "text",
-    "lightText",
-    "chart",
-    "tabHover",
-    "tabBorder",
-    "tabSelected",
-    "tabSelectedHover",
-    "editor",
-    "lineSelected",
-    "valueText",
-    "propertyText",
-    "error",
-    "scrollBarHover",
-    "thumb",
-    "thumbHover",
-    "control",
-    "controlBorder",
-    "controlFocus",
-    "menuHover"
-)
 sealed class Theme : Stylesheet() {
     companion object {
         val editorText by cssclass()

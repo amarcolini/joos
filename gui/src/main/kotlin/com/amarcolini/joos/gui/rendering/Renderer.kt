@@ -2,24 +2,30 @@ package com.amarcolini.joos.gui.rendering
 
 import com.amarcolini.joos.geometry.Pose2d
 import com.amarcolini.joos.geometry.Vector2d
-import com.amarcolini.joos.gui.style.Theme
 import com.amarcolini.joos.gui.trajectory.Start
 import com.amarcolini.joos.gui.trajectory.WaypointTrajectory
 import javafx.animation.AnimationTimer
-import javafx.beans.property.Property
+import javafx.embed.swing.SwingFXUtils
 import javafx.geometry.Pos
+import javafx.scene.Camera
+import javafx.scene.SnapshotParameters
 import javafx.scene.image.Image
 import javafx.scene.input.KeyCode
 import javafx.scene.layout.StackPane
 import tornadofx.add
 import tornadofx.onChange
 import tornadofx.onLeftClick
+import java.awt.image.RenderedImage
+import java.io.File
+import java.nio.channels.Channels
+import javax.imageio.ImageIO
+import javax.imageio.stream.ImageOutputStream
 import kotlin.math.min
 
-internal class Renderer(val theme: Property<Theme>, background: Image) : StackPane() {
+internal class Renderer : StackPane() {
     val trajectoryRenderer = TrajectoryEntity { -min(width, height) / 144 }
     val robot = Robot()
-    val fieldRenderer = FieldRenderer(background)
+    val fieldRenderer = FieldRenderer()
     val scrubBar = ScrubBarEntity()
     val posIndicator = PosIndicator()
     var trajectory: WaypointTrajectory = trajectoryRenderer.trajectory
@@ -42,8 +48,8 @@ internal class Renderer(val theme: Property<Theme>, background: Image) : StackPa
     private val timer = object : AnimationTimer() {
         override fun handle(now: Long) {
             entities.forEach {
-                it.update(now, theme.value)
-                if (it.alignment == Pos.CENTER) {
+                it.update(now)
+                if (it is FieldEntity) {
                     val fieldSize = min(width, height)
                     val offset = Pose2d(
                         Vector2d(-it.pose.y, -it.pose.x) * (fieldSize / 144),
@@ -61,7 +67,9 @@ internal class Renderer(val theme: Property<Theme>, background: Image) : StackPa
         add(fieldRenderer)
         entities.forEach {
             add(it.node)
-            setAlignment(it.node, it.alignment)
+            if (it is FixedEntity) {
+                setAlignment(it.node, it.alignment)
+            }
         }
 
         trajectoryRenderer.trajectoryProperty.onChange {
@@ -120,7 +128,7 @@ internal class Renderer(val theme: Property<Theme>, background: Image) : StackPa
         val scaleY = fieldSize / 144
         val scaleX = -scaleY
         entities.forEach {
-            if (it.alignment == Pos.CENTER) {
+            if (it is FieldEntity) {
                 it.node.scaleX = scaleX
                 it.node.scaleY = scaleY
             }

@@ -2,6 +2,7 @@ package com.amarcolini.joos.gui.trajectory
 
 import com.amarcolini.joos.geometry.Pose2d
 import com.amarcolini.joos.geometry.Vector2d
+import com.amarcolini.joos.gui.Global
 import com.amarcolini.joos.gui.rendering.Renderer
 import com.amarcolini.joos.gui.style.Theme
 import com.amarcolini.joos.trajectory.config.*
@@ -26,7 +27,8 @@ import kotlin.reflect.KVisibility
 import kotlin.reflect.full.memberProperties
 
 
-internal class TrajectoryEditor(val renderer: Renderer) : View() {
+internal class TrajectoryEditor() : View() {
+    val renderer: Renderer = Renderer()
 
     override val root = tabpane {
         tabClosingPolicy = TabPane.TabClosingPolicy.UNAVAILABLE
@@ -280,8 +282,8 @@ internal class TrajectoryEditor(val renderer: Renderer) : View() {
                                 update()
                         }
                         line {
-                            stroke = renderer.theme.value.text
-                            renderer.theme.onChange {
+                            stroke = Global.theme.value.text
+                            Global.theme.onChange {
                                 stroke = it?.text
                             }
                             renderer.robot.timeProperty.onChange {
@@ -550,7 +552,7 @@ internal class TrajectoryEditor(val renderer: Renderer) : View() {
     fun saveToFile() {
         val directory = chooseDirectory(
             "Choose Directory to Save Trajectory",
-            File(Paths.get("").toAbsolutePath().toUri())
+            File(Paths.get("").toAbsolutePath().toUri()), currentWindow
         ) ?: return
         val chooser = FileChooser()
         chooser.initialDirectory = directory
@@ -630,7 +632,7 @@ internal class TrajectoryEditor(val renderer: Renderer) : View() {
             "*.yaml"
         )
         chooser.title = "Load Trajectory"
-        val file = trajectory ?: chooser.showOpenDialog(null) ?: return
+        val file = trajectory ?: chooser.showOpenDialog(currentWindow) ?: return
         val config = try {
             TrajectoryConfigManager.loadConfig(file)
         } catch (e: Exception) {

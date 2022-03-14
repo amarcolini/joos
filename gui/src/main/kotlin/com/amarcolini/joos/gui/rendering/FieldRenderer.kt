@@ -1,5 +1,6 @@
 package com.amarcolini.joos.gui.rendering
 
+import com.amarcolini.joos.gui.Global
 import javafx.scene.canvas.Canvas
 import javafx.scene.image.Image
 import javafx.scene.transform.Affine
@@ -16,7 +17,7 @@ internal fun getFieldTransform(width: Double, height: Double): Affine {
     return affine
 }
 
-internal class FieldRenderer(var background: Image) : Canvas() {
+internal class FieldRenderer : Canvas() {
     init {
         graphicsContext2D.globalAlpha = 1.0
         draw(width, height)
@@ -33,7 +34,7 @@ internal class FieldRenderer(var background: Image) : Canvas() {
         val fieldSize = min(width, height)
         val offsetX = (width - fieldSize) / 2.0
         val offsetY = (height - fieldSize) / 2.0
-        graphicsContext2D.drawImage(background, offsetX, offsetY, fieldSize, fieldSize)
+        graphicsContext2D.drawImage(Global.background.value, offsetX, offsetY, fieldSize, fieldSize)
     }
 
     override fun minHeight(width: Double) = 50.0

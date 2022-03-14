@@ -2,6 +2,7 @@ package com.amarcolini.joos.hardware
 
 import com.amarcolini.joos.command.Command
 import com.amarcolini.joos.command.Component
+import com.amarcolini.joos.command.WaitCommand
 import com.amarcolini.joos.util.NanoClock
 import com.qualcomm.robotcore.hardware.CRServo
 import com.qualcomm.robotcore.hardware.DcMotorSimple
@@ -13,19 +14,18 @@ import com.qualcomm.robotcore.hardware.HardwareMap
  * @param servo the servo for this wrapper to use
  * @param maxRPM the max RPM of the servo
  */
-class CRServo @JvmOverloads constructor(
-    private val servo: CRServo, @JvmField val maxRPM: Double, private val clock: NanoClock = NanoClock.system()
+class CRServo constructor(
+    private val servo: CRServo, @JvmField val maxRPM: Double
 ) : Component {
     /**
      * @param hMap the hardware map from the OpMode
      * @param id the device id from the RC config
      * @param maxRPM the maximum revolutions per minute of the motor
      */
-    @JvmOverloads
     constructor(
-        hMap: HardwareMap, id: String, maxRPM: Double, clock: NanoClock = NanoClock.system()
+        hMap: HardwareMap, id: String, maxRPM: Double
     ) : this(
-        hMap.get(CRServo::class.java, id), maxRPM, clock
+        hMap.get(CRServo::class.java, id), maxRPM
     )
 
     /**
@@ -63,10 +63,9 @@ class CRServo @JvmOverloads constructor(
         @JvmName("isReversed") get() = servo.direction == DcMotorSimple.Direction.REVERSE
 
     private var speed: Double = 0.0
-    private var targetSeconds = 0.0
 
     /**
-     * Reverses the direction of the motor.
+     * Reverses the direction of the servo.
      */
     fun reversed(): com.amarcolini.joos.hardware.CRServo {
         reversed = !reversed
@@ -74,7 +73,7 @@ class CRServo @JvmOverloads constructor(
     }
 
     /**
-     * Sets the speed of the motor.
+     * Sets the speed of the servo.
      *
      * @param velocity the velocity to set
      * @param unit the units [velocity] is expressed in (revolutions per minute by default).
@@ -98,14 +97,10 @@ class CRServo @JvmOverloads constructor(
      * Returns a command that runs the motor for a desired time.
      */
     @JvmOverloads
-    fun runForSeconds(seconds: Double, speed: Double, unit: RotationUnit = RotationUnit.RPM): Command = Command.of {
-        update()
-    }.onInit {
-            targetSeconds = clock.seconds() + seconds
-            setSpeed(speed, unit)
-        }.requires(this).runUntil {
-            clock.seconds() >= targetSeconds
-        }.onEnd { _, _ -> setSpeed(0.0) }
+    fun runForSeconds(seconds: Double, speed: Double, unit: RotationUnit = RotationUnit.RPM): Command =
+        WaitCommand(seconds)
+            .onInit { setSpeed(speed, unit) }
+            .onEnd { setSpeed(0.0) }
 
 
     /**

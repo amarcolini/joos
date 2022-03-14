@@ -8,6 +8,8 @@ import com.amarcolini.joos.geometry.Pose2d
 class MinVelocityConstraint(
     val constraints: List<TrajectoryVelocityConstraint>
 ) : TrajectoryVelocityConstraint {
+    constructor(vararg constraints: TrajectoryVelocityConstraint) : this(constraints.toList())
+
     override fun get(s: Double, pose: Pose2d, deriv: Pose2d, baseRobotVel: Pose2d) =
         constraints.map { it[s, pose, deriv, baseRobotVel] }.minOrNull()!!
 }

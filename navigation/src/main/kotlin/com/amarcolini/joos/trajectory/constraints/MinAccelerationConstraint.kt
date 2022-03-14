@@ -9,6 +9,8 @@ import com.amarcolini.joos.path.Path
 class MinAccelerationConstraint(
     val constraints: List<TrajectoryAccelerationConstraint>
 ) : TrajectoryAccelerationConstraint {
+    constructor(vararg constraints: TrajectoryAccelerationConstraint) : this(constraints.toList())
+
     override fun get(lastS: Double, s: Double, lastVel: Double, dx: Double, path: Path) =
         constraints.map { it[lastS, s, lastVel, dx, path] }.minOrNull()!!
 }

@@ -6,13 +6,7 @@ import com.amarcolini.joos.gui.style.Theme
 import javafx.beans.property.SimpleObjectProperty
 import javafx.geometry.Pos
 
-internal class ScrubBarEntity : Entity() {
-    private val themeProperty = SimpleObjectProperty<Theme>(Dark())
-    override val node: ScrubBar = ScrubBar(themeProperty)
-    override val pose = Pose2d()
+internal class ScrubBarEntity : FixedEntity() {
+    override val node: ScrubBar = ScrubBar()
     override val alignment = Pos.BOTTOM_CENTER
-
-    override fun update(now: Long, theme: Theme) {
-        themeProperty.set(theme)
-    }
 }

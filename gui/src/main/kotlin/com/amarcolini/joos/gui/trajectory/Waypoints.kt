@@ -4,43 +4,19 @@ import com.amarcolini.joos.geometry.Pose2d
 import com.amarcolini.joos.geometry.Vector2d
 import com.amarcolini.joos.trajectory.config.GenericConstraints
 import com.amarcolini.joos.trajectory.config.TrajectoryConstraints
-import com.fasterxml.jackson.annotation.JsonIgnore
-import com.fasterxml.jackson.annotation.JsonSubTypes
-import com.fasterxml.jackson.annotation.JsonTypeInfo
 import javafx.beans.property.SimpleObjectProperty
 
-@JsonTypeInfo(use = JsonTypeInfo.Id.MINIMAL_CLASS, include = JsonTypeInfo.As.PROPERTY)
-@JsonSubTypes(
-    JsonSubTypes.Type(Start::class),
-    JsonSubTypes.Type(Spline::class),
-    JsonSubTypes.Type(SplineTo::class),
-    JsonSubTypes.Type(SplineToConstantHeading::class),
-    JsonSubTypes.Type(SplineToLinearHeading::class),
-    JsonSubTypes.Type(SplineToSplineHeading::class),
-    JsonSubTypes.Type(StrafeTo::class),
-    JsonSubTypes.Type(Forward::class),
-    JsonSubTypes.Type(Back::class),
-    JsonSubTypes.Type(StrafeLeft::class),
-    JsonSubTypes.Type(StrafeRight::class),
-    JsonSubTypes.Type(LineTo::class),
-    JsonSubTypes.Type(LineToConstantHeading::class),
-    JsonSubTypes.Type(LineToLinearHeading::class),
-    JsonSubTypes.Type(LineToSplineHeading::class),
-    JsonSubTypes.Type(Turn::class),
-    JsonSubTypes.Type(Wait::class),
-)
 sealed class Waypoint {
-    @JsonIgnore
     val error: SimpleObjectProperty<String?> = SimpleObjectProperty<String?>(null)
 }
 
 class WaypointTrajectory(
-    val waypoints: List<Waypoint>,
+    val waypoints: List<Waypoint> = listOf(Start()),
     val constraints: TrajectoryConstraints = GenericConstraints()
 ) {
     constructor(
         constraints: TrajectoryConstraints = GenericConstraints(),
-        vararg waypoints: Waypoint
+        vararg waypoints: Waypoint = arrayOf(Start())
     ) : this(waypoints.toList(), constraints)
 
     val trajectory by lazy {
