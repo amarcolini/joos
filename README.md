@@ -24,6 +24,6 @@ repositories {
   maven { url 'https://jitpack.io' }
 }
 dependencies {
-  implementation "com.github.amarcolini.joos:$module:0.2.1-alpha"
+  implementation "com.github.amarcolini.joos:$module:0.2.2-alpha"
 }
 ```
