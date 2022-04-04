@@ -143,9 +143,18 @@ class SuperTelemetry {
     fun update() {
         telemetries.forEach { it.clearAll() }
         lines.forEach { line ->
-            val string = line.composed()
-            telemetries.forEach { it.addLine(string) }
-            packet.addLine(string)
+            when (line) {
+                is Item -> {
+                    telemetries.forEach { it.addData(line.caption, line.value) }
+                    packet.put(line.caption, line.value)
+                }
+                else -> {
+                    val string = line.composed()
+                    telemetries.forEach { it.addLine(string) }
+                    packet.addLine(string)
+                }
+
+            }
         }
         FtcDashboard.getInstance().sendTelemetryPacket(packet)
         packet = TelemetryPacket()
