@@ -30,7 +30,7 @@ class SimpleTrajectoryBuilder private constructor(
      */
     @JvmOverloads
     constructor(
-        startPose: Pose2d,
+        startPose: Pose2d = Pose2d(),
         startTangent: Angle = startPose.heading,
         maxProfileVel: Double,
         maxProfileAccel: Double,
@@ -51,8 +51,42 @@ class SimpleTrajectoryBuilder private constructor(
         MotionState(0.0, 0.0, 0.0)
     )
 
+    /**
+     * Create a builder from a start pose and motion state. This is the recommended constructor for creating
+     * trajectories from rest.
+     *
+     * @param startTangent the initial tangent in [Angle.defaultUnits]
+     */
+    @JvmOverloads
     constructor(
-        startPose: Pose2d,
+        startPose: Pose2d = Pose2d(),
+        startTangent: Double,
+        maxProfileVel: Double,
+        maxProfileAccel: Double,
+        maxProfileJerk: Double = 0.0,
+        maxAngVel: Angle,
+        maxAngAccel: Angle,
+        maxAngJerk: Angle = 0.deg
+    ) : this(
+        startPose,
+        Pose2d(Angle(startTangent).vec(), 0.0),
+        Pose2d(),
+        maxProfileVel,
+        maxProfileAccel,
+        maxProfileJerk,
+        maxAngVel,
+        maxAngAccel,
+        maxAngJerk,
+        MotionState(0.0, 0.0, 0.0)
+    )
+
+    /**
+     * Create a builder from a start pose with a reversed tangent. This constructor is used to execute trajectories
+     * backwards.
+     */
+    @JvmOverloads
+    constructor(
+        startPose: Pose2d = Pose2d(),
         reversed: Boolean,
         maxProfileVel: Double,
         maxProfileAccel: Double,

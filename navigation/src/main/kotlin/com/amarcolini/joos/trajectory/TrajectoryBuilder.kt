@@ -33,7 +33,7 @@ class TrajectoryBuilder private constructor(
      */
     @JvmOverloads
     constructor(
-        startPose: Pose2d,
+        startPose: Pose2d = Pose2d(),
         startTangent: Angle = startPose.heading,
         baseVelConstraint: TrajectoryVelocityConstraint,
         baseAccelConstraint: TrajectoryAccelerationConstraint,
@@ -60,13 +60,63 @@ class TrajectoryBuilder private constructor(
      */
     @JvmOverloads
     constructor(
-        startPose: Pose2d,
+        startPose: Pose2d = Pose2d(),
+        startTangent: Double,
+        baseVelConstraint: TrajectoryVelocityConstraint,
+        baseAccelConstraint: TrajectoryAccelerationConstraint,
+        baseAngVel: Angle,
+        baseAngAccel: Angle,
+        baseAngJerk: Angle = 0.rad,
+        resolution: Double = 0.25
+    ) : this(
+        startPose,
+        Pose2d(Angle(startTangent).vec()),
+        Pose2d(),
+        baseVelConstraint,
+        baseAccelConstraint,
+        baseAngVel,
+        baseAngAccel,
+        baseAngJerk,
+        MotionState(0.0, 0.0, 0.0),
+        resolution
+    )
+
+    /**
+     * Creates a builder from a start pose and tangent. This is the recommended constructor for creating
+     * trajectories from rest.
+     */
+    @JvmOverloads
+    constructor(
+        startPose: Pose2d = Pose2d(),
         startTangent: Angle = startPose.heading,
         constraints: TrajectoryConstraints,
         resolution: Double = 0.25
     ) : this(
         startPose,
         startTangent,
+        constraints.velConstraint,
+        constraints.accelConstraint,
+        constraints.maxAngVel,
+        constraints.maxAngAccel,
+        constraints.maxAngJerk,
+        resolution
+    )
+
+    /**
+     * Creates a builder from a start pose and tangent. This is the recommended constructor for creating
+     * trajectories from rest.
+     *
+     * @param startTangent the initial tangent in [Angle.defaultUnits]
+     */
+    @JvmOverloads
+    constructor(
+        startPose: Pose2d = Pose2d(),
+        startTangent: Double,
+        constraints: TrajectoryConstraints,
+        resolution: Double = 0.25
+    ) : this(
+        startPose,
+        Angle(startTangent),
         constraints.velConstraint,
         constraints.accelConstraint,
         constraints.maxAngVel,
