@@ -3,8 +3,8 @@ package com.amarcolini.joos.followers
 import com.amarcolini.joos.drive.DriveSignal
 import com.amarcolini.joos.geometry.Pose2d
 import com.amarcolini.joos.path.Path
-import com.amarcolini.joos.util.Angle
 import com.amarcolini.joos.util.NanoClock
+import com.amarcolini.joos.util.abs
 import kotlin.math.abs
 
 /**
@@ -59,7 +59,7 @@ abstract class PathFollower @JvmOverloads constructor(
         val pathEndError = path.end() - currentPose
         admissible = abs(pathEndError.x) < admissibleError.x &&
                 abs(pathEndError.y) < admissibleError.y &&
-                abs(Angle.normDelta(pathEndError.heading)) < admissibleError.heading
+                abs(pathEndError.heading.normDelta()) < admissibleError.heading
         return if (isFollowing()) {
             internalUpdate(currentPose)
         } else {

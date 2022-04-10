@@ -1,5 +1,7 @@
 package com.amarcolini.joos.gui.trajectory
 
+import com.amarcolini.joos.geometry.Angle
+import com.amarcolini.joos.geometry.AngleUnit
 import com.amarcolini.joos.geometry.Pose2d
 import com.amarcolini.joos.geometry.Vector2d
 import javafx.util.StringConverter
@@ -22,9 +24,12 @@ internal class Vector2dStringConverter : StringConverter<Vector2d>() {
 }
 
 internal class Pose2dStringConverter : StringConverter<Pose2d>() {
+    private val angleConverter = AngleStringConverter()
     override fun toString(`object`: Pose2d?) =
-        String.format("(%.1f, %.1f, %.1f°)", `object`?.x, `object`?.y,
-            `object`?.heading?.let { Math.toDegrees(it) })
+        String.format(
+            "(%.1f, %.1f, %s)", `object`?.x, `object`?.y,
+            angleConverter.toString(`object`?.heading)
+        )
 
     override fun fromString(string: String?): Pose2d {
         if (string == null) return Pose2d()
@@ -34,22 +39,20 @@ internal class Pose2dStringConverter : StringConverter<Pose2d>() {
         return Pose2d(
             doubles.getOrElse(0) { 0.0 },
             doubles.getOrElse(1) { 0.0 },
-            Math.toRadians(doubles.getOrElse(2) { 0.0 })
+            Angle(doubles.getOrElse(2) { 0.0 })
         )
     }
 }
 
-internal class Degree(value: Double = 0.0, inDegrees: Boolean = true) {
-    val radians = if (inDegrees) Math.toRadians(value) else value
-    val value = if (inDegrees) value else Math.toDegrees(value)
-    override fun toString() = String.format("%.1f°", value)
-}
+internal class AngleStringConverter : StringConverter<Angle>() {
+    override fun toString(`object`: Angle?) = when (Angle.defaultUnits) {
+        AngleUnit.Degrees -> String.format("%.1f°", `object`?.degrees)
+        AngleUnit.Radians -> String.format("%.3f", `object`?.radians)
+    }
 
-internal class DegreeStringConverter : StringConverter<Degree>() {
-    override fun toString(`object`: Degree?) = `object`.toString()
-    override fun fromString(string: String?): Degree {
-        if (string == null) return Degree()
-        return Degree(doublePattern.find(string)?.value?.toDouble() ?: 0.0)
+    override fun fromString(string: String?): Angle {
+        if (string == null) return Angle()
+        return Angle(doublePattern.find(string)?.value?.toDouble() ?: 0.0)
     }
 }
 

@@ -1,5 +1,6 @@
 package com.amarcolini.joos.trajectory
 
+import com.amarcolini.joos.geometry.Angle
 import com.amarcolini.joos.geometry.Pose2d
 import com.amarcolini.joos.geometry.Vector2d
 import com.amarcolini.joos.path.Path
@@ -167,24 +168,24 @@ object TrajectoryGenerator {
     /**
      * Generates a turn segment.
      * @param pose pose to turn on
-     * @param angle angle to turn (in radians)
+     * @param angle angle to turn
      * @param maxAngVel maximum angular velocity
      * @param maxAngAccel maximum angular acceleration
      * @param maxAngJerk maximum angular jerk
      */
     fun generateTurnSegment(
         pose: Pose2d,
-        angle: Double,
-        maxAngVel: Double,
-        maxAngAccel: Double,
-        maxAngJerk: Double,
+        angle: Angle,
+        maxAngVel: Angle,
+        maxAngAccel: Angle,
+        maxAngJerk: Angle,
         overshoot: Boolean = false
     ): TurnSegment {
         val profile =
             generateSimpleProfile(
-                maxAngVel, maxAngAccel, maxAngJerk,
+                maxAngVel.radians, maxAngAccel.radians, maxAngJerk.radians,
                 MotionState(0.0, 0.0, 0.0),
-                MotionState(angle, 0.0, 0.0),
+                MotionState(angle.radians, 0.0, 0.0),
                 overshoot
             )
         return TurnSegment(pose, profile)

@@ -1,13 +1,12 @@
 package com.amarcolini.joos.gui.rendering
 
+import com.amarcolini.joos.geometry.Angle
+import com.amarcolini.joos.geometry.AngleUnit
 import com.amarcolini.joos.geometry.Pose2d
 import com.amarcolini.joos.geometry.Vector2d
-import com.amarcolini.joos.gui.style.Theme
 import com.amarcolini.joos.gui.trajectory.*
 import com.amarcolini.joos.trajectory.config.GenericConstraints
-import com.amarcolini.joos.util.Angle
-import com.amarcolini.joos.util.DoubleProgression
-import com.amarcolini.joos.util.epsilonEquals
+import com.amarcolini.joos.util.*
 import javafx.beans.property.SimpleObjectProperty
 import javafx.scene.CacheHint
 import javafx.scene.Group
@@ -16,6 +15,8 @@ import javafx.scene.paint.Color
 import javafx.scene.shape.MoveTo
 import javafx.scene.shape.Path
 import javafx.scene.shape.StrokeLineCap
+import javafx.geometry.Point3D
+import javafx.scene.transform.Rotate
 import tornadofx.*
 import kotlin.math.*
 
@@ -45,12 +46,13 @@ internal class TrajectoryEntity(private val getScale: () -> Double) : FieldEntit
 
     private var moving: Node? = null
     private var usedWaypoint: Waypoint? = null
+    private var isPoint: Boolean = true
     var beingDragged: Boolean = false
         private set
     var trajectory: WaypointTrajectory = WaypointTrajectory(GenericConstraints(), Start())
         set(value) {
             trajectoryProperty.set(value)
-            if (waypoints != value.waypoints)
+            if (waypoints !== value.waypoints)
                 waypoints.setAll(value.waypoints)
             if (constraints.value != value.constraints)
                 constraints.set(value.constraints)
@@ -84,43 +86,37 @@ internal class TrajectoryEntity(private val getScale: () -> Double) : FieldEntit
 
             //render draggable waypoints
             waypoints.mapPose().zipWithNext { (_, last), (waypoint, current) ->
-                if (usedWaypoint == waypoint) return@zipWithNext
                 val (pose, tangent) = current
                 val (lastPose, _) = last
                 when (waypoint) {
                     is Turn -> {
+                        if (usedWaypoint == waypoint) return@zipWithNext
                         val arrow = node.group()
-                        fun setAngle(angle: Double, dragged: Boolean = false) {
+                        fun setAngle(angle: Angle, dragged: Boolean = false) {
                             arrow.children.clear()
                             val radius = 3.0
                             val turnAngle =
-                                if (abs(angle) < 2) 0.0 else angle.coerceIn(-330.0, 330.0)
-                            val endAngle = lastPose.heading + Math.toRadians(turnAngle)
-                            val pos = lastPose.vec() + Vector2d(
-                                cos(endAngle) * radius,
-                                sin(endAngle) * radius
-                            )
+                                if (abs(angle) < Angle(2.0, AngleUnit.Degrees)) 0.0
+                                else angle.degrees.coerceIn(-330.0, 330.0)
+                            val endAngle = lastPose.heading + Angle(turnAngle, AngleUnit.Degrees)
+                            val pos = lastPose.vec() + Vector2d.polar(radius, endAngle)
                             val line1 =
                                 pos + Vector2d.polar(
                                     1.0,
-                                    endAngle + (PI / 2 * sign(endAngle - lastPose.heading)) + Math.toRadians(
-                                        135.0
-                                    )
+                                    endAngle + Angle(90 * sign(endAngle - lastPose.heading) + 135, AngleUnit.Degrees)
                                 )
                             val line2 =
                                 pos + Vector2d.polar(
                                     1.0,
-                                    endAngle + (PI / 2 * sign(endAngle - lastPose.heading)) - Math.toRadians(
-                                        135.0
-                                    )
+                                    endAngle + Angle(90 * sign(endAngle - lastPose.heading) - 135, AngleUnit.Degrees)
                                 )
                             if (dragged) {
                                 arrow.arc(
                                     pose.x,
                                     pose.y,
-                                    3.0,
-                                    3.0,
-                                    -Math.toDegrees(lastPose.heading),
+                                    radius,
+                                    radius,
+                                    -lastPose.heading.degrees,
                                     -turnAngle
                                 ) {
                                     fill = Color.TRANSPARENT
@@ -142,9 +138,9 @@ internal class TrajectoryEntity(private val getScale: () -> Double) : FieldEntit
                             arrow.arc(
                                 pose.x,
                                 pose.y,
-                                3.0,
-                                3.0,
-                                -Math.toDegrees(lastPose.heading),
+                                radius,
+                                radius,
+                                -lastPose.heading.degrees,
                                 -turnAngle
                             ) {
                                 fill = Color.TRANSPARENT
@@ -163,16 +159,14 @@ internal class TrajectoryEntity(private val getScale: () -> Double) : FieldEntit
                                 strokeWidth = 1.0
                             }
                         }
-                        setAngle(waypoint.angle.value)
+                        setAngle(waypoint.angle)
 
                         var currentWaypoint: Turn = waypoint
                         arrow.setOnMouseDragged {
+                            isPoint = true
                             val mouse = Vector2d(it.x, it.y)
                             val newWaypoint = Turn(
-                                Degree(
-                                    Angle.normDelta((mouse - lastPose.vec()).angle() - lastPose.heading),
-                                    false
-                                )
+                                ((mouse - lastPose.vec()).angle() - lastPose.heading).normDelta()
                             )
                             val currentIndex = waypoints.indexOf(currentWaypoint)
                             if (currentIndex < 0 || currentIndex > waypoints.size) return@setOnMouseDragged
@@ -187,34 +181,180 @@ internal class TrajectoryEntity(private val getScale: () -> Double) : FieldEntit
                                 this.trajectory.constraints
                             )
                             arrow.toFront()
-                            setAngle(newWaypoint.angle.value, true)
+                            setAngle(newWaypoint.angle, true)
                         }
                         arrow.setOnMouseReleased {
-                            setAngle(currentWaypoint.angle.value, false)
+                            setAngle(currentWaypoint.angle, false)
                             moving = null
                             beingDragged = false
                             usedWaypoint = null
                         }
                     }
                     is Wait -> {
+                        if (usedWaypoint == waypoint) return@zipWithNext
                         val circle = node.circle(pose.x, pose.y, 1.0) {
                             fill = Color.LIGHTBLUE
                         }
                         circle.isMouseTransparent = true
                     }
                     else -> {
-                        val circle = node.circle(pose.x, pose.y, 1.5) {
-                            fill = Color.DARKGREEN
-                        }
-                        circle.isCache = true
-                        circle.cacheHint = CacheHint.ROTATE
                         var currentWaypoint = waypoint
                         lateinit var lastMouse: Vector2d
+
+                        val headingLine = if (waypoint is CustomHeading && !(usedWaypoint == waypoint && !isPoint)) {
+                            val heading = waypoint.pose.heading
+                            val pos = waypoint.pose.vec()
+                            val start = Vector2d.polar(7.0, heading) + pos
+                            val line1 = Vector2d.polar(6.0, heading - Angle(10.0, AngleUnit.Degrees)) + pos
+                            val line2 = Vector2d.polar(6.0, heading + Angle(10.0, AngleUnit.Degrees)) + pos
+                            val line = node.group { hide() }
+                            val firstLine = line.line(start.x, start.y, line1.x, line1.y) {
+                                stroke = Color.LIGHTBLUE
+                                strokeLineCap = StrokeLineCap.ROUND
+                                strokeWidth = 1.0
+                            }
+                            val secondLine = line.line(start.x, start.y, line2.x, line2.y) {
+                                stroke = Color.LIGHTBLUE
+                                strokeLineCap = StrokeLineCap.ROUND
+                                strokeWidth = 1.0
+                            }
+                            val middleLine = line.line(pos.x, pos.y, start.x, start.y) {
+                                stroke = Color.LIGHTBLUE
+                                strokeLineCap = StrokeLineCap.ROUND
+                                strokeWidth = 1.0
+                            }
+                            line.setOnMouseEntered {
+                                line.show()
+                            }
+                            line.setOnMouseDragged {
+                                val newAngle = (Vector2d(it.x, it.y) - pos).angle()
+                                val newStart = Vector2d.polar(7.0, newAngle) + pos
+                                val newLine1 = Vector2d.polar(6.0, newAngle - Angle(10.0, AngleUnit.Degrees)) + pos
+                                val newLine2 = Vector2d.polar(6.0, newAngle + Angle(10.0, AngleUnit.Degrees)) + pos
+                                firstLine.startX = newStart.x
+                                firstLine.startY = newStart.y
+                                secondLine.startX = newStart.x
+                                secondLine.startY = newStart.y
+                                firstLine.endX = newLine1.x
+                                firstLine.endY = newLine1.y
+                                secondLine.endX = newLine2.x
+                                secondLine.endY = newLine2.y
+                                middleLine.endX = newStart.x
+                                middleLine.endY = newStart.y
+                                val newWaypoint = waypoint.apply { this.pose = Pose2d(pos, newAngle) }
+                                val currentIndex = waypoints.indexOf(currentWaypoint)
+                                if (currentIndex < 0 || currentIndex > waypoints.size) return@setOnMouseDragged
+                                isPoint = false
+                                moving = line
+                                beingDragged = true
+                                val newList = waypoints.toMutableList()
+                                newList[currentIndex] = newWaypoint
+                                usedWaypoint = newWaypoint
+                                currentWaypoint = newWaypoint
+                                this.trajectory = WaypointTrajectory(
+                                    newList,
+                                    this.trajectory.constraints
+                                )
+                            }
+                            line.setOnMouseReleased {
+                                moving = null
+                                beingDragged = false
+                                usedWaypoint = null
+                                this.trajectory = this.trajectory
+                                trajectoryProperty.set(this.trajectory)
+                            }
+                            line
+                        } else null
+
+                        val tangentLine = if (waypoint is Spline && !(usedWaypoint == waypoint && !isPoint)) {
+                            val (x, y) = waypoint.pos
+                            val (x2, y2) = Vector2d.polar(10.0, waypoint.tangent)
+                            val group = node.group {
+                                hide()
+                                toFront()
+                                headingLine?.toFront()
+                            }
+                            val line = group.line(x - x2, y - y2, x + x2, y + y2) {
+                                stroke = c("#004000")
+                                strokeLineCap = StrokeLineCap.BUTT
+                                strokeWidth = 1.0
+                            }
+                            val size = 2.0
+                            val box1 = group.rectangle(x - x2 - size / 2, y - y2 - size / 2, size, size) {
+                                rotate = waypoint.tangent.degrees
+                                fill = c("#004000")
+                            }
+                            val box2 = group.rectangle(x + x2 - size / 2, y + y2 - size / 2, size, size) {
+                                rotate = waypoint.tangent.degrees
+                                fill = c("#004000")
+                            }
+                            var firstAngle = waypoint.tangent
+                            group.setOnMouseEntered {
+                                group.show()
+                                headingLine?.show()
+                            }
+                            group.setOnMousePressed {
+                                firstAngle = waypoint.tangent - (Vector2d(it.x, it.y) - waypoint.pos).angle()
+                            }
+                            group.setOnMouseDragged {
+                                val angle = (Vector2d(it.x, it.y) - waypoint.pos).angle() + firstAngle
+                                val newWaypoint = waypoint.apply { this.tangent = angle }
+                                val (newX, newY) = newWaypoint.pos
+                                val (newX2, newY2) = Vector2d.polar(10.0, angle)
+                                line.startX = newX - newX2
+                                line.endX = newX + newX2
+                                line.startY = newY - newY2
+                                line.endY = newY + newY2
+                                box1.x = newX - newX2 - size / 2
+                                box1.y = newY - newY2 - size / 2
+                                box2.x = newX + newX2 - size / 2
+                                box2.y = newY + newY2 - size / 2
+                                box1.rotate = angle.degrees
+                                box2.rotate = angle.degrees
+                                val currentIndex = waypoints.indexOf(currentWaypoint)
+                                if (currentIndex < 0 || currentIndex > waypoints.size) return@setOnMouseDragged
+                                isPoint = false
+                                moving = group
+                                beingDragged = true
+                                val newList = waypoints.toMutableList()
+                                newList[currentIndex] = newWaypoint
+                                usedWaypoint = newWaypoint
+                                currentWaypoint = newWaypoint
+                                this.trajectory = WaypointTrajectory(
+                                    newList,
+                                    this.trajectory.constraints
+                                )
+                            }
+                            group.setOnMouseReleased {
+                                moving = null
+                                beingDragged = false
+                                usedWaypoint = null
+                                this.trajectory = this.trajectory
+                                trajectoryProperty.set(this.trajectory)
+                            }
+                            group
+                        } else null
+
+                        if (usedWaypoint == waypoint && isPoint) return@zipWithNext
+                        val circle = node.circle(pose.x, pose.y, 1.5) {
+                            fill = Color.DARKGREEN
+                            isCache = true
+                            cacheHint = CacheHint.ROTATE
+                        }
                         circle.setOnMousePressed {
                             val scale = getScale()
                             lastMouse = Vector2d(it.sceneY / scale, it.sceneX / scale)
                         }
+                        circle.setOnMouseEntered {
+                            tangentLine?.show()
+                            headingLine?.show()
+                        }
+                        circle.setOnMouseExited {
+                            tangentLine?.hide()
+                            headingLine?.hide()
+                        }
                         circle.setOnMouseDragged {
+                            isPoint = true
                             val scale = getScale()
                             val mouse = Vector2d(it.sceneY / scale, it.sceneX / scale)
                             val delta = (mouse - lastMouse)
@@ -231,7 +371,7 @@ internal class TrajectoryEntity(private val getScale: () -> Double) : FieldEntit
                                 is LineTo -> LineTo(pos)
                                 is Forward -> {
                                     val c = pose.vec()
-                                    val b = Angle.vec(tangent.radians)
+                                    val b = tangent.vec()
                                     val numerator = (pos - c) dot b
                                     val result =
                                         (b * (numerator / (b dot b))) + c
@@ -245,7 +385,7 @@ internal class TrajectoryEntity(private val getScale: () -> Double) : FieldEntit
                                 }
                                 is Back -> {
                                     val c = pose.vec()
-                                    val b = -Angle.vec(tangent.radians)
+                                    val b = -tangent.vec()
                                     val numerator = (pos - c) dot b
                                     val result =
                                         (b * (numerator / (b dot b))) + c
@@ -259,7 +399,7 @@ internal class TrajectoryEntity(private val getScale: () -> Double) : FieldEntit
                                 }
                                 is StrafeLeft -> {
                                     val c = pose.vec()
-                                    val b = Angle.vec(tangent.radians + PI / 2)
+                                    val b = (tangent.radians + Angle(90.0, AngleUnit.Degrees)).vec()
                                     val numerator = (pos - c) dot b
                                     val result =
                                         (b * (numerator / (b dot b))) + c
@@ -273,7 +413,7 @@ internal class TrajectoryEntity(private val getScale: () -> Double) : FieldEntit
                                 }
                                 is StrafeRight -> {
                                     val c = pose.vec()
-                                    val b = Angle.vec(tangent.radians - PI / 2)
+                                    val b = (tangent.radians - Angle(90.0, AngleUnit.Degrees)).vec()
                                     val numerator = (pos - c) dot b
                                     val result =
                                         (b * (numerator / (b dot b))) + c
@@ -319,6 +459,7 @@ internal class TrajectoryEntity(private val getScale: () -> Double) : FieldEntit
                             }
                             val currentIndex = waypoints.indexOf(currentWaypoint)
                             if (currentIndex < 0 || currentIndex > waypoints.size) return@setOnMouseDragged
+                            circle.toFront()
                             moving = circle
                             beingDragged = true
                             val newList = waypoints.toMutableList()
@@ -338,8 +479,9 @@ internal class TrajectoryEntity(private val getScale: () -> Double) : FieldEntit
                             circle.stroke = Color.TRANSPARENT
                             moving = null
                             beingDragged = false
-                            trajectoryProperty.set(this.trajectory)
                             usedWaypoint = null
+                            this.trajectory = this.trajectory
+                            trajectoryProperty.set(this.trajectory)
                         }
                     }
                 }

@@ -1,8 +1,10 @@
 package com.amarcolini.joos.hardware
 
+import com.amarcolini.joos.geometry.Angle
 import com.amarcolini.joos.geometry.Pose2d
 import com.amarcolini.joos.geometry.Vector2d
 import com.amarcolini.joos.localization.Localizer
+import com.amarcolini.joos.util.rad
 import com.qualcomm.hardware.bosch.BNO055IMU
 import com.qualcomm.robotcore.hardware.HardwareMap
 import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit
@@ -98,19 +100,19 @@ class Imu constructor(val imu: BNO055IMU) {
     /**
      * Returns the heading of the IMU using the gyroscope.
      */
-    val heading: Double get() = imu.angularOrientation.firstAngle.toDouble()
+    val heading: Angle get() = imu.angularOrientation.firstAngle.toDouble().rad
 
     /**
      * Returns the heading velocity of IMU using the gyroscope.
      */
-    val headingVelocity: Double
+    val headingVelocity: Angle
         get() {
             val velocity = imu.angularVelocity.toAngleUnit(AngleUnit.RADIANS)
-            return when (axis) {
+            return (when (axis) {
                 Axis.X -> -velocity.zRotationRate
                 Axis.Y -> velocity.yRotationRate
                 Axis.Z -> -velocity.xRotationRate
-            } * if (reversed) -1.0 else 1.0
+            } * if (reversed) -1.0 else 1.0).rad
         }
 
     /**

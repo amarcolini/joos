@@ -1,5 +1,6 @@
 package com.amarcolini.joos.gui.trajectory
 
+import com.amarcolini.joos.geometry.Angle
 import com.amarcolini.joos.geometry.Pose2d
 import com.amarcolini.joos.geometry.Vector2d
 import com.amarcolini.joos.trajectory.config.GenericConstraints
@@ -24,41 +25,81 @@ class WaypointTrajectory(
     }
 }
 
-internal data class Start(var pose: Pose2d = Pose2d(), var tangent: Degree = Degree()) : Waypoint()
-internal sealed class Spline : Waypoint() {
-    abstract var tangent: Degree
+internal sealed class Line : Waypoint() {
+    internal abstract var pos: Vector2d
+}
+
+internal sealed class Spline : Line() {
+    abstract var tangent: Angle
+}
+
+internal sealed interface CustomHeading {
+    var pose: Pose2d
+}
+
+internal data class Start(override var pose: Pose2d = Pose2d(), override var tangent: Angle = Angle()) : Spline(),
+    CustomHeading {
+    override var pos: Vector2d
+        get() = pose.vec()
+        set(value) {
+            pose = Pose2d(value, pose.heading)
+        }
 }
 
 internal data class SplineTo(
-    var pos: Vector2d = Vector2d(),
-    override var tangent: Degree = Degree()
-) :
-    Spline()
+    public override var pos: Vector2d = Vector2d(),
+    override var tangent: Angle = Angle()
+) : Spline()
 
 internal data class SplineToConstantHeading(
-    var pos: Vector2d = Vector2d(),
-    override var tangent: Degree = Degree()
+    public override var pos: Vector2d = Vector2d(),
+    override var tangent: Angle = Angle()
 ) : Spline()
 
 internal data class SplineToLinearHeading(
-    var pose: Pose2d = Pose2d(),
-    override var tangent: Degree = Degree()
-) : Spline()
+    override var pose: Pose2d = Pose2d(),
+    override var tangent: Angle = Angle()
+) : Spline(), CustomHeading {
+    override var pos: Vector2d
+        get() = pose.vec()
+        set(value) {
+            pose = Pose2d(value, pose.heading)
+        }
+}
 
 internal data class SplineToSplineHeading(
-    var pose: Pose2d = Pose2d(),
-    override var tangent: Degree = Degree()
-) : Spline()
+    override var pose: Pose2d = Pose2d(),
+    override var tangent: Angle = Angle()
+) : Spline(), CustomHeading {
+    override var pos: Vector2d
+        get() = pose.vec()
+        set(value) {
+            pose = Pose2d(value, pose.heading)
+        }
+}
 
-internal sealed class Line : Waypoint()
-internal data class StrafeTo(var pos: Vector2d = Vector2d()) : Line()
-internal data class Forward(var distance: Double = 0.0) : Line()
-internal data class Back(var distance: Double = 0.0) : Line()
-internal data class StrafeLeft(var distance: Double = 0.0) : Line()
-internal data class StrafeRight(var distance: Double = 0.0) : Line()
-internal data class LineTo(var pos: Vector2d = Vector2d()) : Line()
-internal data class LineToConstantHeading(var pos: Vector2d = Vector2d()) : Line()
-internal data class LineToLinearHeading(var pose: Pose2d = Pose2d()) : Line()
-internal data class LineToSplineHeading(var pose: Pose2d = Pose2d()) : Line()
-internal data class Turn(var angle: Degree = Degree()) : Waypoint()
+internal data class StrafeTo(public override var pos: Vector2d = Vector2d()) : Line()
+internal data class Forward(var distance: Double = 0.0) : Waypoint()
+internal data class Back(var distance: Double = 0.0) : Waypoint()
+internal data class StrafeLeft(var distance: Double = 0.0) : Waypoint()
+internal data class StrafeRight(var distance: Double = 0.0) : Waypoint()
+internal data class LineTo(public override var pos: Vector2d = Vector2d()) : Line()
+internal data class LineToConstantHeading(public override var pos: Vector2d = Vector2d()) : Line()
+internal data class LineToLinearHeading(override var pose: Pose2d = Pose2d()) : Line(), CustomHeading {
+    override var pos: Vector2d
+        get() = pose.vec()
+        set(value) {
+            pose = Pose2d(value, pose.heading)
+        }
+}
+
+internal data class LineToSplineHeading(override var pose: Pose2d = Pose2d()) : Line(), CustomHeading {
+    override var pos: Vector2d
+        get() = pose.vec()
+        set(value) {
+            pose = Pose2d(value, pose.heading)
+        }
+}
+
+internal data class Turn(var angle: Angle = Angle()) : Waypoint()
 internal data class Wait(var seconds: Double = 0.0) : Waypoint()

@@ -5,8 +5,11 @@ import com.amarcolini.joos.command.Component
 import com.amarcolini.joos.control.FeedforwardCoefficients
 import com.amarcolini.joos.control.PIDCoefficients
 import com.amarcolini.joos.control.PIDFController
+import com.amarcolini.joos.geometry.Angle
 import com.amarcolini.joos.kinematics.Kinematics
 import com.amarcolini.joos.util.NanoClock
+import com.amarcolini.joos.util.deg
+import com.amarcolini.joos.util.rad
 import com.qualcomm.robotcore.hardware.DcMotor
 import com.qualcomm.robotcore.hardware.DcMotorEx
 import com.qualcomm.robotcore.hardware.DcMotorSimple
@@ -255,6 +258,12 @@ class Motor @JvmOverloads constructor(
     @JvmField
     val encoder = Encoder(TPR, motor::getCurrentPosition, motor::getVelocity, clock)
 
+    /**
+     * The maximum achievable distance velocity of the motor.
+     */
+    @JvmField
+    val maxDistanceVelocity: Double = rpmToDistanceVelocity(maxRPM)
+
     var runMode: RunMode = RunMode.RUN_WITHOUT_ENCODER
     var zeroPowerBehavior: ZeroPowerBehavior = ZeroPowerBehavior.FLOAT
         set(value) {
@@ -282,9 +291,9 @@ class Motor @JvmOverloads constructor(
     /**
      * Feedforward coefficients used in both [RunMode.RUN_USING_ENCODER] and [RunMode.RUN_WITHOUT_ENCODER].
      * Note that these coefficients are applied to desired distance velocity, so not using feedforward means setting
-     * kV to 1 / maximum distance velocity.
+     * kV to 1 / [maxDistanceVelocity].
      */
-    var feedforwardCoefficients = FeedforwardCoefficients(1 / rpmToDistanceVelocity(maxRPM))
+    var feedforwardCoefficients = FeedforwardCoefficients(1 / maxDistanceVelocity)
 
     /**
      * The target position used by [RunMode.RUN_TO_POSITION].
@@ -337,6 +346,7 @@ class Motor @JvmOverloads constructor(
     /**
      * The maximum achievable ticks per second velocity of the motor.
      */
+    @JvmField
     val maxTPS: Double = TPR * (maxRPM / 60)
 
     /**
@@ -489,6 +499,11 @@ class Motor @JvmOverloads constructor(
      */
     val velocity
         get() = encoder.velocity * 60 / TPR
+
+    /**
+     * The total rotation of the motor. Note that this value is positive or negative according to motor direction.
+     */
+    val rotation: Angle get() = (encoder.position / TPR * 2 * PI).rad
 
     /**
      * The velocity of the motor in the specified [units]. Computed using the encoder.

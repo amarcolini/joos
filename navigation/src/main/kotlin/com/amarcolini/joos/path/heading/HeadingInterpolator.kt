@@ -1,5 +1,6 @@
 package com.amarcolini.joos.path.heading
 
+import com.amarcolini.joos.geometry.Angle
 import com.amarcolini.joos.path.ParametricCurve
 
 /**
@@ -24,51 +25,51 @@ abstract class HeadingInterpolator {
      * Returns the heading at the specified [s].
      */
     @JvmOverloads
-    operator fun get(s: Double, t: Double = curve.reparam(s)) = internalGet(s, t)
+    operator fun get(s: Double, t: Double = curve.reparam(s)): Angle = internalGet(s, t)
 
     /**
      * Returns the heading derivative at the specified [s].
      */
     @JvmOverloads
-    fun deriv(s: Double, t: Double = curve.reparam(s)) = internalDeriv(s, t)
+    fun deriv(s: Double, t: Double = curve.reparam(s)): Angle = internalDeriv(s, t)
 
     /**
      * Returns the heading second derivative at the specified [s].
      */
     @JvmOverloads
-    fun secondDeriv(s: Double, t: Double = curve.reparam(s)) = internalSecondDeriv(s, t)
+    fun secondDeriv(s: Double, t: Double = curve.reparam(s)): Angle = internalSecondDeriv(s, t)
 
     /**
      * Returns the start heading.
      */
-    fun start() = get(0.0, 0.0)
+    fun start(): Angle = get(0.0, 0.0)
 
     /**
      * Returns the start heading derivative.
      */
-    fun startDeriv() = deriv(0.0, 0.0)
+    fun startDeriv(): Angle = deriv(0.0, 0.0)
 
     /**
      * Returns the start heading second derivative.
      */
-    fun startSecondDeriv() = secondDeriv(0.0, 0.0)
+    fun startSecondDeriv(): Angle = secondDeriv(0.0, 0.0)
 
     /**
      * Returns the end heading.
      */
-    fun end() = get(curve.length(), 1.0)
+    fun end(): Angle = get(curve.length(), 1.0)
 
     /**
      * Returns the end heading derivative.
      */
-    fun endDeriv() = deriv(curve.length(), 1.0)
+    fun endDeriv(): Angle = deriv(curve.length(), 1.0)
 
     /**
      * Returns the end heading second derivative.
      */
-    fun endSecondDeriv() = secondDeriv(curve.length(), 1.0)
+    fun endSecondDeriv(): Angle = secondDeriv(curve.length(), 1.0)
 
-    internal abstract fun internalGet(s: Double, t: Double): Double
-    internal abstract fun internalDeriv(s: Double, t: Double): Double
-    internal abstract fun internalSecondDeriv(s: Double, t: Double): Double
+    internal abstract fun internalGet(s: Double, t: Double): Angle
+    internal abstract fun internalDeriv(s: Double, t: Double): Angle
+    internal abstract fun internalSecondDeriv(s: Double, t: Double): Angle
 }

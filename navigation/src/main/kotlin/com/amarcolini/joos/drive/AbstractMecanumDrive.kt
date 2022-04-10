@@ -16,7 +16,7 @@ import com.amarcolini.joos.localization.MecanumLocalizer
  * @param lateralMultiplier lateral multiplier
  */
 abstract class AbstractMecanumDrive @JvmOverloads constructor(
-    var feedforward: FeedforwardCoefficients,
+    private val feedforward: FeedforwardCoefficients,
     private val trackWidth: Double,
     private val wheelBase: Double = trackWidth,
     private val lateralMultiplier: Double = 1.0

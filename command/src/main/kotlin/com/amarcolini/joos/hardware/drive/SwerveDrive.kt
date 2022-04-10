@@ -4,14 +4,17 @@ import com.amarcolini.joos.command.Component
 import com.amarcolini.joos.control.PIDCoefficients
 import com.amarcolini.joos.drive.DriveSignal
 import com.amarcolini.joos.followers.HolonomicPIDVAFollower
+import com.amarcolini.joos.geometry.Angle
 import com.amarcolini.joos.geometry.Pose2d
 import com.amarcolini.joos.hardware.Imu
 import com.amarcolini.joos.hardware.Motor
+import com.amarcolini.joos.hardware.MotorGroup
 import com.amarcolini.joos.hardware.Servo
 import com.amarcolini.joos.kinematics.SwerveKinematics
 import com.amarcolini.joos.localization.Localizer
 import com.amarcolini.joos.localization.SwerveLocalizer
 import com.amarcolini.joos.trajectory.config.SwerveConstraints
+import com.amarcolini.joos.util.deg
 import kotlin.math.abs
 
 /**
@@ -29,20 +32,26 @@ open class SwerveDrive @JvmOverloads constructor(
             backLeft,
             backRight,
             frontRight
-        ).minOf { it.first.maxRPM }
+        ).minOf { it.first.maxDistanceVelocity }
     ),
     translationalPID: PIDCoefficients = PIDCoefficients(1.0, 0.0, 0.5),
     headingPID: PIDCoefficients = PIDCoefficients(1.0, 0.0, 0.5)
 ) : DriveComponent() {
-    private val motors =
+    private val wheels =
         listOf(frontLeft.first, backLeft.first, backRight.first, frontRight.first)
     private val servos =
         listOf(frontLeft.second, frontRight.second, backRight.second, frontRight.second)
 
+    /**
+     * All the motors in this drive.
+     */
+    @JvmField
+    val motors: MotorGroup = MotorGroup(frontLeft.first, backLeft.first, backRight.first, frontRight.first)
+
     override val trajectoryFollower = HolonomicPIDVAFollower(
         translationalPID, translationalPID,
         headingPID,
-        Pose2d(0.5, 0.5, Math.toRadians(5.0)),
+        Pose2d(0.5, 0.5, 5.deg),
         0.5
     )
     override var localizer: Localizer = SwerveLocalizer(
@@ -54,7 +63,7 @@ open class SwerveDrive @JvmOverloads constructor(
     )
 
     override fun setDriveSignal(driveSignal: DriveSignal) {
-        motors.zip(
+        wheels.zip(
             SwerveKinematics.robotToWheelVelocities(
                 driveSignal.vel,
                 constraints.trackWidth,
@@ -84,7 +93,7 @@ open class SwerveDrive @JvmOverloads constructor(
 
     override fun setDrivePower(drivePower: Pose2d) {
         val avg = (constraints.trackWidth + constraints.wheelBase) / 2.0
-        motors.zip(
+        wheels.zip(
             SwerveKinematics.robotToWheelVelocities(
                 drivePower,
                 constraints.trackWidth / avg,
@@ -111,9 +120,9 @@ open class SwerveDrive @JvmOverloads constructor(
     ) {
         var vel = drivePower
 
-        if (abs(vel.x) + abs(vel.y) + abs(vel.heading) > 1) {
+        if (abs(vel.x) + abs(vel.y) + abs(vel.heading.radians) > 1) {
             val denom =
-                xWeight * abs(vel.x) + yWeight * abs(vel.y) + headingWeight * abs(vel.heading)
+                xWeight * abs(vel.x) + yWeight * abs(vel.y) + headingWeight * abs(vel.heading.radians)
             vel = Pose2d(vel.x * xWeight, vel.y * yWeight, vel.heading * headingWeight) / denom
         }
 
@@ -121,21 +130,21 @@ open class SwerveDrive @JvmOverloads constructor(
     }
 
     override fun setRunMode(runMode: Motor.RunMode) {
-        motors.forEach { it.runMode = runMode }
+        wheels.forEach { it.runMode = runMode }
     }
 
     override fun setZeroPowerBehavior(zeroPowerBehavior: Motor.ZeroPowerBehavior) {
-        motors.forEach { it.zeroPowerBehavior = zeroPowerBehavior }
+        wheels.forEach { it.zeroPowerBehavior = zeroPowerBehavior }
     }
 
-    private fun getWheelPositions(): List<Double> = motors.map { it.distance }
+    private fun getWheelPositions(): List<Double> = wheels.map { it.distance }
 
-    private fun getWheelVelocities(): List<Double> = motors.map { it.distanceVelocity }
+    private fun getWheelVelocities(): List<Double> = wheels.map { it.distanceVelocity }
 
-    private fun getModuleOrientations(): List<Double> = servos.map { it.angle }
+    private fun getModuleOrientations(): List<Angle> = servos.map { it.angle }
 
     override fun update() {
         super.update()
-        motors.forEach { it.update() }
+        wheels.forEach { it.update() }
     }
 }

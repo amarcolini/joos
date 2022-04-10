@@ -1,7 +1,6 @@
 package com.amarcolini.joos.trajectory
 
 import com.amarcolini.joos.geometry.Pose2d
-import com.amarcolini.joos.util.Angle
 
 /**
  * Static trajectory segment that holds a constant pose.
@@ -17,7 +16,7 @@ class WaitSegment(private val pose: Pose2d, private val duration: Double) : Traj
     override fun get(time: Double) = pose
     override fun distance(time: Double) = 0.0
 
-    override fun deriv(time: Double) = Pose2d(Angle.vec(pose.heading))
+    override fun deriv(time: Double) = Pose2d(pose.heading.vec())
     override fun secondDeriv(time: Double) = Pose2d()
     override fun velocity(time: Double) = Pose2d()
     override fun acceleration(time: Double) = Pose2d()

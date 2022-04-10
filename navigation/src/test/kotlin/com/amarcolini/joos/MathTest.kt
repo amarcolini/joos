@@ -17,7 +17,7 @@ class MathTest {
     }
 
     @Test
-    fun testAngle() {
+    fun testAngleConversionSpeeds() {
         val tests = mapOf(
             "kotlin" to { sin(Math.random() * 360) },
             "kotlin with convert" to { sin(Math.toRadians(Math.random() * 360)) },

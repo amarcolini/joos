@@ -4,15 +4,15 @@ import com.amarcolini.joos.geometry.Pose2d
 import com.amarcolini.joos.trajectory.config.GenericConstraints
 import com.amarcolini.joos.trajectory.config.TrajectoryConfig
 import com.amarcolini.joos.trajectory.config.TrajectoryConfigManager
+import com.amarcolini.joos.util.deg
 import org.junit.jupiter.api.Test
 import java.io.File
-import java.nio.file.Paths
 
-const val CONFIG_DIR = "./config/"
+const val CONFIG_DIR: String = "./config/"
 
 class ConfigTest {
     @Test
-    fun saveConfig() {
+    fun saveConfig(): TrajectoryConfig {
         val waypoints = listOf(
             TrajectoryConfig.Spline(
                 TrajectoryConfig.SplineData(
@@ -20,20 +20,21 @@ class ConfigTest {
                 )
             ),
             TrajectoryConfig.Wait(5.0),
-            TrajectoryConfig.Turn(Math.toRadians(90.0))
+            TrajectoryConfig.Turn(90.deg)
         )
         val constraints =
-            GenericConstraints(30.0, 30.0, Math.toRadians(180.0), Math.toRadians(180.0))
-        val config = TrajectoryConfig(Pose2d(), 0.0, waypoints, constraints)
+            GenericConstraints(30.0, 30.0, 180.0.deg, 180.deg)
+        val config = TrajectoryConfig(Pose2d(), 0.deg, waypoints, constraints)
         val file = File("${CONFIG_DIR}/test.yaml")
         file.parentFile.mkdirs()
         TrajectoryConfigManager.saveConfig(config, file)
+        return config
     }
 
     @Test
     fun loadConfig() {
-        saveConfig()
+        val savedConfig = saveConfig()
         val loadedConfig = TrajectoryConfigManager.loadConfig(File("${CONFIG_DIR}/test.yaml"))
-        assert(loadedConfig != null)
+        assert(loadedConfig == savedConfig)
     }
 }

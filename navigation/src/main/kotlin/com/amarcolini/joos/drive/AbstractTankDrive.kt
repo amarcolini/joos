@@ -14,7 +14,7 @@ import com.amarcolini.joos.localization.TankLocalizer
  * @param trackWidth lateral distance between pairs of wheels on different sides of the robot
  */
 abstract class AbstractTankDrive constructor(
-    var feedforward: FeedforwardCoefficients,
+    private val feedforward: FeedforwardCoefficients,
     private val trackWidth: Double
 ) : Drive() {
 
@@ -34,7 +34,7 @@ abstract class AbstractTankDrive constructor(
     }
 
     override fun setDrivePower(drivePower: Pose2d) {
-        val powers = TankKinematics.robotToWheelVelocities(drivePower, 1.0)
+        val powers = TankKinematics.robotToWheelVelocities(drivePower, 2.0)
         setMotorPowers(powers[0], powers[1])
     }
 

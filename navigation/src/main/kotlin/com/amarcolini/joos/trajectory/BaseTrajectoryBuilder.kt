@@ -1,5 +1,6 @@
 package com.amarcolini.joos.trajectory
 
+import com.amarcolini.joos.geometry.Angle
 import com.amarcolini.joos.geometry.Pose2d
 import com.amarcolini.joos.geometry.Vector2d
 import com.amarcolini.joos.path.Path
@@ -58,18 +59,25 @@ abstract class BaseTrajectoryBuilder<T : BaseTrajectoryBuilder<T>> protected con
     }
 
     /**
-     * Adds a turn segment that turns [angle] degrees.
+     * Adds a turn segment that turns the specified [angle].
      *
-     * @param angle angle to turn (in degrees)
+     * @param angle angle to turn
      */
-    fun turn(angle: Double): T {
+    fun turn(angle: Angle): T {
         pushPath()
         val start = if (segments.isEmpty()) startPose else segments.last().end()
-        addSegment(makeTurnSegment(start, Math.toRadians(angle)))
+        addSegment(makeTurnSegment(start, angle))
         pathBuilder = PathBuilder(segments.last().end())
 
         return this as T
     }
+
+    /**
+     * Adds a turn segment that turns the specified [angle].
+     *
+     * @param angle angle to turn in [Angle.defaultUnits]
+     */
+    fun turn(angle: Double): T = turn(Angle(angle))
 
     /**
      * Adds a wait segment that waits [seconds].
@@ -186,10 +194,36 @@ abstract class BaseTrajectoryBuilder<T : BaseTrajectoryBuilder<T>> protected con
      * Adds a spline segment with tangent heading interpolation.
      *
      * @param endPosition end position
-     * @param endTangent end tangent, in degrees
+     * @param endTangent end tangent
      */
-    fun splineTo(endPosition: Vector2d, endTangent: Double): T {
-        addPathSegment { pathBuilder.splineTo(endPosition, Math.toRadians(endTangent)) }
+    fun splineTo(endPosition: Vector2d, endTangent: Angle): T {
+        addPathSegment { pathBuilder.splineTo(endPosition, endTangent) }
+
+        return this as T
+    }
+
+    /**
+     * Adds a spline segment with tangent heading interpolation.
+     *
+     * @param endPosition end position
+     * @param endTangent end tangent in [Angle.defaultUnits]
+     */
+    fun splineTo(endPosition: Vector2d, endTangent: Double): T =
+        splineTo(endPosition, Angle(endTangent))
+
+    /**
+     * Adds a spline segment with constant heading interpolation.
+     *
+     * @param endPosition end position
+     * @param endTangent end tangent
+     */
+    fun splineToConstantHeading(endPosition: Vector2d, endTangent: Angle): T {
+        addPathSegment {
+            pathBuilder.splineToConstantHeading(
+                endPosition,
+                endTangent
+            )
+        }
 
         return this as T
     }
@@ -198,15 +232,19 @@ abstract class BaseTrajectoryBuilder<T : BaseTrajectoryBuilder<T>> protected con
      * Adds a spline segment with constant heading interpolation.
      *
      * @param endPosition end position
-     * @param endTangent end tangent, in degrees
+     * @param endTangent end tangent in [Angle.defaultUnits]
      */
-    fun splineToConstantHeading(endPosition: Vector2d, endTangent: Double): T {
-        addPathSegment {
-            pathBuilder.splineToConstantHeading(
-                endPosition,
-                Math.toRadians(endTangent)
-            )
-        }
+    fun splineToConstantHeading(endPosition: Vector2d, endTangent: Double): T =
+        splineToConstantHeading(endPosition, Angle(endTangent))
+
+    /**
+     * Adds a spline segment with linear heading interpolation.
+     *
+     * @param endPose end pose
+     * @param endTangent end tangent
+     */
+    fun splineToLinearHeading(endPose: Pose2d, endTangent: Angle): T {
+        addPathSegment { pathBuilder.splineToLinearHeading(endPose, endTangent) }
 
         return this as T
     }
@@ -215,10 +253,19 @@ abstract class BaseTrajectoryBuilder<T : BaseTrajectoryBuilder<T>> protected con
      * Adds a spline segment with linear heading interpolation.
      *
      * @param endPose end pose
-     * @param endTangent end tangent, in degrees
+     * @param endTangent end tangent in [Angle.defaultUnits]
      */
-    fun splineToLinearHeading(endPose: Pose2d, endTangent: Double): T {
-        addPathSegment { pathBuilder.splineToLinearHeading(endPose, Math.toRadians(endTangent)) }
+    fun splineToLinearHeading(endPose: Pose2d, endTangent: Double): T =
+        splineToLinearHeading(endPose, Angle(endTangent))
+
+    /**
+     * Adds a spline segment with spline heading interpolation.
+     *
+     * @param endPose end pose
+     * @param endTangent end tangent
+     */
+    fun splineToSplineHeading(endPose: Pose2d, endTangent: Angle): T {
+        addPathSegment { pathBuilder.splineToSplineHeading(endPose, endTangent) }
 
         return this as T
     }
@@ -227,24 +274,21 @@ abstract class BaseTrajectoryBuilder<T : BaseTrajectoryBuilder<T>> protected con
      * Adds a spline segment with spline heading interpolation.
      *
      * @param endPose end pose
-     * @param endTangent end tangent, in degrees
+     * @param endTangent end tangent in [Angle.defaultUnits]
      */
-    fun splineToSplineHeading(endPose: Pose2d, endTangent: Double): T {
-        addPathSegment { pathBuilder.splineToSplineHeading(endPose, Math.toRadians(endTangent)) }
-
-        return this as T
-    }
+    fun splineToSplineHeading(endPose: Pose2d, endTangent: Double): T =
+        splineToSplineHeading(endPose, Angle(endTangent))
 
     /**
      * Adds a marker to the trajectory at [time].
      */
-    fun addTemporalMarker(time: Double, callback: MarkerCallback) =
+    fun addTemporalMarker(time: Double, callback: MarkerCallback): T =
         addTemporalMarker(0.0, time, callback)
 
     /**
      * Adds a marker to the trajectory at [scale] * trajectory duration + [offset].
      */
-    fun addTemporalMarker(scale: Double, offset: Double, callback: MarkerCallback) =
+    fun addTemporalMarker(scale: Double, offset: Double, callback: MarkerCallback): T =
         addTemporalMarker({ scale * it + offset }, callback)
 
     /**
@@ -268,19 +312,19 @@ abstract class BaseTrajectoryBuilder<T : BaseTrajectoryBuilder<T>> protected con
     /**
      * Adds a marker at the current position of the trajectory.
      */
-    fun addDisplacementMarker(callback: MarkerCallback) =
+    fun addDisplacementMarker(callback: MarkerCallback): T =
         addDisplacementMarker(pathBuilder.build().length(), callback)
 
     /**
      * Adds a marker to the trajectory at [displacement].
      */
-    fun addDisplacementMarker(displacement: Double, callback: MarkerCallback) =
+    fun addDisplacementMarker(displacement: Double, callback: MarkerCallback): T =
         addDisplacementMarker(0.0, displacement, callback)
 
     /**
      * Adds a marker to the trajectory at [scale] * path length + [offset].
      */
-    fun addDisplacementMarker(scale: Double, offset: Double, callback: MarkerCallback) =
+    fun addDisplacementMarker(scale: Double, offset: Double, callback: MarkerCallback): T =
         addDisplacementMarker({ scale * it + offset }, callback)
 
     /**
@@ -304,5 +348,5 @@ abstract class BaseTrajectoryBuilder<T : BaseTrajectoryBuilder<T>> protected con
 
     protected abstract fun makePathSegment(path: Path): PathTrajectorySegment
 
-    protected abstract fun makeTurnSegment(pose: Pose2d, angle: Double): TurnSegment
+    protected abstract fun makeTurnSegment(pose: Pose2d, angle: Angle): TurnSegment
 }

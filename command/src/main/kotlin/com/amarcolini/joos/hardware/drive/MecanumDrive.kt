@@ -7,10 +7,12 @@ import com.amarcolini.joos.followers.HolonomicPIDVAFollower
 import com.amarcolini.joos.geometry.Pose2d
 import com.amarcolini.joos.hardware.Imu
 import com.amarcolini.joos.hardware.Motor
+import com.amarcolini.joos.hardware.MotorGroup
 import com.amarcolini.joos.kinematics.MecanumKinematics
 import com.amarcolini.joos.localization.Localizer
 import com.amarcolini.joos.localization.MecanumLocalizer
 import com.amarcolini.joos.trajectory.config.MecanumConstraints
+import com.amarcolini.joos.util.deg
 import kotlin.math.abs
 
 /**
@@ -28,18 +30,24 @@ open class MecanumDrive @JvmOverloads constructor(
             backLeft,
             backRight,
             frontRight
-        ).minOf { it.maxRPM }
+        ).minOf { it.maxDistanceVelocity }
     ),
     translationalPID: PIDCoefficients = PIDCoefficients(1.0, 0.0, 0.5),
     headingPID: PIDCoefficients = PIDCoefficients(1.0, 0.0, 0.5)
 ) : DriveComponent() {
 
-    private val motors = listOf(frontLeft, backLeft, backRight, frontRight)
+    private val wheels = listOf(frontLeft, backLeft, backRight, frontRight)
+
+    /**
+     * All the motors in this drive.
+     */
+    @JvmField
+    val motors: MotorGroup = MotorGroup(frontLeft, backLeft, backRight, frontRight)
 
     override val trajectoryFollower = HolonomicPIDVAFollower(
         translationalPID, translationalPID,
         headingPID,
-        Pose2d(0.5, 0.5, Math.toRadians(5.0)),
+        Pose2d(0.5, 0.5, 5.deg),
         0.5
     )
 
@@ -50,12 +58,12 @@ open class MecanumDrive @JvmOverloads constructor(
         this, imu != null
     )
 
-    private fun getWheelPositions() = motors.map { it.distance }
+    private fun getWheelPositions() = wheels.map { it.distance }
 
-    private fun getWheelVelocities() = motors.map { it.distanceVelocity }
+    private fun getWheelVelocities() = wheels.map { it.distanceVelocity }
 
     override fun setDriveSignal(driveSignal: DriveSignal) {
-        motors.zip(
+        wheels.zip(
             MecanumKinematics.robotToWheelVelocities(
                 driveSignal.vel,
                 constraints.trackWidth,
@@ -76,7 +84,7 @@ open class MecanumDrive @JvmOverloads constructor(
     }
 
     override fun setDrivePower(drivePower: Pose2d) {
-        motors.zip(
+        wheels.zip(
             MecanumKinematics.robotToWheelVelocities(
                 drivePower,
                 1.0,
@@ -95,9 +103,9 @@ open class MecanumDrive @JvmOverloads constructor(
     ) {
         var vel = drivePower
 
-        if (abs(vel.x) + abs(vel.y) + abs(vel.heading) > 1) {
+        if (abs(vel.x) + abs(vel.y) + abs(vel.heading.defaultValue) > 1) {
             val denom =
-                xWeight * abs(vel.x) + yWeight * abs(vel.y) + headingWeight * abs(vel.heading)
+                xWeight * abs(vel.x) + yWeight * abs(vel.y) + headingWeight * abs(vel.heading.defaultValue)
             vel = Pose2d(vel.x * xWeight, vel.y * yWeight, vel.heading * headingWeight) / denom
         }
 
@@ -105,15 +113,15 @@ open class MecanumDrive @JvmOverloads constructor(
     }
 
     override fun setRunMode(runMode: Motor.RunMode) {
-        motors.forEach { it.runMode = runMode }
+        wheels.forEach { it.runMode = runMode }
     }
 
     override fun setZeroPowerBehavior(zeroPowerBehavior: Motor.ZeroPowerBehavior) {
-        motors.forEach { it.zeroPowerBehavior = zeroPowerBehavior }
+        wheels.forEach { it.zeroPowerBehavior = zeroPowerBehavior }
     }
 
     override fun update() {
         super.update()
-        motors.forEach { it.update() }
+        wheels.forEach { it.update() }
     }
 }

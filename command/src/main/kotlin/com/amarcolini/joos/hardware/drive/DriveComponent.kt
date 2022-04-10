@@ -7,14 +7,13 @@ import com.amarcolini.joos.command.FunctionalCommand
 import com.amarcolini.joos.drive.Drive
 import com.amarcolini.joos.drive.DriveSignal
 import com.amarcolini.joos.followers.TrajectoryFollower
+import com.amarcolini.joos.geometry.Angle
 import com.amarcolini.joos.geometry.Pose2d
 import com.amarcolini.joos.hardware.Imu
 import com.amarcolini.joos.hardware.Motor
 import com.amarcolini.joos.trajectory.Trajectory
 import com.amarcolini.joos.trajectory.TrajectoryBuilder
 import com.amarcolini.joos.trajectory.config.TrajectoryConstraints
-import com.amarcolini.joos.util.DashboardUtil
-import kotlin.Double.Companion.NaN
 
 /**
  * A [Component] implementation of [Drive].
@@ -39,24 +38,28 @@ abstract class DriveComponent : Drive(), Component {
     override fun update() {
         updatePoseEstimate()
         if (dashboardEnabled) {
+            val telemetry = CommandScheduler.telemetry
             val trajectory = getCurrentTrajectory()
             if (trajectory != null) {
                 poseHistory.add(poseEstimate)
                 if (poseHistoryLimit > -1 && poseHistory.size > poseHistoryLimit)
                     poseHistory.removeFirst()
-                DashboardUtil.drawSampledTrajectory(trajectory, pathColor, turnColor, waitColor)
-                DashboardUtil.drawPoseHistory(poseHistory, robotColor)
+                telemetry.drawSampledTrajectory(trajectory, pathColor, turnColor, waitColor)
+                telemetry.drawPoseHistory(poseHistory, robotColor)
             }
-            CommandScheduler.telemetry.fieldOverlay().setStrokeWidth(1)
-            DashboardUtil.drawRobot(poseEstimate, robotColor)
+            telemetry.fieldOverlay().setStrokeWidth(1)
+            telemetry.drawRobot(poseEstimate, robotColor)
         }
     }
 
+    /**
+     * Returns a [TrajectoryBuilder] with the constraints of this drive.
+     */
     @JvmOverloads
     fun trajectoryBuilder(
         startPose: Pose2d = poseEstimate,
-        startTangent: Double = startPose.heading
-    ) = TrajectoryBuilder(
+        startTangent: Angle = startPose.heading
+    ): TrajectoryBuilder = TrajectoryBuilder(
         startPose,
         startTangent,
         constraints.velConstraint,
@@ -64,11 +67,23 @@ abstract class DriveComponent : Drive(), Component {
         constraints.maxAngVel, constraints.maxAngAccel, constraints.maxAngJerk
     )
 
+    /**
+     * Returns a [TrajectoryBuilder] with the constraints of this drive.
+     *
+     * @param startTangent the starting tangent in degrees or radians as specified by [Angle.defaultUnits]
+     */
+    @JvmOverloads
+    fun trajectoryBuilder(startPose: Pose2d = poseEstimate, startTangent: Double): TrajectoryBuilder =
+        trajectoryBuilder(startPose, Angle(startTangent))
+
+    /**
+     * Returns a [TrajectoryBuilder] with the constraints of this drive.
+     */
     @JvmOverloads
     fun trajectoryBuilder(
         startPose: Pose2d = poseEstimate,
         reversed: Boolean
-    ) = TrajectoryBuilder(
+    ): TrajectoryBuilder = TrajectoryBuilder(
         startPose,
         reversed,
         constraints.velConstraint,
@@ -76,6 +91,9 @@ abstract class DriveComponent : Drive(), Component {
         constraints.maxAngVel, constraints.maxAngAccel, constraints.maxAngJerk
     )
 
+    /**
+     * Returns a [Command] that follows the provided trajectory.
+     */
     fun followTrajectory(trajectory: Trajectory): Command {
         poseHistory.clear()
         return if (!trajectoryFollower.isFollowing()) {
@@ -95,10 +113,10 @@ abstract class DriveComponent : Drive(), Component {
     fun getCurrentTrajectory(): Trajectory? =
         if (trajectoryFollower.isFollowing()) trajectoryFollower.trajectory else null
 
-    override val rawExternalHeading: Double
-        get() = imu?.heading ?: NaN
+    override val rawExternalHeading: Angle
+        get() = imu?.heading ?: Angle()
 
-    override fun getExternalHeadingVelocity() = imu?.headingVelocity
+    override fun getExternalHeadingVelocity(): Angle? = imu?.headingVelocity
 
     abstract fun setRunMode(runMode: Motor.RunMode)
     abstract fun setZeroPowerBehavior(zeroPowerBehavior: Motor.ZeroPowerBehavior)

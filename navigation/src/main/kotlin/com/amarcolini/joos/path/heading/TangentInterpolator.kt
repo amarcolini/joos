@@ -1,6 +1,6 @@
 package com.amarcolini.joos.path.heading
 
-import com.amarcolini.joos.util.Angle
+import com.amarcolini.joos.geometry.Angle
 
 /**
  * Tangent (system) interpolator for tank/differential and other nonholonomic drives.
@@ -8,11 +8,16 @@ import com.amarcolini.joos.util.Angle
  * @param offset tangent heading offset
  */
 class TangentInterpolator @JvmOverloads constructor(
-    val offset: Double = 0.0
+    val offset: Angle = Angle()
 ) : HeadingInterpolator() {
-    override fun internalGet(s: Double, t: Double) = Angle.norm(offset + curve.tangentAngle(s, t))
+    /**
+     * Constructs a [TangentInterpolator] where [offset] is in degrees or radians as specified by [Angle.defaultUnits].
+     */
+    constructor(offset: Double) : this(Angle(offset))
 
-    override fun internalDeriv(s: Double, t: Double) = curve.tangentAngleDeriv(s, t)
+    override fun internalGet(s: Double, t: Double): Angle = (offset + curve.tangentAngle(s, t)).norm()
 
-    override fun internalSecondDeriv(s: Double, t: Double) = curve.tangentAngleSecondDeriv(s, t)
+    override fun internalDeriv(s: Double, t: Double): Angle = curve.tangentAngleDeriv(s, t)
+
+    override fun internalSecondDeriv(s: Double, t: Double): Angle = curve.tangentAngleSecondDeriv(s, t)
 }

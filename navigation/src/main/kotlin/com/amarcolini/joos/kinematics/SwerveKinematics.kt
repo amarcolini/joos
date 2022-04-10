@@ -1,7 +1,10 @@
 package com.amarcolini.joos.kinematics
 
+import com.amarcolini.joos.geometry.Angle
 import com.amarcolini.joos.geometry.Pose2d
 import com.amarcolini.joos.geometry.Vector2d
+import com.amarcolini.joos.util.cos
+import com.amarcolini.joos.util.sin
 import kotlin.math.cos
 import kotlin.math.sin
 
@@ -33,7 +36,7 @@ object SwerveKinematics {
 
         val vx = robotVel.x
         val vy = robotVel.y
-        val omega = robotVel.heading
+        val omega = robotVel.heading.radians
 
         return listOf(
             Vector2d(vx - omega * y, vy + omega * x),
@@ -65,7 +68,7 @@ object SwerveKinematics {
         ).map(Vector2d::norm)
 
     /**
-     * Computes the module orientations (in radians) corresponding to [robotVel] given the provided
+     * Computes the module orientations corresponding to [robotVel] given the provided
      * [trackWidth] and [wheelBase].
      *
      * @param robotVel velocity of the robot in its reference frame
@@ -105,7 +108,7 @@ object SwerveKinematics {
 
         val ax = robotAccel.x
         val ay = robotAccel.y
-        val alpha = robotAccel.heading
+        val alpha = robotAccel.heading.radians
 
         return listOf(
             Vector2d(ax - alpha * y, ay + alpha * x),
@@ -188,7 +191,7 @@ object SwerveKinematics {
     @JvmOverloads
     fun wheelToRobotVelocities(
         wheelVelocities: List<Double>,
-        moduleOrientations: List<Double>,
+        moduleOrientations: List<Angle>,
         trackWidth: Double,
         wheelBase: Double = trackWidth
     ): Pose2d {

@@ -61,16 +61,16 @@ class HolonomicPIDVAFollower @JvmOverloads constructor(
         // you can pass the error directly to PIDFController by setting setpoint = error and measurement = 0
         axialController.targetPosition = poseError.x
         lateralController.targetPosition = poseError.y
-        headingController.targetPosition = poseError.heading
+        headingController.targetPosition = poseError.heading.radians
 
         axialController.targetVelocity = targetRobotVel.x
         lateralController.targetVelocity = targetRobotVel.y
-        headingController.targetVelocity = targetRobotVel.heading
+        headingController.targetVelocity = targetRobotVel.heading.radians
 
         // note: feedforward is processed at the wheel level
         val axialCorrection = axialController.update(0.0, currentRobotVel?.x)
         val lateralCorrection = lateralController.update(0.0, currentRobotVel?.y)
-        val headingCorrection = headingController.update(0.0, currentRobotVel?.heading)
+        val headingCorrection = headingController.update(0.0, currentRobotVel?.heading?.radians)
 
         val correctedVelocity = targetRobotVel + Pose2d(
             axialCorrection,

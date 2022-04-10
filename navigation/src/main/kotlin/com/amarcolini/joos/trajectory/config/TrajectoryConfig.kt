@@ -1,5 +1,6 @@
 package com.amarcolini.joos.trajectory.config
 
+import com.amarcolini.joos.geometry.Angle
 import com.amarcolini.joos.geometry.Pose2d
 import com.amarcolini.joos.trajectory.TrajectoryBuilder
 import com.fasterxml.jackson.annotation.JsonSubTypes
@@ -10,7 +11,7 @@ import com.fasterxml.jackson.annotation.JsonTypeInfo
  */
 data class TrajectoryConfig(
     val startPose: Pose2d,
-    val startTangent: Double = startPose.heading,
+    val startTangent: Angle = startPose.heading,
     val waypoints: List<Waypoint>,
     val constraints: TrajectoryConstraints,
     val resolution: Double = 0.25
@@ -47,12 +48,12 @@ data class TrajectoryConfig(
     data class Back(val back: Double) : Waypoint()
     data class StrafeLeft(val strafeLeft: Double) : Waypoint()
     data class StrafeRight(val strafeRight: Double) : Waypoint()
-    data class Turn(val turn: Double) : Waypoint()
+    data class Turn(val turn: Angle) : Waypoint()
     data class Wait(val wait: Double) : Waypoint()
 
     data class SplineData(
         val pose: Pose2d,
-        val tangent: Double = pose.heading,
+        val tangent: Angle = pose.heading,
         val interpolationType: HeadingInterpolationType = HeadingInterpolationType.Tangent
     )
 

@@ -1,5 +1,7 @@
 package com.amarcolini.joos.trajectory.config
 
+import com.amarcolini.joos.geometry.Angle
+import com.amarcolini.joos.util.*
 import com.amarcolini.joos.trajectory.constraints.*
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties
 import com.fasterxml.jackson.annotation.JsonTypeInfo
@@ -10,7 +12,7 @@ import kotlin.reflect.KClass
  */
 @JsonIgnoreProperties("velConstraint", "accelConstraint", "type")
 @JsonTypeInfo(use = JsonTypeInfo.Id.NAME, include = JsonTypeInfo.As.PROPERTY, property = "type")
-sealed interface TrajectoryConstraints {
+interface TrajectoryConstraints {
     /**
      * Type of drivetrain.
      */
@@ -18,6 +20,7 @@ sealed interface TrajectoryConstraints {
         GENERIC(GenericConstraints::class),
         MECANUM(MecanumConstraints::class),
         SWERVE(SwerveConstraints::class),
+        DIFF_SWERVE(DiffSwerveConstraints::class),
         TANK(TankConstraints::class)
     }
 
@@ -26,33 +29,33 @@ sealed interface TrajectoryConstraints {
     val velConstraint: TrajectoryVelocityConstraint
     val accelConstraint: TrajectoryAccelerationConstraint
 
-    val maxAngVel: Double
-    val maxAngAccel: Double
-    val maxAngJerk: Double
+    val maxAngVel: Angle
+    val maxAngAccel: Angle
+    val maxAngJerk: Angle
 }
 
 data class MecanumConstraints @JvmOverloads constructor(
-    val maxRPM: Double = 100.0,
+    val maxWheelVel: Double = 100.0,
     val trackWidth: Double = 1.0,
     val wheelBase: Double = trackWidth,
     val lateralMultiplier: Double = 1.0,
     val maxVel: Double = 30.0,
     val maxAccel: Double = 30.0,
-    override val maxAngVel: Double = 180.0,
-    override val maxAngAccel: Double = 180.0,
-    override val maxAngJerk: Double = 0.0
+    override val maxAngVel: Angle = 180.deg,
+    override val maxAngAccel: Angle = 180.deg,
+    override val maxAngJerk: Angle = 0.deg
 ) : TrajectoryConstraints {
     override val velConstraint = MinVelocityConstraint(
         listOf(
-            MecanumVelocityConstraint(maxRPM, trackWidth, wheelBase, lateralMultiplier),
-            AngularVelocityConstraint(Math.toRadians(maxAngVel)),
+            MecanumVelocityConstraint(maxWheelVel, trackWidth, wheelBase, lateralMultiplier),
+            AngularVelocityConstraint(maxAngVel),
             TranslationalVelocityConstraint(maxVel),
         )
     )
     override val accelConstraint = MinAccelerationConstraint(
         listOf(
             TranslationalAccelerationConstraint(maxAccel),
-            AngularAccelerationConstraint(Math.toRadians(maxAngAccel))
+            AngularAccelerationConstraint(maxAngAccel)
         )
     )
     override val type = TrajectoryConstraints.DriveType.MECANUM
@@ -61,72 +64,99 @@ data class MecanumConstraints @JvmOverloads constructor(
 data class GenericConstraints @JvmOverloads constructor(
     val maxVel: Double = 30.0,
     val maxAccel: Double = 30.0,
-    override val maxAngVel: Double = 180.0,
-    override val maxAngAccel: Double = 180.0,
-    override val maxAngJerk: Double = 0.0
+    override val maxAngVel: Angle = 180.deg,
+    override val maxAngAccel: Angle = 180.deg,
+    override val maxAngJerk: Angle = 0.deg
 ) : TrajectoryConstraints {
     override val velConstraint = MinVelocityConstraint(
         listOf(
             TranslationalVelocityConstraint(maxVel),
-            AngularVelocityConstraint(Math.toRadians(maxAngVel))
+            AngularVelocityConstraint(maxAngVel)
         )
     )
     override val accelConstraint = MinAccelerationConstraint(
         listOf(
             TranslationalAccelerationConstraint(maxAccel),
-            AngularAccelerationConstraint(Math.toRadians(maxAngAccel))
+            AngularAccelerationConstraint(maxAngAccel)
         )
     )
     override val type = TrajectoryConstraints.DriveType.GENERIC
 }
 
 data class TankConstraints @JvmOverloads constructor(
-    val maxRPM: Double = 100.0,
+    val maxWheelVel: Double = 100.0,
     val trackWidth: Double = 1.0,
     val maxVel: Double = 30.0,
     val maxAccel: Double = 30.0,
-    override val maxAngVel: Double = 180.0,
-    override val maxAngAccel: Double = 180.0,
-    override val maxAngJerk: Double = 0.0
+    override val maxAngVel: Angle = 180.deg,
+    override val maxAngAccel: Angle = 180.deg,
+    override val maxAngJerk: Angle = 0.deg
 ) : TrajectoryConstraints {
     override val velConstraint = MinVelocityConstraint(
         listOf(
-            TankVelocityConstraint(maxRPM, trackWidth),
-            AngularVelocityConstraint(Math.toRadians(maxAngVel)),
+            TankVelocityConstraint(maxWheelVel, trackWidth),
+            AngularVelocityConstraint(maxAngVel),
             TranslationalVelocityConstraint(maxVel),
         )
     )
     override val accelConstraint = MinAccelerationConstraint(
         listOf(
             TranslationalAccelerationConstraint(maxAccel),
-            AngularAccelerationConstraint(Math.toRadians(maxAngAccel))
+            AngularAccelerationConstraint(maxAngAccel)
         )
     )
     override val type = TrajectoryConstraints.DriveType.TANK
 }
 
 data class SwerveConstraints @JvmOverloads constructor(
-    val maxRPM: Double = 100.0,
+    val maxWheelVel: Double = 100.0,
     val trackWidth: Double = 1.0,
     val wheelBase: Double = trackWidth,
     val maxVel: Double = 30.0,
     val maxAccel: Double = 30.0,
-    override val maxAngVel: Double = 180.0,
-    override val maxAngAccel: Double = 180.0,
-    override val maxAngJerk: Double = 0.0
+    override val maxAngVel: Angle = 180.deg,
+    override val maxAngAccel: Angle = 180.deg,
+    override val maxAngJerk: Angle = 0.deg
 ) : TrajectoryConstraints {
     override val velConstraint = MinVelocityConstraint(
         listOf(
-            SwerveVelocityConstraint(maxRPM, trackWidth, wheelBase),
-            AngularVelocityConstraint(Math.toRadians(maxAngVel)),
+            SwerveVelocityConstraint(maxWheelVel, trackWidth, wheelBase),
+            AngularVelocityConstraint(maxAngVel),
             TranslationalVelocityConstraint(maxVel),
         )
     )
     override val accelConstraint = MinAccelerationConstraint(
         listOf(
             TranslationalAccelerationConstraint(maxAccel),
-            AngularAccelerationConstraint(Math.toRadians(maxAngAccel))
+            AngularAccelerationConstraint(maxAngAccel)
         )
     )
     override val type = TrajectoryConstraints.DriveType.SWERVE
+}
+
+data class DiffSwerveConstraints @JvmOverloads constructor(
+    val maxGearVel: Double = 100.0,
+    val trackWidth: Double = 1.0,
+    val maxVel: Double = 30.0,
+    val maxAccel: Double = 30.0,
+    override val maxAngVel: Angle = 180.deg,
+    override val maxAngAccel: Angle = 180.deg,
+    override val maxAngJerk: Angle = 0.deg
+) : TrajectoryConstraints {
+    override val type = TrajectoryConstraints.DriveType.DIFF_SWERVE
+
+    override val velConstraint: TrajectoryVelocityConstraint = MinVelocityConstraint(
+        listOf(
+            DiffSwerveVelocityConstraint(maxGearVel, trackWidth),
+            AngularVelocityConstraint(maxAngVel),
+            TranslationalVelocityConstraint(maxVel),
+        )
+    )
+
+    override val accelConstraint: TrajectoryAccelerationConstraint = MinAccelerationConstraint(
+        listOf(
+            TranslationalAccelerationConstraint(maxAccel),
+            AngularAccelerationConstraint(maxAngAccel)
+        )
+    )
 }

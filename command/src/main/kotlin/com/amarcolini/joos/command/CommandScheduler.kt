@@ -28,9 +28,11 @@ open class CommandScheduler {
 
     private val conditions = LinkedHashMap<BooleanSupplier, MutableSet<Command>>()
 
-    private val scheduleCache = LinkedHashSet<Command>()
-
-    private val cancelCache = HashSet<Command>()
+    /**
+     * A list storing all actions that couldn't be completed at the time they were called because
+     * the scheduler was busy.
+     */
+    private val actionCache = LinkedHashSet<() -> Boolean>()
 
     /**
      * Command scheduling policy. If true, all commands which cannot currently be scheduled will be scheduled as soon as
@@ -57,14 +59,14 @@ open class CommandScheduler {
      *
      * @return `true` if all commands were successfully scheduled immediately, and `false` if they were not. Note that if
      * the scheduler is currently updating, this method will return `false`, but the scheduler will attempt to
-     * schedule them when it can. If [schedulePolicy] is `true`, all commands will be successfully scheduled.
+     * schedule the commands when it can. If [schedulePolicy] is `true`, all commands will be successfully scheduled.
      *
      * @see schedulePolicy
      */
     fun schedule(vararg commands: Command): Boolean {
         var success = true
         if (isBusy) {
-            scheduleCache += commands
+            actionCache += { schedule(*commands) || schedulePolicy }
             return false
         }
         for (command in commands) {
@@ -82,12 +84,19 @@ open class CommandScheduler {
         return success
     }
 
+    /**
+     * Schedules commands for execution.
+     *
+     * @return `true` if all commands were successfully scheduled immediately, and `false` if they were not. Note that if
+     * the scheduler is currently updating, this method will return `false`, but the scheduler will attempt to
+     * schedule the commands when it can. If [schedulePolicy] is `true`, all commands will be successfully scheduled.
+     *
+     * @see schedulePolicy
+     */
+    fun schedule(vararg runnables: Runnable): Boolean = schedule(*runnables.map { BasicCommand(it) }.toTypedArray())
+
     private var isBusy = false
     fun update() {
-        //Schedules all commands which were unable to be scheduled previously.
-        scheduleCache.removeIf {
-            schedule(it) || !schedulePolicy
-        }
         //Updates all registered components
         components.forEach { it.update() }
 
@@ -109,9 +118,6 @@ open class CommandScheduler {
         }
         isBusy = false
 
-        //Cancels all commands which were attempted to be cancelled while the scheduler was busy.
-        cancel(*cancelCache.toTypedArray())
-
         //Schedules the necessary commands mapped to a condition
         conditions.filterKeys { it.asBoolean }.values.forEach { commands ->
             commands.forEach { schedule(it) }
@@ -125,6 +131,9 @@ open class CommandScheduler {
         }
 
         telemetry.update()
+
+        //Updates action cache
+        actionCache.removeIf { it() }
     }
 
     /**
@@ -158,7 +167,10 @@ open class CommandScheduler {
      */
     fun cancel(vararg commands: Command) {
         if (isBusy) {
-            cancelCache += commands
+            actionCache += {
+                cancel(*commands)
+                true
+            }
             return
         }
         for (command in commands) {
@@ -204,20 +216,23 @@ open class CommandScheduler {
     /**
      * Cancels all currently scheduled commands. Ignores whether a command is interruptable.
      */
-    fun cancelAll() {
-        scheduledCommands.forEach { cancel(it) }
-    }
+    fun cancelAll() = cancel(*scheduledCommands.toTypedArray())
 
     /**
      * Resets this [CommandScheduler]. The telemetry is reset, all commands are cancelled, and all commands, components, and conditions are cleared.
      */
     fun reset() {
-        cancelAll()
-        scheduledCommands.clear()
-        components.clear()
-        requirements.clear()
-        conditions.clear()
-        resetTelemetry()
+        val reset = {
+            cancelAll()
+            scheduledCommands.clear()
+            components.clear()
+            requirements.clear()
+            conditions.clear()
+            resetTelemetry()
+            true
+        }
+        if (isBusy) actionCache += reset
+        else reset()
     }
 
     /**

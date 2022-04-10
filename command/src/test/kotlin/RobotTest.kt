@@ -25,8 +25,12 @@ class TestOpMode : RobotOpMode<DummyRobot>() {
         }
     }
 
-    override fun init() {
+    override fun preInit() {
         initialize<DummyRobot>()
         assert(robot.specialNumber == 42)
+    }
+
+    override fun preStart() {
+
     }
 }

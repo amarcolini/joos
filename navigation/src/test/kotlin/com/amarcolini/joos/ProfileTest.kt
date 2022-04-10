@@ -9,6 +9,7 @@ import com.amarcolini.joos.trajectory.TrajectoryBuilder
 import com.amarcolini.joos.trajectory.TrajectoryGenerator
 import com.amarcolini.joos.trajectory.config.GenericConstraints
 import com.amarcolini.joos.util.DoubleProgression
+import com.amarcolini.joos.util.deg
 import org.junit.jupiter.api.Test
 
 class ProfileTest {
@@ -41,7 +42,7 @@ class ProfileTest {
     fun testAngularAcceleration() {
         val trajectory = TrajectoryBuilder(
             startPose = Pose2d(),
-            constraints = GenericConstraints(maxAngAccel = Math.toRadians(180.0)),
+            constraints = GenericConstraints(maxAngAccel = 180.deg),
             resolution = 0.25
         )
             .splineTo(Vector2d(30.0, -30.0), 0.0)
@@ -50,10 +51,10 @@ class ProfileTest {
             0.0, trajectory.duration(),
             (trajectory.duration() / 0.01).toInt()
         )
-        val max = progression.map { trajectory.acceleration(it).heading }.maxByOrNull { it }
+        val max = progression.map { trajectory.acceleration(it).heading }.maxByOrNull { it.radians }
         println("max: $max vs ${Math.toRadians(180.0)}")
         if (max != null) {
-            assert(max < Math.toRadians(180.0))
+            assert(max < 180.deg)
         }
     }
 }

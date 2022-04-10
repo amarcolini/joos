@@ -1,5 +1,6 @@
 package com.amarcolini.joos.gui.trajectory
 
+import com.amarcolini.joos.geometry.Angle
 import com.amarcolini.joos.geometry.Pose2d
 import com.amarcolini.joos.geometry.Vector2d
 import com.amarcolini.joos.gui.Global
@@ -24,7 +25,9 @@ import java.nio.file.Paths
 import kotlin.math.max
 import kotlin.reflect.KMutableProperty
 import kotlin.reflect.KVisibility
+import kotlin.reflect.full.declaredMemberProperties
 import kotlin.reflect.full.memberProperties
+import kotlin.reflect.full.primaryConstructor
 
 
 internal class TrajectoryEditor() : View() {
@@ -59,7 +62,7 @@ internal class TrajectoryEditor() : View() {
                             addClass(Theme.valueText)
                         }
                         text("(")
-                        val properties = it::class.memberProperties
+                        val properties = it::class.declaredMemberProperties
                             .filter { it.visibility == KVisibility.PUBLIC }
                             .filterIsInstance<KMutableProperty<*>>()
                         properties.forEachIndexed { i, it ->
@@ -69,7 +72,7 @@ internal class TrajectoryEditor() : View() {
                             val value = it.call(item)
                             val valueText = text(
                                 when (value) {
-                                    is Degree -> DegreeStringConverter().toString(value)
+                                    is Angle -> AngleStringConverter().toString(value)
                                     is Double -> DoubleStringConverter().toString(value)
                                     is Vector2d -> Vector2dStringConverter().toString(value)
                                     is Pose2d -> Pose2dStringConverter().toString(value)
@@ -80,7 +83,7 @@ internal class TrajectoryEditor() : View() {
                             }
                             textfield(value.toString()) {
                                 textFormatter = when (value) {
-                                    is Degree -> TextFormatter(DegreeStringConverter(), value)
+                                    is Angle -> TextFormatter(AngleStringConverter(), value)
                                     is Double -> TextFormatter(DoubleStringConverter(), value)
                                     is Vector2d -> TextFormatter(
                                         Vector2dStringConverter(),
@@ -131,7 +134,7 @@ internal class TrajectoryEditor() : View() {
                                 index = renderer.waypoints.indexOf(it) + 1
                                 val (newPose, newTangent) = renderer.waypoints.mapPose()
                                     .last().second
-                                lastPose = newPose
+                                lastPose = newPose + Pose2d(0.01, 0.01)
                                 lastTangent = newTangent
                             }
                             menu("_New") {
@@ -271,7 +274,7 @@ internal class TrajectoryEditor() : View() {
                                     multiseries("ẋ", "ẏ", "ω") {
                                         progression.forEach {
                                             val result = trajectory.velocity(it)
-                                            data(it, result.x, result.y, result.heading)
+                                            data(it, result.x, result.y, result.heading.radians)
                                         }
                                     }
                                 }
@@ -324,7 +327,7 @@ internal class TrajectoryEditor() : View() {
                                 TrajectoryConstraints.DriveType.values().toList()
                             )
 
-                            val maxRPM = SimpleDoubleProperty(312.0)
+                            val maxWheelVel = SimpleDoubleProperty(312.0)
                             val trackWidth = SimpleDoubleProperty(1.0)
                             val wheelBase = SimpleDoubleProperty(1.0)
                             val lateralMultiplier = SimpleDoubleProperty(1.0)
@@ -334,24 +337,15 @@ internal class TrajectoryEditor() : View() {
                                 SimpleDoubleProperty(30.0)
                             val maxAngVel =
                                 SimpleObjectProperty(
-                                    Degree(
-                                        renderer.constraints.value.maxAngVel,
-                                        true
-                                    )
+                                    renderer.constraints.value.maxAngVel
                                 )
                             val maxAngAccel =
                                 SimpleObjectProperty(
-                                    Degree(
-                                        renderer.constraints.value.maxAngAccel,
-                                        true
-                                    )
+                                    renderer.constraints.value.maxAngAccel,
                                 )
                             val maxAngJerk =
                                 SimpleObjectProperty(
-                                    Degree(
-                                        renderer.constraints.value.maxAngJerk,
-                                        true
-                                    )
+                                    renderer.constraints.value.maxAngJerk,
                                 )
 
                             renderer.constraints.onChange {
@@ -365,20 +359,20 @@ internal class TrajectoryEditor() : View() {
                                     is MecanumConstraints -> {
                                         maxVel.set(current.maxVel)
                                         maxAccel.set(current.maxAccel)
-                                        maxRPM.set(current.maxRPM)
+                                        maxWheelVel.set(current.maxWheelVel)
                                         trackWidth.set(current.trackWidth)
                                         lateralMultiplier.set(current.lateralMultiplier)
                                     }
                                     is SwerveConstraints -> {
                                         maxVel.set(current.maxVel)
                                         maxAccel.set(current.maxAccel)
-                                        maxRPM.set(current.maxRPM)
+                                        maxWheelVel.set(current.maxWheelVel)
                                         trackWidth.set(current.trackWidth)
                                     }
                                     is TankConstraints -> {
                                         maxVel.set(current.maxVel)
                                         maxAccel.set(current.maxAccel)
-                                        maxRPM.set(current.maxRPM)
+                                        maxWheelVel.set(current.maxWheelVel)
                                         trackWidth.set(current.trackWidth)
                                     }
                                 }
@@ -390,39 +384,48 @@ internal class TrajectoryEditor() : View() {
                                         TrajectoryConstraints.DriveType.GENERIC, null -> GenericConstraints(
                                             maxVel.value,
                                             maxAccel.value,
-                                            maxAngVel.value.value,
-                                            maxAngAccel.value.value,
-                                            maxAngJerk.value.value
+                                            maxAngVel.value,
+                                            maxAngAccel.value,
+                                            maxAngJerk.value
                                         )
                                         TrajectoryConstraints.DriveType.MECANUM -> MecanumConstraints(
-                                            maxRPM.value,
+                                            maxWheelVel.value,
                                             trackWidth.value,
                                             wheelBase.value,
                                             lateralMultiplier.value,
                                             maxVel.value,
                                             maxAccel.value,
-                                            maxAngVel.value.value,
-                                            maxAngAccel.value.value,
-                                            maxAngJerk.value.value
+                                            maxAngVel.value,
+                                            maxAngAccel.value,
+                                            maxAngJerk.value
                                         )
                                         TrajectoryConstraints.DriveType.SWERVE -> SwerveConstraints(
-                                            maxRPM.value,
+                                            maxWheelVel.value,
                                             trackWidth.value,
                                             wheelBase.value,
                                             maxVel.value,
                                             maxAccel.value,
-                                            maxAngVel.value.value,
-                                            maxAngAccel.value.value,
-                                            maxAngJerk.value.value
+                                            maxAngVel.value,
+                                            maxAngAccel.value,
+                                            maxAngJerk.value
                                         )
-                                        TrajectoryConstraints.DriveType.TANK -> TankConstraints(
-                                            maxRPM.value,
+                                        TrajectoryConstraints.DriveType.DIFF_SWERVE -> DiffSwerveConstraints(
+                                            maxWheelVel.value,
                                             trackWidth.value,
                                             maxVel.value,
                                             maxAccel.value,
-                                            maxAngVel.value.value,
-                                            maxAngAccel.value.value,
-                                            maxAngJerk.value.value
+                                            maxAngVel.value,
+                                            maxAngAccel.value,
+                                            maxAngJerk.value
+                                        )
+                                        TrajectoryConstraints.DriveType.TANK -> TankConstraints(
+                                            maxWheelVel.value,
+                                            trackWidth.value,
+                                            maxVel.value,
+                                            maxAccel.value,
+                                            maxAngVel.value,
+                                            maxAngAccel.value,
+                                            maxAngJerk.value
                                         )
                                     }
                                 )
@@ -431,11 +434,11 @@ internal class TrajectoryEditor() : View() {
                             type.onChange { update() }
 
                             textflow {
-                                text("maxRPM: ").addClass(Theme.propertyText)
-                                textfield(maxRPM, DoubleStringConverter()) {
+                                text("maxWheelVel: ").addClass(Theme.propertyText)
+                                textfield(maxWheelVel, DoubleStringConverter()) {
                                     action(::update)
                                     textFormatter =
-                                        TextFormatter(DoubleStringConverter(), maxRPM.value)
+                                        TextFormatter(DoubleStringConverter(), maxWheelVel.value)
                                 }
                                 addClass(Theme.padding)
                                 visibleWhen { type.select { (it != TrajectoryConstraints.DriveType.GENERIC).toProperty() } }
@@ -502,28 +505,28 @@ internal class TrajectoryEditor() : View() {
                             }
                             textflow {
                                 text("maxAngVel: ").addClass(Theme.propertyText)
-                                textfield(maxAngVel, DegreeStringConverter()) {
+                                textfield(maxAngVel, AngleStringConverter()) {
                                     action(::update)
                                     textFormatter =
-                                        TextFormatter(DegreeStringConverter(), maxAngVel.value)
+                                        TextFormatter(AngleStringConverter(), maxAngVel.value)
                                 }
                                 addClass(Theme.padding)
                             }
                             textflow {
                                 text("maxAngAccel: ").addClass(Theme.propertyText)
-                                textfield(maxAngAccel, DegreeStringConverter()) {
+                                textfield(maxAngAccel, AngleStringConverter()) {
                                     action(::update)
                                     textFormatter =
-                                        TextFormatter(DegreeStringConverter(), maxAngAccel.value)
+                                        TextFormatter(AngleStringConverter(), maxAngAccel.value)
                                 }
                                 addClass(Theme.padding)
                             }
                             textflow {
                                 text("maxAngJerk: ").addClass(Theme.propertyText)
-                                textfield(maxAngJerk, DegreeStringConverter()) {
+                                textfield(maxAngJerk, AngleStringConverter()) {
                                     action(::update)
                                     textFormatter =
-                                        TextFormatter(DegreeStringConverter(), maxAngJerk.value)
+                                        TextFormatter(AngleStringConverter(), maxAngJerk.value)
                                 }
                                 addClass(Theme.padding)
                             }
@@ -579,7 +582,7 @@ internal class TrajectoryEditor() : View() {
         val start = renderer.trajectory.waypoints[0] as Start
         var string = """new TrajectoryBuilder(
                         |   ${start.pose.toJava()},
-                        |   ${start.tangent.value},
+                        |   ${start.tangent.toJava()},
                         |   ${renderer.constraints.value.toJava()}
                         |)
                     """.trimMargin()
@@ -603,7 +606,7 @@ internal class TrajectoryEditor() : View() {
         val start = renderer.trajectory.waypoints[0] as Start
         var string = """TrajectoryBuilder(
                         |   ${start.pose.toKotlin()},
-                        |   ${start.tangent.value},
+                        |   ${start.tangent.toKotlin()},
                         |   ${renderer.constraints.value.toKotlin()}
                         |)
                     """.trimMargin()

@@ -4,7 +4,9 @@ import com.amarcolini.joos.drive.DriveSignal
 import com.amarcolini.joos.geometry.Pose2d
 import com.amarcolini.joos.kinematics.Kinematics
 import com.amarcolini.joos.util.NanoClock
+import com.amarcolini.joos.util.cos
 import com.amarcolini.joos.util.epsilonEquals
+import com.amarcolini.joos.util.sin
 import kotlin.math.cos
 import kotlin.math.sin
 import kotlin.math.sqrt
@@ -44,7 +46,7 @@ class RamseteFollower @JvmOverloads constructor(
         val targetRobotVel = Kinematics.fieldToRobotVelocity(targetPose, targetVel)
 
         val targetV = targetRobotVel.x
-        val targetOmega = targetRobotVel.heading
+        val targetOmega = targetRobotVel.heading.radians
 
         val error = Kinematics.calculateFieldPoseError(targetPose, currentPose)
 
@@ -54,9 +56,9 @@ class RamseteFollower @JvmOverloads constructor(
 
         val v = targetV * cos(error.heading) +
                 k1 * (cos(currentPose.heading) * error.x + sin(currentPose.heading) * error.y)
-        val omega = targetOmega + k2 * targetV * sinc(error.heading) *
+        val omega = targetOmega + k2 * targetV * sinc(error.heading.radians) *
                 (cos(currentPose.heading) * error.y - sin(currentPose.heading) * error.x) +
-                k3 * error.heading
+                k3 * error.heading.radians
 
         lastError = Kinematics.calculateRobotPoseError(targetPose, currentPose)
 

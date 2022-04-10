@@ -23,8 +23,8 @@ object TankKinematics {
         require((robotVel.y epsilonEquals 0.0)) { "Lateral (robot y) velocity must be zero for tank drives" }
 
         return listOf(
-            robotVel.x - trackWidth / 2 * robotVel.heading,
-            robotVel.x + trackWidth / 2 * robotVel.heading
+            robotVel.x - trackWidth / 2 * robotVel.heading.radians,
+            robotVel.x + trackWidth / 2 * robotVel.heading.radians
         )
     }
 

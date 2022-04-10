@@ -1,32 +1,53 @@
 package com.amarcolini.joos.gui.trajectory
 
+import com.amarcolini.joos.geometry.Angle
 import com.amarcolini.joos.geometry.Pose2d
 import com.amarcolini.joos.geometry.Vector2d
 import com.amarcolini.joos.trajectory.config.GenericConstraints
 import com.amarcolini.joos.trajectory.config.TrajectoryConstraints
 
+/**
+ * A class that makes interacting with the GUI just that much easier.
+ */
 class WaypointBuilder @JvmOverloads constructor(
     startPose: Pose2d = Pose2d(),
-    startTangent: Double = startPose.heading,
+    startTangent: Angle = startPose.heading,
     private val constraints: TrajectoryConstraints = GenericConstraints()
 ) {
     private val waypoints: ArrayList<Waypoint> =
-        arrayListOf(Start(startPose, Degree(startTangent, true)))
+        arrayListOf(Start(startPose, startTangent))
 
-    fun splineTo(pos: Vector2d, tangent: Double): WaypointBuilder {
-        waypoints += SplineTo(pos, Degree(tangent, true))
+    fun splineTo(pos: Vector2d, tangent: Angle): WaypointBuilder {
+        waypoints += SplineTo(pos, tangent)
         return this
     }
 
-    fun splineToConstantHeading(pos: Vector2d, tangent: Double): WaypointBuilder {
-        waypoints += SplineToConstantHeading(pos, Degree(tangent, true))
+    /**
+     * @param tangent tangent in degrees or radians as specified by [Angle.defaultUnits]
+     */
+    fun splineTo(pos: Vector2d, tangent: Double): WaypointBuilder = splineTo(pos, Angle(tangent))
+
+    fun splineToConstantHeading(pos: Vector2d, tangent: Angle): WaypointBuilder {
+        waypoints += SplineToConstantHeading(pos, tangent)
         return this
     }
 
-    fun splineToSplineHeading(pose: Pose2d, tangent: Double): WaypointBuilder {
-        waypoints += SplineToSplineHeading(pose, Degree(tangent, true))
+    /**
+     * @param tangent tangent in degrees or radians as specified by [Angle.defaultUnits]
+     */
+    fun splineToConstantHeading(pos: Vector2d, tangent: Double): WaypointBuilder =
+        splineToConstantHeading(pos, Angle(tangent))
+
+    fun splineToSplineHeading(pose: Pose2d, tangent: Angle): WaypointBuilder {
+        waypoints += SplineToSplineHeading(pose, tangent)
         return this
     }
+
+    /**
+     * @param tangent tangent in degrees or radians as specified by [Angle.defaultUnits]
+     */
+    fun splineToSplineHeading(pose: Pose2d, tangent: Double): WaypointBuilder =
+        splineToSplineHeading(pose, Angle(tangent))
 
     fun lineTo(pos: Vector2d): WaypointBuilder {
         waypoints += LineTo(pos)
@@ -68,10 +89,15 @@ class WaypointBuilder @JvmOverloads constructor(
         return this
     }
 
-    fun turn(angle: Double): WaypointBuilder {
-        waypoints += Turn(Degree(angle, true))
+    fun turn(angle: Angle): WaypointBuilder {
+        waypoints += Turn(angle)
         return this
     }
+
+    /**
+     * @param angle angle to turn in degrees or radians as specified by [Angle.defaultUnits]
+     */
+    fun turn(angle: Double): WaypointBuilder = turn(Angle(angle))
 
     fun wait(seconds: Double): WaypointBuilder {
         waypoints += Wait(seconds)

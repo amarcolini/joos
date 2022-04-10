@@ -1,6 +1,7 @@
 package com.amarcolini.joos.drive
 
 import com.amarcolini.joos.control.FeedforwardCoefficients
+import com.amarcolini.joos.geometry.Angle
 import com.amarcolini.joos.geometry.Pose2d
 import com.amarcolini.joos.kinematics.Kinematics
 import com.amarcolini.joos.kinematics.SwerveKinematics
@@ -15,7 +16,7 @@ import com.amarcolini.joos.localization.SwerveLocalizer
  * @param wheelBase distance between pairs of wheels on the same side of the robot
  */
 abstract class AbstractSwerveDrive @JvmOverloads constructor(
-    var feedforward: FeedforwardCoefficients,
+    private val feedforward: FeedforwardCoefficients,
     private val trackWidth: Double,
     private val wheelBase: Double = trackWidth
 ) : Drive() {
@@ -75,13 +76,13 @@ abstract class AbstractSwerveDrive @JvmOverloads constructor(
     )
 
     /**
-     * Sets the module orientations. All values are in radians.
+     * Sets the module orientations.
      */
     abstract fun setModuleOrientations(
-        frontLeft: Double,
-        rearLeft: Double,
-        rearRight: Double,
-        frontRight: Double
+        frontLeft: Angle,
+        rearLeft: Angle,
+        rearRight: Angle,
+        frontRight: Angle
     )
 
     /**
@@ -97,8 +98,8 @@ abstract class AbstractSwerveDrive @JvmOverloads constructor(
     open fun getWheelVelocities(): List<Double>? = null
 
     /**
-     * Returns the current module orientations in radians. Orientations should exactly match the order in
+     * Returns the current module orientations. Orientations should exactly match the order in
      * [setModuleOrientations].
      */
-    abstract fun getModuleOrientations(): List<Double>
+    abstract fun getModuleOrientations(): List<Angle>
 }

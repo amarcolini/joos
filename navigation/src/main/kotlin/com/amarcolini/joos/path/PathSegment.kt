@@ -1,5 +1,6 @@
 package com.amarcolini.joos.path
 
+import com.amarcolini.joos.geometry.Angle
 import com.amarcolini.joos.path.heading.HeadingInterpolator
 import com.amarcolini.joos.path.heading.TangentInterpolator
 import com.amarcolini.joos.geometry.Pose2d
@@ -21,18 +22,18 @@ class PathSegment @JvmOverloads constructor(
     fun length() = curve.length()
 
     @JvmOverloads
-    operator fun get(s: Double, t: Double = reparam(s)) = Pose2d(curve[s, t], interpolator[s, t])
+    operator fun get(s: Double, t: Double = reparam(s)): Pose2d = Pose2d(curve[s, t], interpolator[s, t])
 
     @JvmOverloads
-    fun deriv(s: Double, t: Double = reparam(s)) =
+    fun deriv(s: Double, t: Double = reparam(s)): Pose2d =
         Pose2d(curve.deriv(s, t), interpolator.deriv(s, t))
 
     @JvmOverloads
-    fun secondDeriv(s: Double, t: Double = reparam(s)) =
+    fun secondDeriv(s: Double, t: Double = reparam(s)): Pose2d =
         Pose2d(curve.secondDeriv(s, t), interpolator.secondDeriv(s, t))
 
     @JvmOverloads
-    fun tangentAngle(s: Double, t: Double = reparam(s)) = curve.tangentAngle(s, t)
+    fun tangentAngle(s: Double, t: Double = reparam(s)): Angle = curve.tangentAngle(s, t)
 
     @JvmOverloads
     internal fun internalDeriv(s: Double, t: Double = reparam(s)) =
@@ -43,29 +44,29 @@ class PathSegment @JvmOverloads constructor(
         Pose2d(curve.internalSecondDeriv(t), interpolator.internalDeriv(s, t))
 
     @JvmOverloads
-    fun curvature(s: Double, t: Double = reparam(s)) = curve.curvature(s, t)
+    fun curvature(s: Double, t: Double = reparam(s)): Double = curve.curvature(s, t)
 
-    fun reparam(s: Double) = curve.reparam(s)
+    fun reparam(s: Double): Double = curve.reparam(s)
 
     /**
      * Returns the start pose.
      */
-    fun start() = get(0.0)
+    fun start(): Pose2d = get(0.0)
 
     /**
      * Returns the start pose derivative.
      */
-    fun startDeriv() = deriv(0.0)
+    fun startDeriv(): Pose2d = deriv(0.0)
 
     /**
      * Returns the start pose second derivative.
      */
-    fun startSecondDeriv() = secondDeriv(0.0)
+    fun startSecondDeriv(): Pose2d = secondDeriv(0.0)
 
     /**
      * Returns the start tangent angle.
      */
-    fun startTangentAngle() = tangentAngle(0.0)
+    fun startTangentAngle(): Angle = tangentAngle(0.0)
 
     internal fun startInternalDeriv() = internalDeriv(0.0)
 
@@ -74,22 +75,22 @@ class PathSegment @JvmOverloads constructor(
     /**
      * Returns the end pose.
      */
-    fun end() = get(length())
+    fun end(): Pose2d = get(length())
 
     /**
      * Returns the end pose derivative.
      */
-    fun endDeriv() = deriv(length())
+    fun endDeriv(): Pose2d = deriv(length())
 
     /**
      * Returns the end pose second derivative.
      */
-    fun endSecondDeriv() = secondDeriv(length())
+    fun endSecondDeriv(): Pose2d = secondDeriv(length())
 
     /**
      * Returns the end tangent angle.
      */
-    fun endTangentAngle() = tangentAngle(length())
+    fun endTangentAngle(): Angle = tangentAngle(length())
 
     internal fun endInternalDeriv() = internalDeriv(length())
 

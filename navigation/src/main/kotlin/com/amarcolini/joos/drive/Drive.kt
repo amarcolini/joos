@@ -1,8 +1,8 @@
 package com.amarcolini.joos.drive
 
+import com.amarcolini.joos.geometry.Angle
 import com.amarcolini.joos.geometry.Pose2d
 import com.amarcolini.joos.localization.Localizer
-import com.amarcolini.joos.util.Angle
 
 /**
  * Abstraction for generic robot drive motion and localization. Robot poses are specified in a coordinate system with
@@ -15,18 +15,18 @@ abstract class Drive {
      */
     abstract var localizer: Localizer
 
-    private var headingOffset: Double = 0.0
+    private var headingOffset: Angle = Angle()
 
     /**
      * The raw heading used for computing [externalHeading]. Not affected by [externalHeading] setter.
      */
-    protected abstract val rawExternalHeading: Double
+    protected abstract val rawExternalHeading: Angle
 
     /**
-     * The robot's heading in radians as measured by an external sensor (e.g., IMU, gyroscope).
+     * The robot's heading as measured by an external sensor (e.g., IMU, gyroscope).
      */
-    var externalHeading: Double
-        get() = Angle.norm(rawExternalHeading + headingOffset)
+    var externalHeading: Angle
+        get() = rawExternalHeading + headingOffset
         set(value) {
             headingOffset = -rawExternalHeading + value
         }
@@ -67,5 +67,5 @@ abstract class Drive {
     /**
      * The heading velocity used to determine pose velocity in some cases
      */
-    open fun getExternalHeadingVelocity(): Double? = null
+    open fun getExternalHeadingVelocity(): Angle? = null
 }

@@ -3,8 +3,18 @@ package com.amarcolini.joos.command
 import com.acmerobotics.dashboard.FtcDashboard
 import com.acmerobotics.dashboard.canvas.Canvas
 import com.acmerobotics.dashboard.telemetry.TelemetryPacket
+import com.amarcolini.joos.geometry.Pose2d
+import com.amarcolini.joos.path.Path
+import com.amarcolini.joos.trajectory.PathTrajectorySegment
+import com.amarcolini.joos.trajectory.Trajectory
+import com.amarcolini.joos.trajectory.TurnSegment
+import com.amarcolini.joos.trajectory.WaitSegment
 import org.firstinspires.ftc.robotcore.external.Telemetry
+import kotlin.math.ceil
 
+/**
+ * A powerful telemetry for both the Driver Station and [FTC Dashboard](https://github.com/acmerobotics/ftc-dashboard).
+ */
 class SuperTelemetry {
     private var packet: TelemetryPacket = TelemetryPacket()
     val lines: MutableList<Lineable> = ArrayList()
@@ -156,7 +166,7 @@ class SuperTelemetry {
 
             }
         }
-        FtcDashboard.getInstance().sendTelemetryPacket(packet)
+        FtcDashboard.getInstance()?.sendTelemetryPacket(packet)
         packet = TelemetryPacket()
         telemetries.forEach { it.update() }
         if (isAutoClear) clear()
@@ -173,5 +183,108 @@ class SuperTelemetry {
 
     fun setDisplayFormat(displayFormat: Telemetry.DisplayFormat?) {
         telemetries.forEach { it.setDisplayFormat(displayFormat) }
+    }
+
+    /**
+     * The radius used by [drawRobot].
+     */
+    val robotRadius = 9.0
+
+    /**
+     * The resolution used by [drawSampledPath] and [drawSampledTrajectory] when sampling.
+     */
+    val resolution = 2.0
+
+    /**
+     * Draws a list of poses on [FTC Dashboard](https://github.com/acmerobotics/ftc-dashboard).
+     */
+    fun drawPoseHistory(
+        poseHistory: List<Pose2d>,
+        color: String
+    ) {
+        val canvas = fieldOverlay()
+        val xPoints = DoubleArray(poseHistory.size)
+        val yPoints = DoubleArray(poseHistory.size)
+        for (i in poseHistory.indices) {
+            val pose = poseHistory[i]
+            xPoints[i] = pose.x
+            yPoints[i] = pose.y
+        }
+        canvas.setStroke(color)
+        canvas.strokePolyline(xPoints, yPoints)
+    }
+
+    /**
+     * Draws a robot on [FTC Dashboard](https://github.com/acmerobotics/ftc-dashboard).
+     */
+    fun drawRobot(
+        pose: Pose2d,
+        color: String
+    ) {
+        val canvas = fieldOverlay()
+        canvas.setStroke(color)
+        canvas.strokeCircle(pose.x, pose.y, robotRadius)
+        val (x, y) = pose.headingVec() * robotRadius
+        val x1: Double = pose.x + x / 2
+        val y1: Double = pose.y + y / 2
+        val x2: Double = pose.x + x
+        val y2: Double = pose.y + y
+        canvas.strokeLine(x1, y1, x2, y2)
+    }
+
+    /**
+     * Draws a path on [FTC Dashboard](https://github.com/acmerobotics/ftc-dashboard).
+     */
+    fun drawSampledPath(
+        path: Path,
+        color: String,
+        resolution: Double = this.resolution
+    ) {
+        val canvas = fieldOverlay()
+        val samples = ceil(path.length() / resolution).toInt()
+        val xPoints = DoubleArray(samples)
+        val yPoints = DoubleArray(samples)
+        val dx: Double = path.length() / (samples - 1)
+        for (i in 0 until samples) {
+            val displacement = i * dx
+            val (x, y, _) = path[displacement]
+            xPoints[i] = x
+            yPoints[i] = y
+        }
+        canvas.setStroke(color)
+        canvas.strokePolyline(xPoints, yPoints)
+    }
+
+    /**
+     * Draws a trajectory on [FTC Dashboard](https://github.com/acmerobotics/ftc-dashboard).
+     */
+    @JvmOverloads
+    fun drawSampledTrajectory(
+        trajectory: Trajectory,
+        pathColor: String = "#4CAF50",
+        turnColor: String = "#7c4dff",
+        waitColor: String = "#dd2c00",
+        resolution: Double = this.resolution
+    ) {
+        val canvas = fieldOverlay()
+        trajectory.segments.forEach {
+            when (it) {
+                is PathTrajectorySegment -> {
+                    canvas.setStrokeWidth(1)
+                    drawSampledPath(it.path, pathColor, resolution)
+                }
+                is TurnSegment -> {
+                    val pose = it.start()
+                    canvas.setFill(turnColor)
+                    canvas.fillCircle(pose.x, pose.y, 2.0)
+                }
+                is WaitSegment -> {
+                    val pose = it.start()
+                    canvas.setStrokeWidth(1)
+                    canvas.setStroke(waitColor)
+                    canvas.strokeCircle(pose.x, pose.y, 3.0)
+                }
+            }
+        }
     }
 }

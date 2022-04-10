@@ -1,8 +1,8 @@
 package com.amarcolini.joos.localization
 
+import com.amarcolini.joos.geometry.Angle
 import com.amarcolini.joos.geometry.Pose2d
 import com.amarcolini.joos.kinematics.Kinematics
-import com.amarcolini.joos.util.Angle
 import org.apache.commons.math3.linear.Array2DRowRealMatrix
 import org.apache.commons.math3.linear.DecompositionSolver
 import org.apache.commons.math3.linear.LUDecomposition
@@ -21,12 +21,12 @@ abstract class TwoTrackingWheelLocalizer(
         get() = _poseEstimate
         set(value) {
             lastWheelPositions = emptyList()
-            lastHeading = Double.NaN
+            lastHeading = null
             _poseEstimate = value
         }
     override var poseVelocity: Pose2d? = null
     private var lastWheelPositions = emptyList<Double>()
-    private var lastHeading = Double.NaN
+    private var lastHeading: Angle? = null
 
     private val forwardSolver: DecompositionSolver
 
@@ -52,10 +52,10 @@ abstract class TwoTrackingWheelLocalizer(
         require(forwardSolver.isNonSingular) { "The specified configuration cannot support full localization" }
     }
 
-    private fun calculatePoseDelta(wheelDeltas: List<Double>, headingDelta: Double): Pose2d {
+    private fun calculatePoseDelta(wheelDeltas: List<Double>, headingDelta: Angle): Pose2d {
         val rawPoseDelta = forwardSolver.solve(
             MatrixUtils.createRealMatrix(
-                arrayOf((wheelDeltas + headingDelta).toDoubleArray())
+                arrayOf((wheelDeltas + headingDelta.radians).toDoubleArray())
             ).transpose()
         )
         return Pose2d(
@@ -68,11 +68,12 @@ abstract class TwoTrackingWheelLocalizer(
     override fun update() {
         val wheelPositions = getWheelPositions()
         val heading = getHeading()
-        if (lastWheelPositions.isNotEmpty()) {
+        val lastHeading = lastHeading
+        if (lastWheelPositions.isNotEmpty() && lastHeading != null) {
             val wheelDeltas = wheelPositions
                 .zip(lastWheelPositions)
                 .map { it.first - it.second }
-            val headingDelta = Angle.normDelta(heading - lastHeading)
+            val headingDelta = (heading - lastHeading).normDelta()
             val robotPoseDelta = calculatePoseDelta(wheelDeltas, headingDelta)
             _poseEstimate = Kinematics.relativeOdometryUpdate(_poseEstimate, robotPoseDelta)
         }
@@ -84,7 +85,7 @@ abstract class TwoTrackingWheelLocalizer(
         }
 
         lastWheelPositions = wheelPositions
-        lastHeading = heading
+        this.lastHeading = heading
     }
 
     /**
@@ -100,10 +101,10 @@ abstract class TwoTrackingWheelLocalizer(
     /**
      * Returns the heading of the robot (usually from a gyroscope or IMU).
      */
-    abstract fun getHeading(): Double
+    abstract fun getHeading(): Angle
 
     /**
      * Returns the heading of the robot (usually from a gyroscope or IMU).
      */
-    open fun getHeadingVelocity(): Double? = null
+    open fun getHeadingVelocity(): Angle? = null
 }

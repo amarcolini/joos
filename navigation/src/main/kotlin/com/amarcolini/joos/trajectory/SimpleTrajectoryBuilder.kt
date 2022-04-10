@@ -1,10 +1,11 @@
 package com.amarcolini.joos.trajectory
 
+import com.amarcolini.joos.geometry.Angle
+import com.amarcolini.joos.geometry.AngleUnit
 import com.amarcolini.joos.geometry.Pose2d
 import com.amarcolini.joos.path.Path
 import com.amarcolini.joos.profile.MotionState
-import com.amarcolini.joos.util.Angle
-import kotlin.math.PI
+import com.amarcolini.joos.util.*
 
 private fun zeroPosition(state: MotionState) = MotionState(0.0, state.v, state.a, state.j)
 
@@ -18,9 +19,9 @@ class SimpleTrajectoryBuilder private constructor(
     private val maxProfileVel: Double,
     private val maxProfileAccel: Double,
     private val maxProfileJerk: Double,
-    maxAngVel: Double,
-    maxAngAccel: Double,
-    maxAngJerk: Double,
+    private val maxAngVel: Angle,
+    private val maxAngAccel: Angle,
+    private val maxAngJerk: Angle,
     private val start: MotionState
 ) : BaseTrajectoryBuilder<SimpleTrajectoryBuilder>(startPose, startDeriv, startSecondDeriv) {
     /**
@@ -30,16 +31,16 @@ class SimpleTrajectoryBuilder private constructor(
     @JvmOverloads
     constructor(
         startPose: Pose2d,
-        startTangent: Double = startPose.heading,
+        startTangent: Angle = startPose.heading,
         maxProfileVel: Double,
         maxProfileAccel: Double,
         maxProfileJerk: Double = 0.0,
-        maxAngVel: Double,
-        maxAngAccel: Double,
-        maxAngJerk: Double = 0.0
+        maxAngVel: Angle,
+        maxAngAccel: Angle,
+        maxAngJerk: Angle = 0.deg
     ) : this(
         startPose,
-        Pose2d(Angle.vec(startTangent), 0.0),
+        Pose2d(startTangent.vec(), 0.0),
         Pose2d(),
         maxProfileVel,
         maxProfileAccel,
@@ -56,12 +57,12 @@ class SimpleTrajectoryBuilder private constructor(
         maxProfileVel: Double,
         maxProfileAccel: Double,
         maxProfileJerk: Double = 0.0,
-        maxAngVel: Double,
-        maxAngAccel: Double,
-        maxAngJerk: Double = 0.0
+        maxAngVel: Angle,
+        maxAngAccel: Angle,
+        maxAngJerk: Angle = 0.deg
     ) : this(
         startPose,
-        Angle.norm(startPose.heading + if (reversed) PI else 0.0),
+        (startPose.heading + (if (reversed) 180.deg else 0.deg)).norm(),
         maxProfileVel,
         maxProfileAccel,
         maxProfileJerk,
@@ -81,9 +82,9 @@ class SimpleTrajectoryBuilder private constructor(
         maxProfileVel: Double,
         maxProfileAccel: Double,
         maxProfileJerk: Double = 0.0,
-        maxAngVel: Double,
-        maxAngAccel: Double,
-        maxAngJerk: Double = 0.0
+        maxAngVel: Angle,
+        maxAngAccel: Angle,
+        maxAngJerk: Angle = 0.deg
     ) : this(
         trajectory[t],
         trajectory.deriv(t),
@@ -97,8 +98,8 @@ class SimpleTrajectoryBuilder private constructor(
         //TODO: fix splicing
         MotionState(
             0.0,
-            (trajectory.velocity(t).vec() / trajectory.velocity(t).vec().norm()).angle(),
-            (trajectory.acceleration(t).vec() / trajectory.acceleration(t).vec().norm()).angle()
+            trajectory.velocity(t).vec().norm(),
+            trajectory.acceleration(t).vec().norm()
         ),
     )
 
@@ -110,11 +111,7 @@ class SimpleTrajectoryBuilder private constructor(
             maxProfileJerk,
         )
 
-    private val maxAngVel = Math.toRadians(maxAngVel)
-    private val maxAngAccel = Math.toRadians(maxAngAccel)
-    private val maxAngJerk = Math.toRadians(maxAngJerk)
-
-    override fun makeTurnSegment(pose: Pose2d, angle: Double) =
+    override fun makeTurnSegment(pose: Pose2d, angle: Angle) =
         TrajectoryGenerator.generateTurnSegment(
             pose,
             angle,

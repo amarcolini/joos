@@ -4,8 +4,8 @@ import com.amarcolini.joos.drive.DriveSignal
 import com.amarcolini.joos.geometry.Pose2d
 import com.amarcolini.joos.trajectory.Trajectory
 import com.amarcolini.joos.trajectory.TrajectoryMarker
-import com.amarcolini.joos.util.Angle
 import com.amarcolini.joos.util.NanoClock
+import com.amarcolini.joos.util.abs
 import kotlin.math.abs
 
 /**
@@ -83,7 +83,7 @@ abstract class TrajectoryFollower @JvmOverloads constructor(
         val trajEndError = trajectory.end() - currentPose
         admissible = abs(trajEndError.x) < admissibleError.x &&
                 abs(trajEndError.y) < admissibleError.y &&
-                abs(Angle.normDelta(trajEndError.heading)) < admissibleError.heading
+                abs(trajEndError.heading.normDelta()) < admissibleError.heading
         return if (internalIsFollowing() || executedFinalUpdate) {
             internalUpdate(currentPose, currentRobotVel)
         } else {

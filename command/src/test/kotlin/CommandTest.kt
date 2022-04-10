@@ -16,8 +16,8 @@ class CommandTest {
     }
 
     @Test
-    fun testCommand() {
-        if (logOutput) println("   **testCommand**")
+    fun testCommandLifeCycle() {
+        if (logOutput) println("   **testCommandLifeCycle**")
         val command = RangeCommand("test", 0, 10, true)
         val extraCommands = List(10) { i -> RangeCommand("extra #$i", 0, 0, true) }
         scheduler.schedule(command, *extraCommands.toTypedArray())
@@ -47,7 +47,7 @@ class CommandTest {
     }
 
     @Test
-    fun testConcurrent() {
+    fun testConcurrentModification() {
         var result = false
         val cmd = Command.emptyCommand().runUntil(false)
             .onEnd {
@@ -57,7 +57,10 @@ class CommandTest {
             scheduler.schedule(Command.emptyCommand())
         }
         scheduler.schedule(Command.of {
-            scheduler.schedule(Command.of { scheduler.cancel(cmd) })
+            scheduler.schedule(Command.of {
+                scheduler.cancel(cmd)
+                scheduler.reset()
+            })
         }, cmd)
         repeat(10) {
             scheduler.update()
@@ -66,8 +69,8 @@ class CommandTest {
     }
 
     @Test
-    fun testComponent() {
-        if (logOutput) println("   **testComponent**")
+    fun testComponentLifeCycle() {
+        if (logOutput) println("   **testComponentLifeCycle**")
         val component = DummyComponent("test")
         scheduler.register(component)
         scheduler.update()
@@ -78,8 +81,8 @@ class CommandTest {
     }
 
     @Test
-    fun testCancel() {
-        if (logOutput) println("   **testCancel**")
+    fun testProperCancelling() {
+        if (logOutput) println("   **testProperCancelling**")
         val command = RangeCommand("test", 0, 10, false)
         scheduler.schedule(command)
         assert(command.isScheduled())
@@ -96,8 +99,8 @@ class CommandTest {
     }
 
     @Test
-    fun testInterrupt() {
-        if (logOutput) println("   **testInterrupt**")
+    fun testProperInterrupting() {
+        if (logOutput) println("   **testProperInterrupting**")
         val component = DummyComponent("Bobby")
         val command = RangeCommand("test", 0, 10, true, setOf(component))
         scheduler.schedule(command)
@@ -136,8 +139,8 @@ class CommandTest {
     }
 
     @Test
-    fun testSequential() {
-        if (logOutput) println("   **testSequential**")
+    fun testSequentialGroups() {
+        if (logOutput) println("   **testSequentialGroups**")
         val component = DummyComponent("common")
         val cmd1 = RangeCommand("#1", 0, 5, true, setOf(component))
         val cmd2 = RangeCommand("#2", 1, 7, false, setOf(component))
@@ -162,8 +165,8 @@ class CommandTest {
     }
 
     @Test
-    fun testWait() {
-        if (logOutput) println("   **testWait**")
+    fun testWaitCommands() {
+        if (logOutput) println("   **testWaitCommands**")
         val cmd = WaitCommand(1.0)
         val clock = NanoClock.system()
         val start = clock.seconds()
@@ -173,8 +176,8 @@ class CommandTest {
     }
 
     @Test
-    fun testParallel() {
-        if (logOutput) println("   **testParallel**")
+    fun testParallelGroups() {
+        if (logOutput) println("   **testParallelGroups**")
         val a1 = RangeCommand("#A1", 0, 5)
         val a2 = RangeCommand("#A2", 0, 6)
         val cmd = a1 and a2
@@ -187,7 +190,7 @@ class CommandTest {
     }
 
     @Test
-    fun testRace() {
+    fun testRaceGroups() {
         if (logOutput) println("   **testRace**")
         val a1 = RangeCommand("#A1", 0, 5)
         val a2 = RangeCommand("#A2", 0, 6)
@@ -201,8 +204,8 @@ class CommandTest {
     }
 
     @Test
-    fun testPretty() {
-        if (logOutput) println("   **testPretty**")
+    fun testIfPrettyLooking() {
+        if (logOutput) println("   **testIfPrettyLooking**")
         val cmd = Command.of { if (logOutput) println("first") }
             .then { if (logOutput) println("second") }
             .then(
@@ -215,8 +218,8 @@ class CommandTest {
     }
 
     @Test
-    fun testCondition() {
-        if (logOutput) println("   **testCondition**")
+    fun testConditionMapping() {
+        if (logOutput) println("   **testConditionMapping**")
         val btn1 = Button()
         val btn2 = Button()
         var runCount = 0
@@ -258,8 +261,8 @@ class CommandTest {
     }
 
     @Test
-    fun testSelect() {
-        if (logOutput) println("   **testSelect**")
+    fun testSelectCommand() {
+        if (logOutput) println("   **testSelectCommand**")
         var number = 0
         if (logOutput) println("number is $number.")
         val cmd = Command.select {

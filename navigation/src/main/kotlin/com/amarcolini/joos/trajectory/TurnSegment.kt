@@ -1,14 +1,16 @@
 package com.amarcolini.joos.trajectory
 
+import com.amarcolini.joos.geometry.Angle
+import com.amarcolini.joos.geometry.AngleUnit
 import com.amarcolini.joos.geometry.Pose2d
 import com.amarcolini.joos.geometry.Vector2d
 import com.amarcolini.joos.profile.MotionProfile
-import com.amarcolini.joos.util.Angle
+import com.amarcolini.joos.util.rad
 
 /**
  * Trajectory segment representing a point turn.
  * @param pose start pose
- * @param profile heading motion profile
+ * @param profile heading motion profile, where heading is specified in radians
  */
 class TurnSegment(
     private val pose: Pose2d,
@@ -20,13 +22,13 @@ class TurnSegment(
 
     override fun get(time: Double) = Pose2d(
         pose.vec(),
-        Angle.norm(pose.heading + profile[time].x)
+        (pose.heading + profile[time].x.rad).norm()
     )
 
     override fun distance(time: Double) = 0.0
 
     override fun deriv(time: Double) = Pose2d(
-        Angle.vec(get(time).heading),
+        get(time).heading.vec(),
         profile[time].v
     )
 
@@ -46,6 +48,6 @@ class TurnSegment(
 
     override fun end() = Pose2d(
         pose.vec(),
-        Angle.norm(pose.heading + profile.end().x)
+        (pose.heading + profile.end().x.rad).norm()
     )
 }

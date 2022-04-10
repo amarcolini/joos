@@ -22,11 +22,31 @@ abstract class RobotOpMode<T : Robot> : OpMode() {
     @JvmField
     protected val isAutonomous = this::class.hasAnnotation<Autonomous>()
 
+    /**
+     * The singleton [Robot] instance of this OpMode.
+     */
     protected lateinit var robot: T
         private set
 
+    /**
+     * This method is called on initialization. Any commands scheduled here will be
+     * run in the init loop. [initialize] **must** be called here.
+     */
+    abstract fun preInit()
+
+    /**
+     * This method is called on start. Any commands scheduled here will be run for the
+     * duration of the OpMode.
+     */
+    abstract fun preStart()
+
+    final override fun init() = preInit()
     final override fun init_loop() = robot.update()
-    final override fun start() = robot.start()
+    final override fun start() {
+        robot.start()
+        preStart()
+    }
+
     final override fun loop() = robot.update()
     override fun stop() = robot.reset()
 

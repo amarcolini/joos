@@ -13,6 +13,7 @@ import com.amarcolini.joos.kinematics.TankKinematics
 import com.amarcolini.joos.localization.Localizer
 import com.amarcolini.joos.localization.TankLocalizer
 import com.amarcolini.joos.trajectory.config.TankConstraints
+import com.amarcolini.joos.util.deg
 import kotlin.math.abs
 import kotlin.math.min
 
@@ -26,18 +27,24 @@ open class TankDrive @JvmOverloads constructor(
     final override val imu: Imu? = null,
     final override val constraints: TankConstraints = TankConstraints(
         min(
-            left.maxRPM,
-            right.maxRPM
+            left.maxDistanceVelocity,
+            right.maxDistanceVelocity
         )
     ),
     axialPID: PIDCoefficients = PIDCoefficients(1.0, 0.0, 0.5),
     headingPID: PIDCoefficients = PIDCoefficients(1.0, 0.0, 0.5)
 ) : DriveComponent() {
 
-    private val motors = listOf(left, right)
+    private val wheels = listOf(left, right)
+
+    /**
+     * All the motors in this drive.
+     */
+    @JvmField
+    val motors: MotorGroup = MotorGroup(left, right)
 
     override val trajectoryFollower: TrajectoryFollower = TankPIDVAFollower(
-        axialPID, headingPID, Pose2d(0.5, 0.5, Math.toRadians(5.0)), 0.5
+        axialPID, headingPID, Pose2d(0.5, 0.5, 5.deg), 0.5
     )
     override var localizer: Localizer = TankLocalizer(
         { listOf(left.distance, right.distance) },
@@ -47,7 +54,7 @@ open class TankDrive @JvmOverloads constructor(
     )
 
     override fun setDriveSignal(driveSignal: DriveSignal) {
-        motors.zip(
+        wheels.zip(
             TankKinematics.robotToWheelVelocities(
                 driveSignal.vel,
                 constraints.trackWidth,
@@ -64,7 +71,7 @@ open class TankDrive @JvmOverloads constructor(
     }
 
     override fun setDrivePower(drivePower: Pose2d) {
-        motors.zip(
+        wheels.zip(
             TankKinematics.robotToWheelVelocities(
                 Pose2d(drivePower.x, 0.0, drivePower.heading), 1.0
             )
@@ -79,25 +86,25 @@ open class TankDrive @JvmOverloads constructor(
     ) {
         var vel = drivePower
 
-        if (abs(vel.x) + abs(vel.heading) > 1) {
+        if (abs(vel.x) + abs(vel.heading.defaultValue) > 1) {
             val denom =
-                xWeight * abs(vel.x) + headingWeight * abs(vel.heading)
-            vel = Pose2d(vel.x * xWeight, 0.0, vel.heading * headingWeight) / denom
+                xWeight * abs(vel.x) + headingWeight * abs(vel.heading.defaultValue)
+            vel = Pose2d(vel.x * xWeight, 0.0, vel.heading.defaultValue * headingWeight) / denom
         }
 
         setDrivePower(vel)
     }
 
     override fun setRunMode(runMode: Motor.RunMode) {
-        motors.forEach { it.runMode = runMode }
+        wheels.forEach { it.runMode = runMode }
     }
 
     override fun setZeroPowerBehavior(zeroPowerBehavior: Motor.ZeroPowerBehavior) {
-        motors.forEach { it.zeroPowerBehavior = zeroPowerBehavior }
+        wheels.forEach { it.zeroPowerBehavior = zeroPowerBehavior }
     }
 
     override fun update() {
         super.update()
-        motors.forEach { it.update() }
+        wheels.forEach { it.update() }
     }
 }

@@ -58,13 +58,19 @@ class MotorGroup(private vararg val motors: Motor) : Component {
     val maxRPM = motors.minOf { it.maxRPM }
 
     /**
+     * The maximum distance velocity that all motors in the group can achieve.
+     */
+    @JvmField
+    val maxDistanceVelocity = motors.minOf { it.maxDistanceVelocity }
+
+    /**
      * The maximum ticks per second velocity that all motors in the group can achieve.
      */
     @JvmField
     val maxTPS: Double = motors.minOf { it.maxTPS }
 
     /**
-     * The maximum distance travelled that all motors in the group have travelled.
+     * The maximum distance that all motors in the group have travelled.
      * @see distanceVelocity
      */
     val distance get() = motors.minOf { it.distance }
@@ -101,6 +107,8 @@ class MotorGroup(private vararg val motors: Motor) : Component {
 
     /**
      * Sets the speed of the motor.
+     *
+     * *Note*: Because of physical constraints, motors may move at different speeds.
      *
      * @param velocity the velocity to set
      * @param acceleration the acceleration to set
@@ -153,7 +161,7 @@ class MotorGroup(private vararg val motors: Motor) : Component {
     /**
      * Feedforward coefficients used in both [RunMode.RUN_USING_ENCODER] and [RunMode.RUN_WITHOUT_ENCODER].
      */
-    var feedforwardCoefficients = FeedforwardCoefficients(1.0)
+    var feedforwardCoefficients = FeedforwardCoefficients(1 / maxDistanceVelocity)
         set(value) {
             motors.forEach { it.feedforwardCoefficients = value }
             field = value

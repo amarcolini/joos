@@ -4,6 +4,7 @@ import com.amarcolini.joos.geometry.Pose2d
 import com.amarcolini.joos.geometry.Vector2d
 import com.amarcolini.joos.gui.trajectory.Start
 import com.amarcolini.joos.gui.trajectory.WaypointTrajectory
+import com.amarcolini.joos.util.deg
 import javafx.animation.AnimationTimer
 import javafx.embed.swing.SwingFXUtils
 import javafx.geometry.Pos
@@ -53,11 +54,11 @@ internal class Renderer : StackPane() {
                     val fieldSize = min(width, height)
                     val offset = Pose2d(
                         Vector2d(-it.pose.y, -it.pose.x) * (fieldSize / 144),
-                        Math.toDegrees(-it.pose.heading)
+                        -it.pose.heading
                     )
                     it.node.translateX = offset.x
                     it.node.translateY = offset.y
-                    it.node.rotate = offset.heading + 90
+                    it.node.rotate = offset.heading.degrees + 90
                 }
             }
         }

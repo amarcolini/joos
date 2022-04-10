@@ -1,5 +1,7 @@
 package com.amarcolini.joos.gui.trajectory
 
+import com.amarcolini.joos.geometry.Angle
+import com.amarcolini.joos.geometry.AngleUnit
 import com.amarcolini.joos.geometry.Pose2d
 import com.amarcolini.joos.geometry.Vector2d
 import com.amarcolini.joos.trajectory.Trajectory
@@ -7,24 +9,33 @@ import com.amarcolini.joos.trajectory.TrajectoryBuilder
 import com.amarcolini.joos.trajectory.WaitSegment
 import com.amarcolini.joos.trajectory.config.TrajectoryConfig
 import com.amarcolini.joos.trajectory.config.TrajectoryConstraints
+import com.amarcolini.joos.util.deg
 import kotlin.math.PI
 import kotlin.reflect.full.declaredMemberProperties
 
 internal fun Pose2d.toKotlin(): String =
-    String.format("Pose2d(%.2f, %.2f, %.2f.rad)", x, y, Math.toDegrees(heading))
+    String.format("Pose2d(%.2f, %.2f, %s)", x, y, heading.toKotlin())
 
 internal fun Pose2d.toJava(): String =
-    String.format("Pose2d.of(%.2f, %.2f, %.2f)", x, y, Math.toDegrees(heading))
+    String.format("Pose2d(%.2f, %.2f, %.2f)", x, y, heading.defaultValue)
 
 internal fun Vector2d.toKotlin(): String = String.format("Vector2d(%.2f, %.2f)", x, y)
-internal fun Vector2d.toJava(): String = String.format("Vector2d.of(%.2f, %.2f)", x, y)
+internal fun Vector2d.toJava(): String = String.format("new Vector2d(%.2f, %.2f)", x, y)
+internal fun Angle.toKotlin(): String = String.format(
+    "%.2f.%s", defaultValue, when (Angle.defaultUnits) {
+        AngleUnit.Degrees -> "deg"
+        AngleUnit.Radians -> "rad"
+    }
+)
+
+internal fun Angle.toJava(): String = String.format("%.2f", degrees)
 internal fun Waypoint.toKotlin(): String {
-    var string = (this::class.simpleName?.replaceFirstChar { it.lowercase() } ?: "") + "("
+    var string = (this::class.simpleName?.replaceFirstChar { it.lowercase() } ?: "Waypoint") + "("
     this::class.declaredMemberProperties.forEach { prop ->
         when (val value = prop.call(this)) {
             is Pose2d -> string += value.toKotlin() + ", "
             is Vector2d -> string += value.toKotlin() + ", "
-            is Degree -> string += String.format("%.2f, ", value.value)
+            is Angle -> string += value.toKotlin() + ", "
             is Double -> string += String.format("%.2f, ", value)
         }
     }
@@ -32,16 +43,37 @@ internal fun Waypoint.toKotlin(): String {
     return string
 }
 
-internal fun TrajectoryConstraints.toKotlin() = toString().replace("\\w+=".toRegex(), "")
-internal fun TrajectoryConstraints.toJava() = "new " + toString().replace("\\w+=".toRegex(), "")
+internal fun TrajectoryConstraints.toKotlin(): String {
+    var string = (this::class.simpleName ?: "TrajectoryConstraints") + "("
+    this::class.declaredMemberProperties.forEach { prop ->
+        when (val value = prop.call(this)) {
+            is Angle -> string += value.toKotlin() + ", "
+            is Double -> string += String.format("%.2f, ", value)
+        }
+    }
+    string = string.dropLast(2) + ")"
+    return string
+}
+
+internal fun TrajectoryConstraints.toJava(): String {
+    var string = "new" + (this::class.simpleName ?: "TrajectoryConstraints") + "("
+    this::class.declaredMemberProperties.forEach { prop ->
+        when (val value = prop.call(this)) {
+            is Angle -> string += value.toJava() + ", "
+            is Double -> string += String.format("%.2f, ", value)
+        }
+    }
+    string = string.dropLast(2) + ")"
+    return string
+}
 
 internal fun Waypoint.toJava(): String {
-    var string = (this::class.simpleName?.replaceFirstChar { it.lowercase() } ?: "") + "("
+    var string = (this::class.simpleName?.replaceFirstChar { it.lowercase() } ?: "Waypoint") + "("
     this::class.declaredMemberProperties.forEach { prop ->
         when (val value = prop.call(this)) {
             is Pose2d -> string += value.toJava() + ", "
             is Vector2d -> string += value.toJava() + ", "
-            is Degree -> string += String.format("%.2f, ", value.value)
+            is Angle -> string += value.toJava() + ", "
             is Double -> string += String.format("%.2f, ", value)
         }
     }
@@ -51,7 +83,7 @@ internal fun Waypoint.toJava(): String {
 
 fun TrajectoryConfig.toWaypoints(): List<Waypoint> {
     val list = ArrayList<Waypoint>()
-    list.add(Start(this.startPose, Degree(this.startTangent, false)))
+    list.add(Start(this.startPose, this.startTangent))
     this.waypoints.forEach {
         when (it) {
             is TrajectoryConfig.Back -> list += Back(it.back)
@@ -70,21 +102,21 @@ fun TrajectoryConfig.toWaypoints(): List<Waypoint> {
             }
             is TrajectoryConfig.Spline -> when (it.splineTo.interpolationType) {
                 TrajectoryConfig.HeadingInterpolationType.Tangent -> list += SplineTo(
-                    it.splineTo.pose.vec(), Degree(it.splineTo.tangent, false)
+                    it.splineTo.pose.vec(), it.splineTo.tangent
                 )
                 TrajectoryConfig.HeadingInterpolationType.Constant -> list += SplineToConstantHeading(
-                    it.splineTo.pose.vec(), Degree(it.splineTo.tangent, false)
+                    it.splineTo.pose.vec(), it.splineTo.tangent
                 )
                 TrajectoryConfig.HeadingInterpolationType.Linear -> list += SplineToLinearHeading(
-                    it.splineTo.pose, Degree(it.splineTo.tangent, false)
+                    it.splineTo.pose, it.splineTo.tangent
                 )
                 TrajectoryConfig.HeadingInterpolationType.Spline -> list += SplineToSplineHeading(
-                    it.splineTo.pose, Degree(it.splineTo.tangent, false)
+                    it.splineTo.pose, it.splineTo.tangent
                 )
             }
             is TrajectoryConfig.StrafeLeft -> list += StrafeLeft(it.strafeLeft)
             is TrajectoryConfig.StrafeRight -> list += StrafeRight(it.strafeRight)
-            is TrajectoryConfig.Turn -> list += Turn(Degree(it.turn, false))
+            is TrajectoryConfig.Turn -> list += Turn(it.turn)
             is TrajectoryConfig.Wait -> list += Wait(it.wait)
         }
     }
@@ -94,7 +126,7 @@ fun TrajectoryConfig.toWaypoints(): List<Waypoint> {
 fun Collection<Waypoint>.toConfig(constraints: TrajectoryConstraints): TrajectoryConfig {
     val start = this.first() as Start
     return TrajectoryConfig(
-        start.pose, start.tangent.radians,
+        start.pose, start.tangent,
         this.filter { it !is Start }.map {
             when (it) {
                 is StrafeLeft -> TrajectoryConfig.StrafeLeft(it.distance)
@@ -131,32 +163,32 @@ fun Collection<Waypoint>.toConfig(constraints: TrajectoryConstraints): Trajector
                 is SplineTo -> TrajectoryConfig.Spline(
                     TrajectoryConfig.SplineData(
                         Pose2d(it.pos),
-                        it.tangent.radians,
+                        it.tangent,
                     )
                 )
                 is SplineToConstantHeading -> TrajectoryConfig.Spline(
                     TrajectoryConfig.SplineData(
                         Pose2d(it.pos),
-                        it.tangent.radians,
+                        it.tangent,
                         TrajectoryConfig.HeadingInterpolationType.Constant
                     )
                 )
                 is SplineToLinearHeading -> TrajectoryConfig.Spline(
                     TrajectoryConfig.SplineData(
                         it.pose,
-                        it.tangent.radians,
+                        it.tangent,
                         TrajectoryConfig.HeadingInterpolationType.Linear
                     )
                 )
                 is SplineToSplineHeading -> TrajectoryConfig.Spline(
                     TrajectoryConfig.SplineData(
                         it.pose,
-                        it.tangent.radians,
+                        it.tangent,
                         TrajectoryConfig.HeadingInterpolationType.Spline
                     )
                 )
                 is Wait -> TrajectoryConfig.Wait(it.seconds)
-                is Turn -> TrajectoryConfig.Turn(it.angle.radians)
+                is Turn -> TrajectoryConfig.Turn(it.angle)
                 else -> throw IllegalStateException()
             }
         }, constraints
@@ -171,33 +203,33 @@ internal fun Collection<Waypoint>.toTrajectory(
     val start =
         if (first is Start) {
             first
-        } else Start(Pose2d(), Degree(0.0))
+        } else Start()
     val builder = TrajectoryBuilder(
-        start.pose, start.tangent.radians, constraints, resolution
+        start.pose, start.tangent, constraints, resolution
     )
 
     if (this.size > 1) {
         this.forEach {
             try {
                 when (it) {
-                    is Turn -> builder.turn(it.angle.value)
+                    is Turn -> builder.turn(it.angle)
                     is Wait -> builder.wait(it.seconds)
                     is LineTo -> builder.lineTo(it.pos)
                     is LineToConstantHeading -> builder.lineToConstantHeading(it.pos)
                     is LineToLinearHeading -> builder.lineToLinearHeading(it.pose)
                     is LineToSplineHeading -> builder.lineToSplineHeading(it.pose)
-                    is SplineTo -> builder.splineTo(it.pos, it.tangent.value)
+                    is SplineTo -> builder.splineTo(it.pos, it.tangent)
                     is SplineToConstantHeading -> builder.splineToConstantHeading(
                         it.pos,
-                        it.tangent.value
+                        it.tangent
                     )
                     is SplineToLinearHeading -> builder.splineToLinearHeading(
                         it.pose,
-                        it.tangent.value
+                        it.tangent
                     )
                     is SplineToSplineHeading -> builder.splineToSplineHeading(
                         it.pose,
-                        it.tangent.value
+                        it.tangent
                     )
                     is Back -> builder.back(it.distance)
                     is Forward -> builder.forward(it.distance)
@@ -227,17 +259,17 @@ internal fun Collection<Waypoint>.toTrajectory(
     } else return Trajectory(WaitSegment(start.pose, 0.0))
 }
 
-internal fun Collection<Waypoint>.mapPose(): List<Pair<Waypoint, Pair<Pose2d, Degree>>> {
+internal fun Collection<Waypoint>.mapPose(): List<Pair<Waypoint, Pair<Pose2d, Angle>>> {
     val first = this.firstOrNull()
     val start =
         if (first is Start) {
             first
-        } else Start(Pose2d(), Degree(0.0))
+        } else Start()
     var pose = start.pose
-    var tangent = start.tangent.radians
+    var tangent = start.tangent
 
-    val list = ArrayList<Pair<Waypoint, Pair<Pose2d, Degree>>>()
-    list += start to (pose to Degree(tangent))
+    val list = ArrayList<Pair<Waypoint, Pair<Pose2d, Angle>>>()
+    list += start to (pose to tangent)
 
     this.forEach {
         when (it) {
@@ -258,20 +290,20 @@ internal fun Collection<Waypoint>.mapPose(): List<Pair<Waypoint, Pair<Pose2d, De
                 tangent = pose.heading
             }
             is SplineTo -> {
-                pose = Pose2d(it.pos, it.tangent.radians)
-                tangent = it.tangent.radians
+                pose = Pose2d(it.pos, it.tangent)
+                tangent = it.tangent
             }
             is SplineToConstantHeading -> {
                 pose = Pose2d(it.pos, pose.heading)
-                tangent = it.tangent.radians
+                tangent = it.tangent
             }
             is SplineToLinearHeading -> {
                 pose = it.pose
-                tangent = it.tangent.radians
+                tangent = it.tangent
             }
             is SplineToSplineHeading -> {
                 pose = it.pose
-                tangent = it.tangent.radians
+                tangent = it.tangent
             }
             is Back -> {
                 pose = Pose2d(pose.vec() + Vector2d.polar(-it.distance, pose.heading), pose.heading)
@@ -283,14 +315,14 @@ internal fun Collection<Waypoint>.mapPose(): List<Pair<Waypoint, Pair<Pose2d, De
             }
             is StrafeLeft -> {
                 pose = Pose2d(
-                    pose.vec() + Vector2d.polar(it.distance, pose.heading + PI / 2),
+                    pose.vec() + Vector2d.polar(it.distance, pose.heading + 90.deg),
                     pose.heading
                 )
                 tangent = pose.heading
             }
             is StrafeRight -> {
                 pose = Pose2d(
-                    pose.vec() + Vector2d.polar(-it.distance, pose.heading + PI / 2),
+                    pose.vec() + Vector2d.polar(-it.distance, pose.heading + 90.deg),
                     pose.heading
                 )
                 tangent = pose.heading
@@ -306,7 +338,7 @@ internal fun Collection<Waypoint>.mapPose(): List<Pair<Waypoint, Pair<Pose2d, De
             else -> {
             }
         }
-        list += it to (pose to Degree(tangent, false))
+        list += it to (pose to tangent)
     }
     return list
 }

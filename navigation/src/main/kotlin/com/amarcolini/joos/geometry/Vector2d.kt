@@ -1,11 +1,8 @@
 package com.amarcolini.joos.geometry
 
-import com.amarcolini.joos.util.Angle
-import com.amarcolini.joos.util.epsilonEquals
+import com.amarcolini.joos.util.*
 import org.apache.commons.math3.util.FastMath
 import kotlin.math.acos
-import kotlin.math.cos
-import kotlin.math.sin
 import kotlin.math.sqrt
 
 /**
@@ -20,92 +17,92 @@ data class Vector2d @JvmOverloads constructor(
          * Returns a vector in Cartesian coordinates `(x, y)` from one in polar coordinates `(r, theta)`.
          */
         @JvmStatic
-        fun polar(r: Double, theta: Double) =
-            Vector2d(r * cos(theta), r * sin(theta))
-
-        @JvmStatic
-        @JvmOverloads
-        fun of(x: Double = 0.0, y: Double = 0.0) = Vector2d(x, y)
+        fun polar(r: Double, theta: Angle) =
+            Vector2d(r * theta.cos(), r * theta.sin())
     }
 
     /**
      * Returns the magnitude of this vector.
      */
-    fun norm() = sqrt(x * x + y * y)
+    fun norm(): Double = sqrt(x * x + y * y)
 
     /**
-     * Returns the angle of this vector (in radians).
+     * Returns the angle of this vector.
      */
-    fun angle() = Angle.norm(FastMath.atan2(y, x))
+    fun angle(): Angle = Angle(FastMath.atan2(y, x), AngleUnit.Radians)
 
     /**
      * Calculates the angle between two vectors (in radians).
      */
-    infix fun angleBetween(other: Vector2d) =
-        acos((this dot other) / (norm() * other.norm()))
+    infix fun angleBetween(other: Vector2d): Angle =
+        Angle(acos((this dot other) / (norm() * other.norm())), AngleUnit.Radians)
 
     /**
      * Adds two vectors.
      */
-    operator fun plus(other: Vector2d) =
+    operator fun plus(other: Vector2d): Vector2d =
         Vector2d(x + other.x, y + other.y)
 
     /**
      * Subtracts two vectors.
      */
-    operator fun minus(other: Vector2d) =
+    operator fun minus(other: Vector2d): Vector2d =
         Vector2d(x - other.x, y - other.y)
 
     /**
-     * Multiplies two vectors.
+     * Multiplies this vector by a scalar.
      */
-    operator fun times(scalar: Double) = Vector2d(scalar * x, scalar * y)
+    operator fun times(scalar: Double): Vector2d = Vector2d(scalar * x, scalar * y)
 
     /**
-     * Divides two vectors.
+     * Divides this vector by a scalar.
      */
-    operator fun div(scalar: Double) = Vector2d(x / scalar, y / scalar)
+    operator fun div(scalar: Double): Vector2d = Vector2d(x / scalar, y / scalar)
 
     /**
      * Returns the negative of this vector.
      */
-    operator fun unaryMinus() = Vector2d(-x, -y)
+    operator fun unaryMinus(): Vector2d = Vector2d(-x, -y)
 
     /**
      * Returns the dot product of two vectors.
      */
-    infix fun dot(other: Vector2d) = x * other.x + y * other.y
+    infix fun dot(other: Vector2d): Double = x * other.x + y * other.y
 
     /**
      * Returns the 2D cross product of two vectors.
      */
-    infix fun cross(other: Vector2d) = x * other.y - y * other.x
+    infix fun cross(other: Vector2d): Double = x * other.y - y * other.x
 
     /**
      * Returns the distance between two vectors.
      */
-    infix fun distTo(other: Vector2d) = (this - other).norm()
+    infix fun distTo(other: Vector2d): Double = (this - other).norm()
 
     /**
      * Returns the projection of this vector onto another.
      */
-    infix fun projectOnto(other: Vector2d) = other * (this dot other) / (other dot other)
+    infix fun projectOnto(other: Vector2d): Vector2d = other * (this dot other) / (other dot other)
 
     /**
      * Rotates this vector by [angle].
      */
-    fun rotated(angle: Double): Vector2d {
-        val newX = x * cos(angle) - y * sin(angle)
-        val newY = x * sin(angle) + y * cos(angle)
+    fun rotated(angle: Angle): Vector2d {
+        val newX = x * angle.cos() - y * angle.sin()
+        val newY = x * angle.sin() + y * angle.cos()
         return Vector2d(newX, newY)
     }
 
-    infix fun epsilonEquals(other: Vector2d) =
+    /**
+     * Rotates this vector by [angle], where [angle] is in [Angle.defaultUnits].
+     */
+    fun rotated(angle: Double): Vector2d = rotated(Angle(angle))
+
+    /**
+     * Returns whether two vectors are approximately equal (within [EPSILON]).
+     */
+    infix fun epsilonEquals(other: Vector2d): Boolean =
         x epsilonEquals other.x && y epsilonEquals other.y
 
-    override fun toString() = String.format("(%.3f, %.3f)", x, y)
+    override fun toString(): String = String.format("(%.3f, %.3f)", x, y)
 }
-
-operator fun Double.times(vector: Vector2d) = vector.times(this)
-
-operator fun Double.div(vector: Vector2d) = vector.div(this)

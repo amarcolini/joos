@@ -1,12 +1,12 @@
 package com.amarcolini.joos.followers
 
 import com.amarcolini.joos.drive.DriveSignal
+import com.amarcolini.joos.geometry.Angle
+import com.amarcolini.joos.geometry.AngleUnit
 import com.amarcolini.joos.geometry.Pose2d
 import com.amarcolini.joos.kinematics.Kinematics
 import com.amarcolini.joos.path.Path
-import com.amarcolini.joos.util.Angle
-import com.amarcolini.joos.util.GuidingVectorField
-import com.amarcolini.joos.util.NanoClock
+import com.amarcolini.joos.util.*
 import org.apache.commons.math3.util.FastMath
 import kotlin.math.sqrt
 
@@ -48,11 +48,11 @@ class GVFFollower @JvmOverloads constructor(
     override fun internalUpdate(currentPose: Pose2d): DriveSignal {
         val gvfResult = gvf.getExtended(currentPose.x, currentPose.y, lastProjDisplacement)
 
-        val desiredHeading = FastMath.atan2(gvfResult.vector.y, gvfResult.vector.x)
-        val headingError = Angle.normDelta(desiredHeading - currentPose.heading)
+        val desiredHeading = Angle(FastMath.atan2(gvfResult.vector.y, gvfResult.vector.x), AngleUnit.Radians)
+        val headingError = desiredHeading - currentPose.heading
 
         // TODO: implement this or nah? ref eqs. (18), (23), and (24)
-        val desiredOmega = 0.0
+        val desiredOmega = Angle()
         val omega = desiredOmega + kOmega * headingError
 
         // basic online motion profiling

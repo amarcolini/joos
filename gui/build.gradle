@@ -31,12 +31,10 @@ dependencies {
     implementation 'no.tornado:tornadofx:1.7.20'
     implementation "org.jetbrains.kotlin:kotlin-reflect:$kotlin_version"
 
-    runtimeOnly "org.openjfx:javafx-controls:$javafx.version:win"
-    runtimeOnly "org.openjfx:javafx-controls:$javafx.version:linux"
-    runtimeOnly "org.openjfx:javafx-controls:$javafx.version:mac"
-    runtimeOnly "org.openjfx:javafx-base:$javafx.version:win"
-    runtimeOnly "org.openjfx:javafx-base:$javafx.version:linux"
-    runtimeOnly "org.openjfx:javafx-base:$javafx.version:mac"
+    runtimeOnly "org.openjfx:javafx-graphics:$javafx.version:win"
+    runtimeOnly "org.openjfx:javafx-graphics:$javafx.version:linux"
+    runtimeOnly "org.openjfx:javafx-graphics:$javafx.version:mac"
+    runtimeOnly "org.openjfx:javafx-controls:$javafx.version"
 }
 
 java {

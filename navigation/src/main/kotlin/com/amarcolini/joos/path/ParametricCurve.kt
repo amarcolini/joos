@@ -1,5 +1,7 @@
 package com.amarcolini.joos.path
 
+import com.amarcolini.joos.geometry.Angle
+import com.amarcolini.joos.geometry.AngleUnit
 import com.amarcolini.joos.geometry.Vector2d
 import org.apache.commons.math3.util.FastMath
 import kotlin.math.abs
@@ -94,26 +96,26 @@ abstract class ParametricCurve {
      * Returns the angle of the tangent line [s] units along the curve.
      */
     @JvmOverloads
-    fun tangentAngle(s: Double, t: Double = reparam(s)) = deriv(s, t).angle()
+    fun tangentAngle(s: Double, t: Double = reparam(s)): Angle = deriv(s, t).angle()
 
     /**
      * Returns the derivative of the tangent angle [s] units along the curve.
      */
     @JvmOverloads
-    fun tangentAngleDeriv(s: Double, t: Double = reparam(s)): Double {
+    fun tangentAngleDeriv(s: Double, t: Double = reparam(s)): Angle {
         val deriv = deriv(s, t)
         val secondDeriv = secondDeriv(s, t)
-        return deriv.x * secondDeriv.y - deriv.y * secondDeriv.x
+        return Angle(deriv.x * secondDeriv.y - deriv.y * secondDeriv.x, AngleUnit.Radians)
     }
 
     /**
      * Returns the second derivative of the tangent angle [s] units along the curve.
      */
     @JvmOverloads
-    fun tangentAngleSecondDeriv(s: Double, t: Double = reparam(s)): Double {
+    fun tangentAngleSecondDeriv(s: Double, t: Double = reparam(s)): Angle {
         val deriv = deriv(s, t)
         val thirdDeriv = thirdDeriv(s, t)
-        return deriv.x * thirdDeriv.y - deriv.y * thirdDeriv.x
+        return Angle(deriv.x * thirdDeriv.y - deriv.y * thirdDeriv.x, AngleUnit.Radians)
     }
 
     /**

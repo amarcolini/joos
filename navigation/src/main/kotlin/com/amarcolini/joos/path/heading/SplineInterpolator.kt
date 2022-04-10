@@ -1,8 +1,9 @@
 package com.amarcolini.joos.path.heading
 
+import com.amarcolini.joos.geometry.Angle
+import com.amarcolini.joos.geometry.AngleUnit
 import com.amarcolini.joos.path.ParametricCurve
 import com.amarcolini.joos.path.QuinticPolynomial
-import com.amarcolini.joos.util.Angle
 
 /**
  * Spline heading interpolator for transitioning smoothly between headings without violating continuity (and hence
@@ -17,12 +18,12 @@ import com.amarcolini.joos.util.Angle
  */
 // note: the spline parameter is transformed linearly into a pseudo-arclength parameter
 class SplineInterpolator @JvmOverloads constructor(
-    private val startHeading: Double,
-    private val endHeading: Double,
-    private val startHeadingDeriv: Double? = null,
-    private val startHeadingSecondDeriv: Double? = null,
-    private val endHeadingDeriv: Double? = null,
-    private val endHeadingSecondDeriv: Double? = null
+    private val startHeading: Angle,
+    private val endHeading: Angle,
+    private val startHeadingDeriv: Angle? = null,
+    private val startHeadingSecondDeriv: Angle? = null,
+    private val endHeadingDeriv: Angle? = null,
+    private val endHeadingSecondDeriv: Angle? = null
 ) : HeadingInterpolator() {
     private val tangentInterpolator = TangentInterpolator()
     private lateinit var headingSpline: QuinticPolynomial
@@ -34,28 +35,28 @@ class SplineInterpolator @JvmOverloads constructor(
 
         val len = curve.length()
 
-        val headingDelta = Angle.normDelta(endHeading - startHeading)
+        val headingDelta = (endHeading - startHeading).normDelta()
 
         headingSpline = QuinticPolynomial(
             0.0,
-            (startHeadingDeriv ?: curve.tangentAngleDeriv(0.0, 0.0)) * len,
-            (startHeadingSecondDeriv ?: curve.tangentAngleSecondDeriv(0.0, 0.0)) * len * len,
-            headingDelta,
-            (endHeadingDeriv ?: curve.tangentAngleDeriv(len, 1.0)) * len,
-            (endHeadingSecondDeriv ?: curve.tangentAngleSecondDeriv(len, 1.0)) * len * len
+            ((startHeadingDeriv ?: curve.tangentAngleDeriv(0.0, 0.0)) * len).radians,
+            ((startHeadingSecondDeriv ?: curve.tangentAngleSecondDeriv(0.0, 0.0)) * len * len).radians,
+            headingDelta.radians,
+            ((endHeadingDeriv ?: curve.tangentAngleDeriv(len, 1.0)) * len).radians,
+            ((endHeadingSecondDeriv ?: curve.tangentAngleSecondDeriv(len, 1.0)) * len * len).radians
         )
     }
 
     override fun internalGet(s: Double, t: Double) =
-        Angle.norm(startHeading + headingSpline[s / curve.length()])
+        (startHeading + Angle(headingSpline[s / curve.length()], AngleUnit.Radians)).norm()
 
-    override fun internalDeriv(s: Double, t: Double): Double {
+    override fun internalDeriv(s: Double, t: Double): Angle {
         val len = curve.length()
-        return headingSpline.deriv(s / len) / len
+        return Angle(headingSpline.deriv(s / len) / len, AngleUnit.Radians)
     }
 
-    override fun internalSecondDeriv(s: Double, t: Double): Double {
+    override fun internalSecondDeriv(s: Double, t: Double): Angle {
         val len = curve.length()
-        return headingSpline.secondDeriv(s / len) / (len * len)
+        return Angle(headingSpline.secondDeriv(s / len) / (len * len), AngleUnit.Radians)
     }
 }
