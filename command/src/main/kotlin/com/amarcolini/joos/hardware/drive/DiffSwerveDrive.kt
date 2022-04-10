@@ -65,7 +65,11 @@ open class DiffSwerveDrive(
         rightModuleController.setInputBounds(-PI, PI)
     }
 
-    private var targetSpeeds: List<Pair<Double, Double>> = emptyList()
+    private var targetSpeeds: List<Pair<Double, Double>> = listOf(
+        0.0 to 0.0,
+        0.0 to 0.0
+    )
+
     override fun setDriveSignal(driveSignal: DriveSignal) {
         targetSpeeds = DiffSwerveKinematics.robotToWheelVelocities(
             driveSignal.vel,
