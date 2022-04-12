@@ -25,30 +25,21 @@ abstract class AbstractDiffSwerveDrive(
 ) : Drive() {
 
     override var localizer: Localizer = DiffSwerveLocalizer(
-        ::getGearRotations,
-        ::getGearPositions,
-        ::getGearVelocities,
-        trackWidth, this, true
+        ::getGearRotations, ::getGearPositions, ::getGearVelocities, trackWidth, this, true
     )
 
     override fun setDriveSignal(driveSignal: DriveSignal) {
         val (leftVel, rightVel) = DiffSwerveKinematics.robotToWheelVelocities(
-            driveSignal.vel,
-            trackWidth
+            driveSignal.vel, trackWidth
         )
         val (leftAccel, rightAccel) = DiffSwerveKinematics.robotToWheelAccelerations(
-            driveSignal.vel,
-            driveSignal.accel,
-            trackWidth
+            driveSignal.vel, driveSignal.accel, trackWidth
         )
         val (leftOrientation, rightOrientation) = DiffSwerveKinematics.robotToModuleOrientations(
-            driveSignal.vel,
-            trackWidth
+            driveSignal.vel, trackWidth
         )
         val (leftAngVel, rightAngVel) = DiffSwerveKinematics.robotToModuleAngularVelocities(
-            driveSignal.vel,
-            driveSignal.accel,
-            trackWidth
+            driveSignal.vel, driveSignal.accel, trackWidth
         )
 
         this.leftVel = leftVel
@@ -62,10 +53,8 @@ abstract class AbstractDiffSwerveDrive(
     }
 
     override fun setDrivePower(drivePower: Pose2d) {
-        val (leftVel, rightVel) =
-            DiffSwerveKinematics.robotToWheelVelocities(drivePower, 1.0)
-        val (leftOrientation, rightOrientation) =
-            DiffSwerveKinematics.robotToModuleOrientations(drivePower, 1.0)
+        val (leftVel, rightVel) = DiffSwerveKinematics.robotToWheelVelocities(drivePower, trackWidth)
+        val (leftOrientation, rightOrientation) = DiffSwerveKinematics.robotToModuleOrientations(drivePower, trackWidth)
         this.leftVel = leftVel
         this.leftAccel = 0.0
         this.rightVel = rightVel
@@ -86,12 +75,12 @@ abstract class AbstractDiffSwerveDrive(
 
     private val leftModuleController = PIDFController(orientationPID)
     private val rightModuleController = PIDFController(orientationPID)
-    
+
     init {
         leftModuleController.setInputBounds(-PI, PI)
         rightModuleController.setInputBounds(-PI, PI)
     }
-    
+
     private var leftVel = 0.0
     private var leftAccel = 0.0
     private var rightVel = 0.0
@@ -105,13 +94,18 @@ abstract class AbstractDiffSwerveDrive(
         val leftControl = leftModuleController.update(left.radians)
         val rightControl = rightModuleController.update(right.radians)
 
+        val (leftDV, leftDA) = DiffSwerveKinematics.speedsToDirectional(
+            leftVel, leftAccel, leftModuleController.targetPosition, left.radians
+        )
+        val (rightDV, rightDA) = DiffSwerveKinematics.speedsToDirectional(
+            rightVel, rightAccel, rightModuleController.targetPosition, right.radians
+        )
+
         val velocities = listOf(
-            leftVel + leftControl, -leftVel + leftControl,
-            rightVel + rightControl, -rightVel + rightControl
+            leftDV + leftControl, -leftDV + leftControl, rightDV + rightControl, -rightDV + rightControl
         )
         val accelerations = listOf(
-            leftAccel, -leftAccel,
-            rightAccel, -rightAccel
+            leftDA, -leftDA, rightDA, -rightDA
         )
         val powers = Kinematics.calculateMotorFeedforward(velocities, accelerations, feedforward)
         setMotorPowers(powers[0], powers[1], powers[2], powers[3])
@@ -121,10 +115,7 @@ abstract class AbstractDiffSwerveDrive(
      * Sets the following motor powers (normalized voltages). All arguments are on the interval `[-1.0, 1.0]`.
      */
     abstract fun setMotorPowers(
-        topLeft: Double,
-        bottomLeft: Double,
-        topRight: Double,
-        bottomRight: Double
+        topLeft: Double, bottomLeft: Double, topRight: Double, bottomRight: Double
     )
 
     /**

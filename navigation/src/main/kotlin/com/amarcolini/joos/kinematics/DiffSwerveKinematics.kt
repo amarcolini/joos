@@ -5,11 +5,10 @@ import com.amarcolini.joos.geometry.AngleUnit
 import com.amarcolini.joos.geometry.Pose2d
 import com.amarcolini.joos.geometry.Vector2d
 import com.amarcolini.joos.util.cos
-import com.amarcolini.joos.util.rad
 import com.amarcolini.joos.util.sin
 import com.amarcolini.joos.util.wrap
 import kotlin.math.PI
-import kotlin.math.sign
+import kotlin.math.abs
 
 /**
  * Differential swerve drive kinematic equations. All wheel positions and velocities are given in (left, right) tuples.
@@ -57,7 +56,7 @@ object DiffSwerveKinematics {
         robotToModuleVelocityVectors(
             robotVel,
             trackWidth
-        ).map { it.norm() * sign(it.x) }
+        ).map { it.norm() }
 
     /**
      * Computes the module orientations corresponding to [robotVel] given the provided [trackWidth].
@@ -73,7 +72,7 @@ object DiffSwerveKinematics {
         robotToModuleVelocityVectors(
             robotVel,
             trackWidth
-        ).map { it.angle().radians.wrap(-PI / 2, PI / 2).rad }
+        ).map { it.angle() }
 
     /**
      * Computes the acceleration vectors corresponding to [robotAccel] given the provided [trackWidth].
@@ -221,5 +220,28 @@ object DiffSwerveKinematics {
             listOf(leftOrientation, rightOrientation),
             trackWidth
         )
+    }
+
+    /**
+     * Computes the robot velocities depending on which direction the module is facing and which direction the module is trying to go
+     * @param velocity the velocity of the module
+     * @param acceleration the acceleration of the module
+     * @param target the target orientation of the module
+     * @param current the current orientation of the module
+     *
+     * @return the robot velocity and acceleration of the module according to the direction the module is facing
+     */
+    @JvmStatic
+    fun speedsToDirectional(
+        velocity: Double,
+        acceleration: Double,
+        target: Double,
+        current: Double
+    ): Pair<Double, Double> {
+        val sameHalf = abs(target.wrap(-PI, PI) - current.wrap(-PI, PI)) <= PI / 2
+
+        return if (sameHalf) velocity to acceleration
+        else -velocity to -acceleration
+
     }
 }

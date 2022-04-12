@@ -11,12 +11,9 @@ import com.amarcolini.joos.geometry.Pose2d
 import com.amarcolini.joos.hardware.Imu
 import com.amarcolini.joos.hardware.Motor
 import com.amarcolini.joos.kinematics.DiffSwerveKinematics
-import com.amarcolini.joos.kinematics.SwerveKinematics
 import com.amarcolini.joos.localization.DiffSwerveLocalizer
 import com.amarcolini.joos.localization.Localizer
 import com.amarcolini.joos.trajectory.config.DiffSwerveConstraints
-import com.amarcolini.joos.trajectory.config.MecanumConstraints
-import com.amarcolini.joos.trajectory.config.TrajectoryConstraints
 import com.amarcolini.joos.util.deg
 import kotlin.math.PI
 import kotlin.math.abs
@@ -53,7 +50,7 @@ open class DiffSwerveDrive(
         gears.forEach { it.zeroPowerBehavior = zeroPowerBehavior }
 
     override var localizer: Localizer = DiffSwerveLocalizer(
-        { gears.map { it.rotation } }, { gears.map { it.distance } }, { gears.map { it.distanceVelocity } },
+        ::getModuleOrientations, { gears.map { it.distance } }, { gears.map { it.distanceVelocity } },
         constraints.trackWidth, this, imu != null
     )
 
@@ -61,8 +58,8 @@ open class DiffSwerveDrive(
     private val rightModuleController = PIDFController(moduleOrientationPID)
 
     init {
-        leftModuleController.setInputBounds(-PI, PI)
-        rightModuleController.setInputBounds(-PI, PI)
+        leftModuleController.setInputBounds(-PI / 2, PI / 2)
+        rightModuleController.setInputBounds(-PI / 2, PI / 2)
     }
 
     private var targetSpeeds: List<Pair<Double, Double>> = listOf(
@@ -97,11 +94,11 @@ open class DiffSwerveDrive(
     }
 
     override fun setDrivePower(drivePower: Pose2d) {
-        targetSpeeds = DiffSwerveKinematics.robotToWheelVelocities(drivePower, 1.0).map {
+        targetSpeeds = DiffSwerveKinematics.robotToWheelVelocities(drivePower, constraints.trackWidth).map {
             it * constraints.maxGearVel
         }.zip(listOf(0.0, 0.0))
         val (leftOrientation, rightOrientation) = DiffSwerveKinematics.robotToModuleOrientations(
-            drivePower, 1.0
+            drivePower, constraints.trackWidth
         )
         leftModuleController.targetPosition = leftOrientation.radians
         rightModuleController.targetPosition = rightOrientation.radians
@@ -111,15 +108,23 @@ open class DiffSwerveDrive(
 
     override fun update() {
         super.update()
-        
+
         val (leftVel, leftAccel) = targetSpeeds[0]
         val leftOrientation = DiffSwerveKinematics.gearToModuleOrientation(
             leftModule.first.rotation,
             leftModule.second.rotation
         )
         val leftControl = leftModuleController.update(leftOrientation.radians)
-        leftModule.first.setSpeed(leftVel + leftControl, leftAccel, Motor.RotationUnit.UPS)
-        leftModule.second.setSpeed(-leftVel + leftControl, -leftAccel, Motor.RotationUnit.UPS)
+
+        val (leftDV, leftDA) = DiffSwerveKinematics.speedsToDirectional(
+            leftVel,
+            leftAccel,
+            leftModuleController.targetPosition,
+            leftOrientation.radians
+        )
+
+        leftModule.first.setSpeed(leftDV + leftControl, leftDA, Motor.RotationUnit.UPS)
+        leftModule.second.setSpeed(-leftDV + leftControl, -leftDA, Motor.RotationUnit.UPS)
 
         val (rightVel, rightAccel) = targetSpeeds[1]
         val rightOrientation = DiffSwerveKinematics.gearToModuleOrientation(
@@ -127,9 +132,27 @@ open class DiffSwerveDrive(
             rightModule.second.rotation
         )
         val rightControl = rightModuleController.update(rightOrientation.radians)
-        rightModule.first.setSpeed(rightVel + rightControl, rightAccel, Motor.RotationUnit.UPS)
-        rightModule.second.setSpeed(-rightVel + rightControl, -rightAccel, Motor.RotationUnit.UPS)
+
+        val (rightDV, rightDA) = DiffSwerveKinematics.speedsToDirectional(
+            rightVel,
+            rightAccel,
+            rightModuleController.targetPosition,
+            rightOrientation.radians
+        )
+
+        rightModule.first.setSpeed(rightDV + rightControl, rightDA, Motor.RotationUnit.UPS)
+        rightModule.second.setSpeed(-rightDV + rightControl, -rightDA, Motor.RotationUnit.UPS)
 
         gears.forEach { it.update() }
     }
+
+    fun getModuleOrientations(): List<Angle> {
+        val (topLeft, bottomLeft, topRight, bottomRight) = getGearRotations()
+        return listOf(
+            DiffSwerveKinematics.gearToModuleOrientation(topLeft, bottomLeft),
+            DiffSwerveKinematics.gearToModuleOrientation(topRight, bottomRight),
+        )
+    }
+
+    fun getGearRotations(): List<Angle> = gears.map { it.rotation }
 }
