@@ -221,27 +221,4 @@ object DiffSwerveKinematics {
             trackWidth
         )
     }
-
-    /**
-     * Computes the robot velocities depending on which direction the module is facing and which direction the module is trying to go
-     * @param velocity the velocity of the module
-     * @param acceleration the acceleration of the module
-     * @param target the target orientation of the module
-     * @param current the current orientation of the module
-     *
-     * @return the robot velocity and acceleration of the module according to the direction the module is facing
-     */
-    @JvmStatic
-    fun speedsToDirectional(
-        velocity: Double,
-        acceleration: Double,
-        target: Double,
-        current: Double
-    ): Pair<Double, Double> {
-        val sameHalf = abs(target.wrap(-PI, PI) - current.wrap(-PI, PI)) <= PI / 2
-
-        return if (sameHalf) velocity to acceleration
-        else -velocity to -acceleration
-
-    }
 }

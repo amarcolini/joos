@@ -9,7 +9,9 @@ import com.amarcolini.joos.kinematics.DiffSwerveKinematics
 import com.amarcolini.joos.kinematics.Kinematics
 import com.amarcolini.joos.localization.DiffSwerveLocalizer
 import com.amarcolini.joos.localization.Localizer
+import com.amarcolini.joos.util.wrap
 import kotlin.math.PI
+import kotlin.math.abs
 
 /**
  * This class provides the basic functionality of a differential swerve drive using [DiffSwerveKinematics].
@@ -53,7 +55,7 @@ abstract class AbstractDiffSwerveDrive(
     }
 
     override fun setDrivePower(drivePower: Pose2d) {
-        val (leftVel, rightVel) = DiffSwerveKinematics.robotToWheelVelocities(drivePower, trackWidth)
+        val (leftVel, rightVel) = DiffSwerveKinematics.robotToWheelVelocities(drivePower, 1.0)
         val (leftOrientation, rightOrientation) = DiffSwerveKinematics.robotToModuleOrientations(drivePower, trackWidth)
         this.leftVel = leftVel
         this.leftAccel = 0.0
@@ -77,8 +79,8 @@ abstract class AbstractDiffSwerveDrive(
     private val rightModuleController = PIDFController(orientationPID)
 
     init {
-        leftModuleController.setInputBounds(-PI, PI)
-        rightModuleController.setInputBounds(-PI, PI)
+        leftModuleController.setInputBounds(-PI / 2, PI / 2)
+        rightModuleController.setInputBounds(-PI / 2, PI / 2)
     }
 
     private var leftVel = 0.0
@@ -94,10 +96,10 @@ abstract class AbstractDiffSwerveDrive(
         val leftControl = leftModuleController.update(left.radians)
         val rightControl = rightModuleController.update(right.radians)
 
-        val (leftDV, leftDA) = DiffSwerveKinematics.speedsToDirectional(
+        val (leftDV, leftDA) = speedsToDirectional(
             leftVel, leftAccel, leftModuleController.targetPosition, left.radians
         )
-        val (rightDV, rightDA) = DiffSwerveKinematics.speedsToDirectional(
+        val (rightDV, rightDA) = speedsToDirectional(
             rightVel, rightAccel, rightModuleController.targetPosition, right.radians
         )
 
@@ -117,6 +119,22 @@ abstract class AbstractDiffSwerveDrive(
     abstract fun setMotorPowers(
         topLeft: Double, bottomLeft: Double, topRight: Double, bottomRight: Double
     )
+
+    /**
+     * Computes the robot velocities depending on which direction the module is facing and which direction the module is trying to go
+     * @param velocity the velocity of the module
+     * @param acceleration the acceleration of the module
+     * @param target the target orientation of the module
+     * @param current the current orientation of the module
+     *
+     * @return the robot velocity and acceleration of the module according to the direction the module is facing
+     */
+    abstract fun speedsToDirectional(
+        velocity: Double,
+        acceleration: Double,
+        target: Double,
+        current: Double
+    ): Pair<Double, Double>
 
     /**
      * Returns the total rotation the gears. Angles should exactly match the ordering in

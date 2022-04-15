@@ -15,6 +15,7 @@ import com.amarcolini.joos.localization.DiffSwerveLocalizer
 import com.amarcolini.joos.localization.Localizer
 import com.amarcolini.joos.trajectory.config.DiffSwerveConstraints
 import com.amarcolini.joos.util.deg
+import com.amarcolini.joos.util.wrap
 import kotlin.math.PI
 import kotlin.math.abs
 
@@ -94,7 +95,7 @@ open class DiffSwerveDrive(
     }
 
     override fun setDrivePower(drivePower: Pose2d) {
-        targetSpeeds = DiffSwerveKinematics.robotToWheelVelocities(drivePower, constraints.trackWidth).map {
+        targetSpeeds = DiffSwerveKinematics.robotToWheelVelocities(drivePower, 1.0).map {
             it * constraints.maxGearVel
         }.zip(listOf(0.0, 0.0))
         val (leftOrientation, rightOrientation) = DiffSwerveKinematics.robotToModuleOrientations(
@@ -116,7 +117,7 @@ open class DiffSwerveDrive(
         )
         val leftControl = leftModuleController.update(leftOrientation.radians)
 
-        val (leftDV, leftDA) = DiffSwerveKinematics.speedsToDirectional(
+        val (leftDV, leftDA) = speedsToDirectional(
             leftVel,
             leftAccel,
             leftModuleController.targetPosition,
@@ -133,7 +134,7 @@ open class DiffSwerveDrive(
         )
         val rightControl = rightModuleController.update(rightOrientation.radians)
 
-        val (rightDV, rightDA) = DiffSwerveKinematics.speedsToDirectional(
+        val (rightDV, rightDA) = speedsToDirectional(
             rightVel,
             rightAccel,
             rightModuleController.targetPosition,
@@ -155,4 +156,26 @@ open class DiffSwerveDrive(
     }
 
     fun getGearRotations(): List<Angle> = gears.map { it.rotation }
+
+    /**
+     * Computes the robot velocities depending on which direction the module is facing and which direction the module is trying to go
+     * @param velocity the velocity of the module
+     * @param acceleration the acceleration of the module
+     * @param target the target orientation of the module
+     * @param current the current orientation of the module
+     *
+     * @return the robot velocity and acceleration of the module according to the direction the module is facing
+     */
+    fun speedsToDirectional(
+        velocity: Double,
+        acceleration: Double,
+        target: Double,
+        current: Double
+    ): Pair<Double, Double> {
+        val sameHalf = abs(target.wrap(-PI, PI) - current.wrap(-PI, PI)) <= PI / 2
+
+        return if (sameHalf) velocity to acceleration
+        else -velocity to -acceleration
+
+    }
 }
