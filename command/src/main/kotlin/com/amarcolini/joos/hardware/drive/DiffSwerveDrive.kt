@@ -172,7 +172,7 @@ open class DiffSwerveDrive(
         target: Double,
         current: Double
     ): Pair<Double, Double> {
-        val sameHalf = abs(target.wrap(-PI, PI) - current.wrap(-PI, PI)) <= PI / 2
+        val sameHalf = abs(target.wrap(-PI, PI) - current.wrap(-PI, PI)) !in (PI / 2)..(3 * PI / 2)
 
         return if (sameHalf) velocity to acceleration
         else -velocity to -acceleration
