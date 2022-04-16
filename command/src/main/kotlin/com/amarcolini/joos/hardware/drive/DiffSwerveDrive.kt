@@ -51,7 +51,7 @@ open class DiffSwerveDrive(
         gears.forEach { it.zeroPowerBehavior = zeroPowerBehavior }
 
     override var localizer: Localizer = DiffSwerveLocalizer(
-        ::getModuleOrientations, { gears.map { it.distance } }, { gears.map { it.distanceVelocity } },
+        { gears.map { it.rotation } }, { gears.map { it.distance } }, { gears.map { it.distanceVelocity } },
         constraints.trackWidth, this, imu != null
     )
 
