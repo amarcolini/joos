@@ -14,7 +14,14 @@ import kotlin.math.tan
  * A class representing different angle units.
  */
 enum class AngleUnit {
+    /**
+     * A unit of measure for angles equivalent to 1/360 of a full rotation.
+     */
     Degrees,
+
+    /**
+     * A unit of measure for angles equivalent to 1/2pi of a full rotation.
+     */
     Radians
 }
 
@@ -23,7 +30,7 @@ enum class AngleUnit {
  */
 @JsonSerialize(using = AngleSerializer::class)
 @JsonDeserialize(using = AngleDeserializer::class)
-open class Angle @JvmOverloads constructor(
+class Angle @JvmOverloads constructor(
     private val value: Double = 0.0,
     private val units: AngleUnit = defaultUnits
 ) {
@@ -222,5 +229,11 @@ open class Angle @JvmOverloads constructor(
         if (other !is Angle) return false
         if (this === other) return true
         return this.getValue(other.units) == other.value
+    }
+
+    override fun hashCode(): Int {
+        var result = value.hashCode()
+        result = 31 * result + units.hashCode()
+        return result
     }
 }

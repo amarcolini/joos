@@ -6,7 +6,6 @@ import com.amarcolini.joos.control.PIDFController
 import com.amarcolini.joos.drive.DriveSignal
 import com.amarcolini.joos.followers.HolonomicPIDVAFollower
 import com.amarcolini.joos.followers.TrajectoryFollower
-import com.amarcolini.joos.geometry.Angle
 import com.amarcolini.joos.geometry.Pose2d
 import com.amarcolini.joos.hardware.Imu
 import com.amarcolini.joos.hardware.Motor
@@ -116,7 +115,8 @@ open class DiffSwerveDrive(
             leftModule.second.rotation
         )
         val leftDirection =
-            if ((leftModuleController.targetPosition - leftOrientation.radians).wrap(-PI, PI) <= (PI * 0.5)) 1 else -1
+            if (abs((leftModuleController.targetPosition - leftOrientation.radians).wrap(-PI, PI)) <= (PI * 0.5)) 1 
+            else -1
         val leftControl = leftModuleController.update(leftOrientation.radians)
         leftModule.first.setSpeed(
             leftVel * leftDirection + leftControl,
@@ -135,7 +135,8 @@ open class DiffSwerveDrive(
             rightModule.second.rotation
         )
         val rightDirection =
-            if ((rightModuleController.targetPosition - rightOrientation.radians).wrap(-PI, PI) <= (PI * 0.5)) 1 else -1
+            if (abs((rightModuleController.targetPosition - rightOrientation.radians).wrap(-PI, PI)) <= (PI * 0.5)) 1
+            else -1
         val rightControl = rightModuleController.update(rightOrientation.radians)
         rightModule.first.setSpeed(
             rightVel * rightDirection + rightControl,

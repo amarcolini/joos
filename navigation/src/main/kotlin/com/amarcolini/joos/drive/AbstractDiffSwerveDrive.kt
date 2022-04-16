@@ -9,8 +9,10 @@ import com.amarcolini.joos.kinematics.DiffSwerveKinematics
 import com.amarcolini.joos.kinematics.Kinematics
 import com.amarcolini.joos.localization.DiffSwerveLocalizer
 import com.amarcolini.joos.localization.Localizer
+import com.amarcolini.joos.util.rad
 import com.amarcolini.joos.util.wrap
 import kotlin.math.PI
+import kotlin.math.abs
 
 /**
  * This class provides the basic functionality of a differential swerve drive using [DiffSwerveKinematics].
@@ -107,9 +109,11 @@ abstract class AbstractDiffSwerveDrive(
         val rightControl = rightModuleController.update(right.radians)
 
         val leftDirection =
-            if ((leftModuleController.targetPosition - left.radians).wrap(-PI, PI) <= (PI * 0.5)) 1 else -1
+            if (abs((leftModuleController.targetPosition - left.radians).wrap(-PI, PI)) <= (PI * 0.5)) 1
+            else -1
         val rightDirection =
-            if ((rightModuleController.targetPosition - right.radians).wrap(-PI, PI) <= (PI * 0.5)) 1 else -1
+            if (abs((rightModuleController.targetPosition - right.radians).wrap(-PI, PI)) <= (PI * 0.5)) 1
+            else -1
         val velocities = listOf(
             leftVel * leftDirection + leftControl, -leftVel * leftDirection + leftControl,
             rightVel * rightDirection + rightControl, -rightVel * rightDirection + rightControl
