@@ -4,23 +4,12 @@ import com.amarcolini.joos.geometry.Pose2d
 import com.amarcolini.joos.geometry.Vector2d
 import com.amarcolini.joos.gui.trajectory.Start
 import com.amarcolini.joos.gui.trajectory.WaypointTrajectory
-import com.amarcolini.joos.util.deg
 import javafx.animation.AnimationTimer
-import javafx.embed.swing.SwingFXUtils
-import javafx.geometry.Pos
-import javafx.scene.Camera
-import javafx.scene.SnapshotParameters
-import javafx.scene.image.Image
 import javafx.scene.input.KeyCode
 import javafx.scene.layout.StackPane
 import tornadofx.add
 import tornadofx.onChange
 import tornadofx.onLeftClick
-import java.awt.image.RenderedImage
-import java.io.File
-import java.nio.channels.Channels
-import javax.imageio.ImageIO
-import javax.imageio.stream.ImageOutputStream
 import kotlin.math.min
 
 internal class Renderer : StackPane() {

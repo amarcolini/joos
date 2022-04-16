@@ -5,10 +5,11 @@ import com.amarcolini.joos.geometry.AngleUnit
 import com.amarcolini.joos.geometry.Pose2d
 import com.amarcolini.joos.geometry.Vector2d
 import com.amarcolini.joos.util.cos
+import com.amarcolini.joos.util.rad
 import com.amarcolini.joos.util.sin
 import com.amarcolini.joos.util.wrap
 import kotlin.math.PI
-import kotlin.math.abs
+import kotlin.math.sign
 
 /**
  * Differential swerve drive kinematic equations. All wheel positions and velocities are given in (left, right) tuples.
@@ -56,7 +57,7 @@ object DiffSwerveKinematics {
         robotToModuleVelocityVectors(
             robotVel,
             trackWidth
-        ).map { it.norm() }
+        ).map(Vector2d::norm)
 
     /**
      * Computes the module orientations corresponding to [robotVel] given the provided [trackWidth].
@@ -72,7 +73,7 @@ object DiffSwerveKinematics {
         robotToModuleVelocityVectors(
             robotVel,
             trackWidth
-        ).map { it.angle() }
+        ).map(Vector2d::angle)
 
     /**
      * Computes the acceleration vectors corresponding to [robotAccel] given the provided [trackWidth].

@@ -4,11 +4,6 @@ import com.amarcolini.joos.gui.rendering.Backgrounds
 import com.amarcolini.joos.gui.style.Dark
 import com.amarcolini.joos.gui.style.Light
 import com.amarcolini.joos.gui.trajectory.TrajectoryEditor
-import com.amarcolini.joos.util.NanoClock
-import com.sun.javafx.application.LauncherImpl
-import javafx.application.Application
-import javafx.application.Preloader
-import javafx.scene.Scene
 import javafx.scene.control.MenuItem
 import javafx.scene.control.TabPane
 import javafx.scene.control.TextInputDialog
@@ -44,8 +39,6 @@ internal class MainApp : App(MainView::class, Dark::class) {
             }
         }
         importStylesheet(Global.theme.value::class)
-//        while (clock.seconds() - start < 3) {}
-//        splashStage.hide()
         super.start(stage)
     }
 }
@@ -152,35 +145,6 @@ internal class MainView : View() {
     }
 }
 
-internal lateinit var splashStage: Stage
-private var start: Double = 0.0
-private val clock = NanoClock.system()
-internal class SplashScreen : Preloader() {
-    
-    override fun start(primaryStage: Stage?) {
-        splashStage = primaryStage ?: return
-        val root = HBox().apply {
-            val image = imageview("logo.png", false) {
-                isPreserveRatio = true
-            }
-            style {
-                paddingAll = 20.0
-            }
-            maxWidth = image.image.width
-            maxHeight = image.image.height
-        }
-        splashStage.scene = Scene(root, Global.theme.value.background)
-        splashStage.initStyle(StageStyle.UNDECORATED)
-        splashStage.show()
-    }
-}
-
 fun main(args: Array<String>) {
-    launch<MainApp>(args + "--add-modules javafx.controls,javafx.fxml")
-//    start = clock.seconds()
-//    LauncherImpl.launchApplication(
-//        MainApp::class.java,
-//        SplashScreen::class.java,
-//        args + "--add-modules javafx.controls,javafx.fxml"
-//    )
+    launch<MainApp>(args + "--add-modules javafx.controls, javafx.graphics, javafx.base")
 }

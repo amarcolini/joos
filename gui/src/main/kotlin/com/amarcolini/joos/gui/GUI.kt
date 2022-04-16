@@ -16,7 +16,7 @@ class GUI {
     private val args = HashMap<String, String>()
 
     init {
-        args["add-modules"] = "javafx.controls,javafx.fxml"
+        args["add-modules"] = "javafx.controls, javafx.graphics, javafx.base"
     }
 
     /**

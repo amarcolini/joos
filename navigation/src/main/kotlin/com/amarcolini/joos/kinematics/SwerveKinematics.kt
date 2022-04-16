@@ -69,7 +69,7 @@ object SwerveKinematics {
             robotVel,
             trackWidth,
             wheelBase
-        ).map { it.norm() * sign(it.x) }
+        ).map(Vector2d::norm)
 
     /**
      * Computes the module orientations corresponding to [robotVel] given the provided
@@ -90,7 +90,7 @@ object SwerveKinematics {
             robotVel,
             trackWidth,
             wheelBase
-        ).map { it.angle().radians.wrap(-PI / 2, PI / 2).rad }
+        ).map(Vector2d::angle)
 
     /**
      * Computes the acceleration vectors corresponding to [robotAccel] given the provided [trackWidth] and

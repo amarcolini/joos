@@ -23,7 +23,7 @@ enum class AngleUnit {
  */
 @JsonSerialize(using = AngleSerializer::class)
 @JsonDeserialize(using = AngleDeserializer::class)
-data class Angle @JvmOverloads constructor(
+open class Angle @JvmOverloads constructor(
     private val value: Double = 0.0,
     private val units: AngleUnit = defaultUnits
 ) {
@@ -70,24 +70,26 @@ data class Angle @JvmOverloads constructor(
     }
         @JvmName("radians") get
 
+    private fun getValue(units: AngleUnit) = when (units) {
+        AngleUnit.Degrees -> degrees
+        AngleUnit.Radians -> radians
+    }
+
     /**
      * The measure of this angle in [defaultUnits].
      */
     val defaultValue: Double
-        @JvmName("defaultValue") get() = when (defaultUnits) {
-            AngleUnit.Degrees -> degrees
-            AngleUnit.Radians -> radians
-        }
+        @JvmName("defaultValue") get() = getValue(defaultUnits)
 
     /**
      * Returns this angle clamped to `[0, 2pi]` in radians, or `[0, 360]` in degrees.
      */
-    fun norm(): Angle = Angle(defaultValue.wrap(0.0, 360.0))
+    fun norm(): Angle = Angle(value.wrap(0.0, 360.deg.getValue(units)), units)
 
     /**
      * Returns this angle clamped to `[-pi, pi]` in radians, or `[-180, 180]` in degrees.
      */
-    fun normDelta(): Angle = Angle(defaultValue.wrap(-180.0, 180.0))
+    fun normDelta(): Angle = Angle(value.wrap(-180.deg.getValue(units), 180.deg.getValue(units)), units)
 
     /**
      * Returns the vector representation of this angle.
@@ -112,12 +114,12 @@ data class Angle @JvmOverloads constructor(
     /**
      * Returns the absolute value of this angle.
      */
-    fun abs(): Angle = Angle(abs(defaultValue))
+    fun abs(): Angle = Angle(abs(value), units)
 
     /**
      * Ensures that this angle lies in the specified range [min]..[max].
      */
-    fun coerceIn(min: Angle, max: Angle): Angle = Angle(defaultValue.coerceIn(min.defaultValue, max.defaultValue))
+    fun coerceIn(min: Angle, max: Angle): Angle = Angle(value.coerceIn(min.getValue(units), max.getValue(units)), units)
 
     /**
      * Ensures that this angle lies in the specified range [min]..[max], where [min] and [max] are in [defaultUnits].
@@ -128,12 +130,16 @@ data class Angle @JvmOverloads constructor(
      * Returns the shortest angle that can be added to this angle to get [other]
      * (e.g., 10° angleTo 360° = -10°).
      */
-    infix fun angleTo(other: Angle): Angle = ((other.degrees - degrees + 180).mod(360.0) - 180).deg
+    infix fun angleTo(other: Angle): Angle = Angle(
+        (other.value - getValue(other.units) + 180.deg.getValue(other.units)).mod(360.deg.getValue(other.units)) - 180.deg.getValue(
+            other.units
+        ), other.units
+    )
 
     /**
      * Adds two angles.
      */
-    operator fun plus(other: Angle): Angle = (radians + other.radians).rad
+    operator fun plus(other: Angle): Angle = Angle(getValue(other.units) + other.value, other.units)
 
     /**
      * Adds two angles, where [other] is in [defaultUnits].
@@ -143,7 +149,7 @@ data class Angle @JvmOverloads constructor(
     /**
      * Subtracts two angles.
      */
-    operator fun minus(other: Angle): Angle = (radians - other.radians).rad
+    operator fun minus(other: Angle): Angle = Angle(getValue(other.units) - other.value, other.units)
 
     /**
      * Subtracts two angles, where [other] is in [defaultUnits].
@@ -153,28 +159,28 @@ data class Angle @JvmOverloads constructor(
     /**
      * Multiplies this angle by a scalar.
      */
-    operator fun times(scalar: Double): Angle = (radians * scalar).rad
+    operator fun times(scalar: Double): Angle = Angle(value * scalar, units)
 
     /**
      * Divides this angle by a scalar.
      */
-    operator fun div(scalar: Double): Angle = (radians / scalar).rad
+    operator fun div(scalar: Double): Angle = Angle(value / scalar, units)
 
     /**
      * Divides two angles.
      */
-    operator fun div(other: Angle): Double = radians / other.radians
+    operator fun div(other: Angle): Double = getValue(other.units) / other.value
 
     /**
      * Returns the negative of this angle.
      */
-    operator fun unaryMinus(): Angle = (-degrees).deg
+    operator fun unaryMinus(): Angle = Angle(-value, units)
 
     /**
      * Returns whether two angles are approximately equal (within [EPSILON]).
      */
     infix fun strictEpsilonEquals(other: Angle): Boolean =
-        radians epsilonEquals other.radians
+        getValue(other.units) epsilonEquals other.value
 
     /**
      * Returns whether two angles are approximately equal (within [EPSILON]). [other]
@@ -188,7 +194,7 @@ data class Angle @JvmOverloads constructor(
      * point in the same direction are considered equal as well (e.g., 0° = 360° = 720°).
      */
     infix fun epsilonEquals(other: Angle): Boolean =
-        norm().radians epsilonEquals other.norm().radians
+        norm().getValue(other.units) epsilonEquals other.norm().value
 
     /**
      * Returns whether two angles are approximately equal (within [EPSILON]), but angles which
@@ -209,6 +215,12 @@ data class Angle @JvmOverloads constructor(
      */
     operator fun compareTo(other: Angle): Int {
         return if (this == other) 0
-        else if (this.degrees > other.degrees) 1 else -1
+        else if (this.getValue(other.units) > other.value) 1 else -1
+    }
+
+    override fun equals(other: Any?): Boolean {
+        if (other !is Angle) return false
+        if (this === other) return true
+        return this.getValue(other.units) == other.value
     }
 }

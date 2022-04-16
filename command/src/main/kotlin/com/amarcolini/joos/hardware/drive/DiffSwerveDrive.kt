@@ -51,7 +51,7 @@ open class DiffSwerveDrive(
         gears.forEach { it.zeroPowerBehavior = zeroPowerBehavior }
 
     override var localizer: Localizer = DiffSwerveLocalizer(
-        ::getModuleOrientations, { gears.map { it.distance } }, { gears.map { it.distanceVelocity } },
+        { gears.map { it.rotation } }, { gears.map { it.distance } }, { gears.map { it.distanceVelocity } },
         constraints.trackWidth, this, imu != null
     )
 
@@ -59,8 +59,8 @@ open class DiffSwerveDrive(
     private val rightModuleController = PIDFController(moduleOrientationPID)
 
     init {
-        leftModuleController.setInputBounds(-PI / 2, PI / 2)
-        rightModuleController.setInputBounds(-PI / 2, PI / 2)
+        leftModuleController.setInputBounds(-PI * 0.5, PI * 0.5)
+        rightModuleController.setInputBounds(-PI * 0.5, PI * 0.5)
     }
 
     private var targetSpeeds: List<Pair<Double, Double>> = listOf(
@@ -99,7 +99,7 @@ open class DiffSwerveDrive(
             it * constraints.maxGearVel
         }.zip(listOf(0.0, 0.0))
         val (leftOrientation, rightOrientation) = DiffSwerveKinematics.robotToModuleOrientations(
-            drivePower, constraints.trackWidth
+            drivePower, 1.0
         )
         leftModuleController.targetPosition = leftOrientation.radians
         rightModuleController.targetPosition = rightOrientation.radians
@@ -115,67 +115,39 @@ open class DiffSwerveDrive(
             leftModule.first.rotation,
             leftModule.second.rotation
         )
+        val leftDirection =
+            if ((leftModuleController.targetPosition - leftOrientation.radians).wrap(-PI, PI) <= (PI * 0.5)) 1 else -1
         val leftControl = leftModuleController.update(leftOrientation.radians)
-
-        val (leftDV, leftDA) = speedsToDirectional(
-            leftVel,
-            leftAccel,
-            leftModuleController.targetPosition,
-            leftOrientation.radians
+        leftModule.first.setSpeed(
+            leftVel * leftDirection + leftControl,
+            leftAccel * leftDirection,
+            Motor.RotationUnit.UPS
         )
-
-        leftModule.first.setSpeed(leftDV + leftControl, leftDA, Motor.RotationUnit.UPS)
-        leftModule.second.setSpeed(-leftDV + leftControl, -leftDA, Motor.RotationUnit.UPS)
+        leftModule.second.setSpeed(
+            -leftVel * leftDirection + leftControl,
+            -leftAccel * leftDirection,
+            Motor.RotationUnit.UPS
+        )
 
         val (rightVel, rightAccel) = targetSpeeds[1]
         val rightOrientation = DiffSwerveKinematics.gearToModuleOrientation(
             rightModule.first.rotation,
             rightModule.second.rotation
         )
+        val rightDirection =
+            if ((rightModuleController.targetPosition - rightOrientation.radians).wrap(-PI, PI) <= (PI * 0.5)) 1 else -1
         val rightControl = rightModuleController.update(rightOrientation.radians)
-
-        val (rightDV, rightDA) = speedsToDirectional(
-            rightVel,
-            rightAccel,
-            rightModuleController.targetPosition,
-            rightOrientation.radians
+        rightModule.first.setSpeed(
+            rightVel * rightDirection + rightControl,
+            rightAccel * rightDirection,
+            Motor.RotationUnit.UPS
         )
-
-        rightModule.first.setSpeed(rightDV + rightControl, rightDA, Motor.RotationUnit.UPS)
-        rightModule.second.setSpeed(-rightDV + rightControl, -rightDA, Motor.RotationUnit.UPS)
+        rightModule.second.setSpeed(
+            -rightVel * rightDirection + rightControl,
+            -rightAccel * rightDirection,
+            Motor.RotationUnit.UPS
+        )
 
         gears.forEach { it.update() }
-    }
-
-    fun getModuleOrientations(): List<Angle> {
-        val (topLeft, bottomLeft, topRight, bottomRight) = getGearRotations()
-        return listOf(
-            DiffSwerveKinematics.gearToModuleOrientation(topLeft, bottomLeft),
-            DiffSwerveKinematics.gearToModuleOrientation(topRight, bottomRight),
-        )
-    }
-
-    fun getGearRotations(): List<Angle> = gears.map { it.rotation }
-
-    /**
-     * Computes the robot velocities depending on which direction the module is facing and which direction the module is trying to go
-     * @param velocity the velocity of the module
-     * @param acceleration the acceleration of the module
-     * @param target the target orientation of the module
-     * @param current the current orientation of the module
-     *
-     * @return the robot velocity and acceleration of the module according to the direction the module is facing
-     */
-    fun speedsToDirectional(
-        velocity: Double,
-        acceleration: Double,
-        target: Double,
-        current: Double
-    ): Pair<Double, Double> {
-        val sameHalf = abs(target.wrap(-PI, PI) - current.wrap(-PI, PI)) <= PI / 2
-
-        return if (sameHalf) velocity to acceleration
-        else -velocity to -acceleration
-
     }
 }

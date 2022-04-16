@@ -4,6 +4,7 @@ import com.amarcolini.joos.geometry.Angle
 import com.amarcolini.joos.util.*
 import com.amarcolini.joos.trajectory.constraints.*
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties
+import com.fasterxml.jackson.annotation.JsonSubTypes
 import com.fasterxml.jackson.annotation.JsonTypeInfo
 import kotlin.reflect.KClass
 
@@ -12,6 +13,13 @@ import kotlin.reflect.KClass
  */
 @JsonIgnoreProperties("velConstraint", "accelConstraint", "type")
 @JsonTypeInfo(use = JsonTypeInfo.Id.NAME, include = JsonTypeInfo.As.PROPERTY, property = "type")
+@JsonSubTypes(
+    JsonSubTypes.Type(GenericConstraints::class),
+    JsonSubTypes.Type(MecanumConstraints::class),
+    JsonSubTypes.Type(TankConstraints::class),
+    JsonSubTypes.Type(SwerveConstraints::class),
+    JsonSubTypes.Type(DiffSwerveConstraints::class)
+)
 interface TrajectoryConstraints {
     /**
      * Type of drivetrain.
