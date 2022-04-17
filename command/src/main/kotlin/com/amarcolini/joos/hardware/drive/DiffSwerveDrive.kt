@@ -9,6 +9,7 @@ import com.amarcolini.joos.followers.TrajectoryFollower
 import com.amarcolini.joos.geometry.Pose2d
 import com.amarcolini.joos.hardware.Imu
 import com.amarcolini.joos.hardware.Motor
+import com.amarcolini.joos.hardware.MotorGroup
 import com.amarcolini.joos.kinematics.DiffSwerveKinematics
 import com.amarcolini.joos.localization.DiffSwerveLocalizer
 import com.amarcolini.joos.localization.Localizer
@@ -39,6 +40,12 @@ open class DiffSwerveDrive(
 ) : DriveComponent() {
 
     private val gears = listOf(leftModule.first, leftModule.second, rightModule.first, rightModule.second)
+
+    /**
+     * All the motors in this drive.
+     */
+    @JvmField
+    val motors: MotorGroup = MotorGroup(leftModule.first, leftModule.second, rightModule.first, rightModule.second)
 
     override val trajectoryFollower: TrajectoryFollower = HolonomicPIDVAFollower(
         translationalPID, translationalPID, headingPID, Pose2d(0.5, 0.5, 5.deg), 0.5
