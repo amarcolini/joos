@@ -37,7 +37,7 @@ only one implementation statement is needed.
 To use the GUI, you can either download the image specific to your platform from the releases page,
 or import it like so:
 
-###Gradle
+### Gradle
 
 ````groovy
 repositories {
