@@ -6,6 +6,7 @@ import com.amarcolini.joos.gui.style.Theme
 import com.amarcolini.joos.gui.trajectory.WaypointTrajectory
 import com.amarcolini.joos.trajectory.config.GenericConstraints
 import com.amarcolini.joos.trajectory.config.TrajectoryConstraints
+import io.github.classgraph.ClassGraph
 import javafx.beans.property.SimpleObjectProperty
 import javafx.scene.image.Image
 
@@ -16,4 +17,14 @@ internal object Global {
     var background: Lazy<Image> = Backgrounds.Generic.image
     val extraBackgrounds: MutableMap<String, Image> = HashMap()
     val extraThemes: MutableMap<String, Theme> = HashMap()
+    internal val resources = run {
+        val classGraph = ClassGraph()
+        classGraph.acceptPaths("joos/gui")
+        if (this::class.java.module.name != null)
+            classGraph
+                .acceptModules(this::class.java.module.name)
+                .rejectClasses()
+                .scan().allResources
+        else null
+    }
 }

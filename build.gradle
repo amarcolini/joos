@@ -1,11 +1,11 @@
 buildscript {
     ext {
         kotlin_version = "1.6.10"
-        lib_version = "0.4.2-alpha"
+        lib_version = "0.4.3-alpha"
     }
 
     repositories {
-        jcenter()
+        gradlePluginPortal()
         google()
     }
 
@@ -17,7 +17,6 @@ buildscript {
 
 allprojects {
     repositories {
-        jcenter()
         mavenCentral()
     }
 

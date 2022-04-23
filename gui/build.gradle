@@ -1,9 +1,10 @@
 plugins {
     id 'application'
-    id 'org.openjfx.javafxplugin' version '0.0.8'
+    id 'org.openjfx.javafxplugin' version '0.0.10'
     id 'kotlin'
     id 'maven-publish'
-    id "com.github.johnrengelman.shadow" version "7.1.0"
+//    id "com.github.johnrengelman.shadow" version "7.1.0"
+    id 'org.beryx.jlink' version '2.25.0'
 }
 
 repositories {
@@ -12,18 +13,34 @@ repositories {
 
 application {
     mainClass = "${rootProject.group}.gui.ApplicationKt"
+    mainModule = 'joos.gui'
+    applicationDefaultJvmArgs = ['--add-opens=javafx.graphics/javafx.scene=tornadofx']
 }
 
 javafx {
-    version = "11.0.2"
-    modules = ['javafx.controls', 'javafx.graphics', 'javafx.swing']
+    version = "15.0.1"
+    modules = ['javafx.controls']
 }
 
-shadowJar {
-    destinationDirectory.set(buildDir)
-    archiveBaseName.set("$rootProject.name-gui")
-    archiveClassifier.set("all")
-    archiveVersion.set(lib_version)
+//shadowJar {
+//    destinationDirectory.set(buildDir)
+//    archiveBaseName.set("$rootProject.name-gui")
+//    archiveClassifier.set("all")
+//    archiveVersion.set(lib_version)
+//}
+
+java {
+    toolchain {
+        languageVersion = JavaLanguageVersion.of(11)
+    }
+    withSourcesJar()
+}
+
+configurations {
+    imageDependency {
+        extendsFrom implementation
+        canBeResolved(true)
+    }
 }
 
 dependencies {
@@ -31,28 +48,53 @@ dependencies {
     implementation 'no.tornado:tornadofx:1.7.20'
     implementation "org.jetbrains.kotlin:kotlin-reflect:$kotlin_version"
 
-    runtimeOnly "org.openjfx:javafx-graphics:$javafx.version:win"
-    runtimeOnly "org.openjfx:javafx-graphics:$javafx.version:linux"
-    runtimeOnly "org.openjfx:javafx-graphics:$javafx.version:mac"
-    runtimeOnly "org.openjfx:javafx-controls:$javafx.version"
+    implementation 'io.github.classgraph:classgraph:4.8.146'
+
+    imageDependency "org.openjfx:javafx-controls:$javafx.version:win"
+    imageDependency "org.openjfx:javafx-controls:$javafx.version:mac"
+    imageDependency "org.openjfx:javafx-controls:$javafx.version:linux"
 }
 
-java {
-    sourceCompatibility = JavaVersion.VERSION_1_8
-    targetCompatibility = JavaVersion.VERSION_1_8
+compileKotlin {
+    kotlinOptions {
+        jvmTarget = "11"
+        apiVersion = "1.5"
+    }
+    destinationDirectory.set(compileJava.destinationDirectory.get())
 }
 
-task sourcesJar(type: Jar) {
+task windowsJar(type: Jar) {
     from sourceSets.main.allSource
-    classifier('sources')
+    dependencies {
+        implementation "org.openjfx:javafx-controls:$javafx.version:win"
+    }
+    classifier('win')
+}
+
+task linuxJar(type: Jar) {
+    from sourceSets.main.allSource
+    dependencies {
+        implementation "org.openjfx:javafx-controls:$javafx.version:linux"
+    }
+    classifier('linux')
+}
+
+task macJar(type: Jar) {
+    from sourceSets.main.allSource
+    dependencies {
+        implementation "org.openjfx:javafx-controls:$javafx.version:mac"
+    }
+    classifier('mac')
 }
 
 publishing {
     publications {
         release(MavenPublication) {
             from components.java
-            artifact sourcesJar
             artifactId = "gui"
+            artifact windowsJar
+            artifact linuxJar
+            artifact macJar
             pom {
                 name = "Joos"
                 description = "A comprehensive kotlin library designed for FTC."
@@ -71,6 +113,43 @@ publishing {
         maven {
             name = 'testRepo'
             url = '../testRepo'
+        }
+    }
+}
+
+jlink {
+    options = ['--strip-debug', '--compress', '2', '--no-header-files', '--no-man-pages']
+    configuration = 'imageDependency'
+    addExtraDependencies("javafx")
+    forceMerge('javafx')
+
+    mergedModule {
+        excludeProvides servicePattern: 'com.fasterxml.jackson.*'
+        uses 'kotlin.reflect.jvm.internal.impl.builtins.BuiltInsLoader'
+        uses 'kotlin.reflect.jvm.internal.impl.resolve.ExternalOverridabilityCondition'
+        uses 'kotlin.reflect.jvm.internal.impl.util.ModuleVisibilityHelper'
+    }
+
+    launcher {
+        jvmArgs = ['--add-opens=javafx.graphics/javafx.scene=tornadofx']
+        noConsole = true
+    }
+
+    targetPlatform("linux") {
+        jdkHome = jdkDownload("https://api.adoptium.net/v3/binary/latest/11/ga/linux/x64/jdk/hotspot/normal/eclipse") {
+            archiveExtension = 'tar.gz'
+        }
+    }
+
+    targetPlatform("win") {
+        jdkHome = jdkDownload("https://api.adoptium.net/v3/binary/latest/11/ga/windows/x64/jdk/hotspot/normal/eclipse") {
+            archiveExtension = 'zip'
+        }
+    }
+
+    targetPlatform("mac") {
+        jdkHome = jdkDownload("https://api.adoptium.net/v3/binary/latest/11/ga/mac/x64/jdk/hotspot/normal/eclipse") {
+            archiveExtension = 'tar.gz'
         }
     }
 }

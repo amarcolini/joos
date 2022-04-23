@@ -4,6 +4,7 @@ import com.amarcolini.joos.command.Command
 import com.amarcolini.joos.command.Component
 import com.amarcolini.joos.control.FeedforwardCoefficients
 import com.amarcolini.joos.control.PIDCoefficients
+import com.amarcolini.joos.geometry.Angle
 import com.amarcolini.joos.hardware.Motor.RunMode
 import com.qualcomm.robotcore.hardware.HardwareMap
 
@@ -55,13 +56,13 @@ class MotorGroup(vararg val motors: Motor) : Component {
      * The maximum revolutions per minute that all motors in the group can achieve.
      */
     @JvmField
-    val maxRPM = motors.minOf { it.maxRPM }
+    val maxRPM: Double = motors.minOf { it.maxRPM }
 
     /**
      * The maximum distance velocity that all motors in the group can achieve.
      */
     @JvmField
-    val maxDistanceVelocity = motors.minOf { it.maxDistanceVelocity }
+    val maxDistanceVelocity: Double = motors.minOf { it.maxDistanceVelocity }
 
     /**
      * The maximum ticks per second velocity that all motors in the group can achieve.
@@ -70,15 +71,20 @@ class MotorGroup(vararg val motors: Motor) : Component {
     val maxTPS: Double = motors.minOf { it.maxTPS }
 
     /**
+     * A list of the individual rotations of each motor.
+     */
+    val rotation: List<Angle> get() = motors.map { it.rotation }
+
+    /**
      * The maximum distance that all motors in the group have travelled.
      * @see distanceVelocity
      */
-    val distance get() = motors.minOf { it.distance }
+    val distance: Double get() = motors.minOf { it.distance }
 
     /**
      * The minimum distance velocity out of all motors in the group.
      */
-    val distanceVelocity get() = motors.minOf { it.distanceVelocity }
+    val distanceVelocity: Double get() = motors.minOf { it.distanceVelocity }
 
     /**
      * Whether the motor group is reversed.
@@ -119,14 +125,14 @@ class MotorGroup(vararg val motors: Motor) : Component {
         velocity: Double,
         acceleration: Double = 0.0,
         unit: Motor.RotationUnit = Motor.RotationUnit.RPM
-    ) = motors.forEach { it.setSpeed(velocity, acceleration, unit) }
+    ): Unit = motors.forEach { it.setSpeed(velocity, acceleration, unit) }
 
     /**
      * Sets the percentage of power/velocity of the motor group in the range `[-1.0, 1.0]`.
      *
      * *Note*: Since power is expressed as a percentage, motors may move at different speeds.
      */
-    fun setPower(power: Double) = motors.forEach { it.power = power }
+    fun setPower(power: Double): Unit = motors.forEach { it.power = power }
 
     var zeroPowerBehavior: Motor.ZeroPowerBehavior = Motor.ZeroPowerBehavior.FLOAT
         set(value) {
@@ -143,7 +149,7 @@ class MotorGroup(vararg val motors: Motor) : Component {
     /**
      * PID coefficients used in [RunMode.RUN_USING_ENCODER].
      */
-    var veloCoefficients = PIDCoefficients(1.0)
+    var veloCoefficients: PIDCoefficients = PIDCoefficients(1.0)
         set(value) {
             motors.forEach { it.veloCoefficients = value }
             field = value
@@ -152,7 +158,7 @@ class MotorGroup(vararg val motors: Motor) : Component {
     /**
      * PID coefficients used in [RunMode.RUN_TO_POSITION].
      */
-    var positionCoefficients = PIDCoefficients(1.0)
+    var positionCoefficients: PIDCoefficients = PIDCoefficients(1.0)
         set(value) {
             motors.forEach { it.positionCoefficients = value }
             field = value
@@ -161,7 +167,7 @@ class MotorGroup(vararg val motors: Motor) : Component {
     /**
      * Feedforward coefficients used in both [RunMode.RUN_USING_ENCODER] and [RunMode.RUN_WITHOUT_ENCODER].
      */
-    var feedforwardCoefficients = FeedforwardCoefficients(1 / maxDistanceVelocity)
+    var feedforwardCoefficients: FeedforwardCoefficients = FeedforwardCoefficients(1 / maxDistanceVelocity)
         set(value) {
             motors.forEach { it.feedforwardCoefficients = value }
             field = value
@@ -188,7 +194,7 @@ class MotorGroup(vararg val motors: Motor) : Component {
     /**
      * Returns a command that runs all the motors in the group until all of them have reached the desired position.
      */
-    fun goToPosition(position: Int) = Command.of {
+    fun goToPosition(position: Int): Command = Command.of {
         runMode = RunMode.RUN_TO_POSITION
         targetPosition = position
     }
@@ -203,7 +209,7 @@ class MotorGroup(vararg val motors: Motor) : Component {
     /**
      * Returns a command that runs all the motors in the group until all of them have reached the desired distance.
      */
-    fun goToDistance(distance: Double) = Command.of {
+    fun goToDistance(distance: Double): Command = Command.of {
         runMode = RunMode.RUN_TO_POSITION
         motors.forEach {
             it.targetPosition = (distance / it.distancePerRev * it.TPR).toInt()
@@ -222,12 +228,12 @@ class MotorGroup(vararg val motors: Motor) : Component {
     /**
      * Resets the encoders of all the motors in the group.
      */
-    fun resetEncoder() = motors.forEach { it.resetEncoder() }
+    fun resetEncoder(): Unit = motors.forEach { it.resetEncoder() }
 
     /**
      * Returns whether any of the motors in the group are currently moving towards the desired setpoint using [RunMode.RUN_TO_POSITION].
      */
-    fun isBusy() = motors.any { it.isBusy() }
+    fun isBusy(): Boolean = motors.any { it.isBusy() }
 
     /**
      * Updates both [RunMode.RUN_USING_ENCODER] and [RunMode.RUN_TO_POSITION]. Running this method is

@@ -10,8 +10,8 @@ import javafx.scene.control.TextInputDialog
 import javafx.scene.image.Image
 import javafx.scene.image.ImageView
 import javafx.scene.layout.*
+import javafx.scene.paint.Color
 import javafx.scene.shape.Path
-import javafx.scene.text.Text
 import javafx.stage.FileChooser
 import javafx.stage.Screen
 import javafx.stage.Stage
@@ -27,12 +27,11 @@ internal class MainApp : App(MainView::class, Dark::class) {
 
     override fun start(stage: Stage) {
         stage.isMaximized = true
-//        stage.minHeight = 500.0
-//        stage.minWidth = 500.0
         stage.maxWidth = Screen.getPrimary().visualBounds.width
         stage.maxHeight = Screen.getPrimary().visualBounds.height
         stage.width = Screen.getPrimary().visualBounds.width
         stage.height = Screen.getPrimary().visualBounds.height
+        stage.title = "Joos GUI"
         when (parameters.named["theme"]?.lowercase()) {
             "light" -> Global.theme.value = Light()
             else -> {
@@ -44,7 +43,7 @@ internal class MainApp : App(MainView::class, Dark::class) {
 }
 
 internal class MainView : View() {
-    val background = when (app.parameters.named["background"]?.lowercase()) {
+    val background = when (app.parameters.named["joos/gui/background"]?.lowercase()) {
         "freightfrenzy" -> Backgrounds.FreightFrenzy.image
         "ultimategoal" -> Backgrounds.UltimateGoal.image
         else -> Global.background
@@ -59,6 +58,18 @@ internal class MainView : View() {
 
     override val root = vbox {
         menubar {
+            menu(null, ImageView(run {
+                val url = "joos/gui/logo.png"
+                Global.resources?.get(url)?.get(0)?.open()?.let { Image(it, 60.0, 100.0, true, true) } ?: Image(
+                    url,
+                    60.0,
+                    100.0,
+                    true,
+                    true
+                )
+            })).style {
+                backgroundColor += Color.TRANSPARENT
+            }
             menu("_Theme") {
                 item("_Dark").action {
                     Global.theme.value = Dark()

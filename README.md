@@ -17,13 +17,35 @@ A comprehensive kotlin library designed for FTC. Based on [Road Runner](https://
 
 ## Installation
 
+For the `command` and `navigation` modules, installation is as follows:
+
 ### Gradle
 
-```gradle
+```groovy
 repositories {
   maven { url 'https://jitpack.io' }
 }
+
 dependencies {
-  implementation "com.github.amarcolini.joos:$module:0.4.2-alpha"
+  implementation "com.github.amarcolini.joos:$module:0.4.3-alpha"
 }
 ```
+
+Note that since the `command` module implicitly imports the `navigation` module,
+only one implementation statement is needed.
+
+To use the GUI, you can either download the image specific to your platform from the releases page,
+or import it like so:
+
+###Gradle
+
+````groovy
+repositories {
+  maven { url 'https://jitpack.io' }
+}
+
+dependencies {
+    // Change 'win' to 'linux' or 'mac' depending on your operating system
+  implementation "com.github.amarcolini.joos:gui:0.4.3-alpha:win"
+}
+````
