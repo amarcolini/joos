@@ -1,5 +1,6 @@
 package com.amarcolini.joos.gui
 
+import com.amarcolini.joos.geometry.Vector2d
 import com.amarcolini.joos.gui.rendering.Backgrounds
 import com.amarcolini.joos.gui.style.Dark
 import com.amarcolini.joos.gui.style.Theme
@@ -15,6 +16,7 @@ internal object Global {
     var trajectory: WaypointTrajectory = WaypointTrajectory()
     var constraints: TrajectoryConstraints = GenericConstraints()
     var background: Lazy<Image> = Backgrounds.Generic.image
+    var robotDimensions: Vector2d = Vector2d(18.0, 18.0)
     val extraBackgrounds: MutableMap<String, Image> = HashMap()
     val extraThemes: MutableMap<String, Theme> = HashMap()
     internal val resources = run {

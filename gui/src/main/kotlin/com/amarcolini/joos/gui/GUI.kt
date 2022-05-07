@@ -1,24 +1,18 @@
 package com.amarcolini.joos.gui
 
+import com.amarcolini.joos.geometry.Vector2d
 import com.amarcolini.joos.gui.rendering.Backgrounds
 import com.amarcolini.joos.gui.style.Theme
 import com.amarcolini.joos.gui.style.Themes
 import com.amarcolini.joos.gui.trajectory.WaypointTrajectory
 import com.amarcolini.joos.trajectory.config.TrajectoryConstraints
 import javafx.scene.image.Image
-import javafx.scene.layout.Pane
 import tornadofx.launch
 
 /**
  * Class for interacting with the application.
  */
 class GUI {
-    private val args = HashMap<String, String>()
-
-    init {
-        args["add-modules"] = "javafx.controls, javafx.graphics, javafx.base"
-    }
-
     /**
      * Sets the trajectory to be opened on startup.
      */
@@ -32,6 +26,11 @@ class GUI {
      */
     fun setConstraints(constraints: TrajectoryConstraints): GUI {
         Global.constraints = constraints
+        return this
+    }
+
+    fun setRobotDimensions(dimensions: Vector2d): GUI {
+        Global.robotDimensions = dimensions
         return this
     }
 
@@ -64,6 +63,6 @@ class GUI {
      * *Note*: This method must only be called *once*.
      */
     fun start() {
-        launch<MainApp>(args.map { "--${it.key}=${it.value}" }.toTypedArray())
+        launch<MainApp>()
     }
 }

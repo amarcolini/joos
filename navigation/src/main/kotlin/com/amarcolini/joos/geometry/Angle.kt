@@ -31,8 +31,8 @@ enum class AngleUnit {
 @JsonSerialize(using = AngleSerializer::class)
 @JsonDeserialize(using = AngleDeserializer::class)
 class Angle @JvmOverloads constructor(
-    private val value: Double = 0.0,
-    private val units: AngleUnit = defaultUnits
+    @JvmField var value: Double = 0.0,
+    @JvmField var units: AngleUnit = defaultUnits
 ) {
 
     companion object Static {
@@ -58,24 +58,20 @@ class Angle @JvmOverloads constructor(
     /**
      * The measure of this angle in degrees.
      */
-    val degrees: Double by lazy {
-        when (units) {
+    val degrees: Double
+        @JvmName("degrees") get() = when (units) {
             AngleUnit.Degrees -> value
             AngleUnit.Radians -> Math.toDegrees(value)
         }
-    }
-        @JvmName("degrees") get
 
     /**
      * The measure of this angle in radians.
      */
-    val radians: Double by lazy {
-        when (units) {
+    val radians: Double
+        @JvmName("radians") get() = when (units) {
             AngleUnit.Degrees -> Math.toRadians(value)
             AngleUnit.Radians -> value
         }
-    }
-        @JvmName("radians") get
 
     private fun getValue(units: AngleUnit) = when (units) {
         AngleUnit.Degrees -> degrees

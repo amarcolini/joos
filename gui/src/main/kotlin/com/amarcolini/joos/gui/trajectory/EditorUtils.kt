@@ -11,6 +11,7 @@ import com.amarcolini.joos.trajectory.config.TrajectoryConfig
 import com.amarcolini.joos.trajectory.config.TrajectoryConstraints
 import com.amarcolini.joos.util.deg
 import kotlin.math.PI
+import kotlin.reflect.KVisibility
 import kotlin.reflect.full.declaredMemberProperties
 
 internal fun Pose2d.toKotlin(): String =
@@ -22,16 +23,16 @@ internal fun Pose2d.toJava(): String =
 internal fun Vector2d.toKotlin(): String = String.format("Vector2d(%.2f, %.2f)", x, y)
 internal fun Vector2d.toJava(): String = String.format("new Vector2d(%.2f, %.2f)", x, y)
 internal fun Angle.toKotlin(): String = String.format(
-    "%.2f.%s", defaultValue, when (Angle.defaultUnits) {
+    "%.0f.%s", defaultValue, when (Angle.defaultUnits) {
         AngleUnit.Degrees -> "deg"
         AngleUnit.Radians -> "rad"
     }
 )
 
-internal fun Angle.toJava(): String = String.format("%.2f", degrees)
+internal fun Angle.toJava(): String = String.format("%.2f", defaultValue)
 internal fun Waypoint.toKotlin(): String {
     var string = (this::class.simpleName?.replaceFirstChar { it.lowercase() } ?: "Waypoint") + "("
-    this::class.declaredMemberProperties.forEach { prop ->
+    this::class.declaredMemberProperties.filter { it.visibility == KVisibility.PUBLIC }.forEach { prop ->
         when (val value = prop.call(this)) {
             is Pose2d -> string += value.toKotlin() + ", "
             is Vector2d -> string += value.toKotlin() + ", "
@@ -47,8 +48,8 @@ internal fun TrajectoryConstraints.toKotlin(): String {
     var string = (this::class.simpleName ?: "TrajectoryConstraints") + "("
     this::class.declaredMemberProperties.forEach { prop ->
         when (val value = prop.call(this)) {
-            is Angle -> string += value.toKotlin() + ", "
             is Double -> string += String.format("%.2f, ", value)
+            is Angle -> string += value.toKotlin() + ", "
         }
     }
     string = string.dropLast(2) + ")"
@@ -69,7 +70,7 @@ internal fun TrajectoryConstraints.toJava(): String {
 
 internal fun Waypoint.toJava(): String {
     var string = (this::class.simpleName?.replaceFirstChar { it.lowercase() } ?: "Waypoint") + "("
-    this::class.declaredMemberProperties.forEach { prop ->
+    this::class.declaredMemberProperties.filter { it.visibility == KVisibility.PUBLIC }.forEach { prop ->
         when (val value = prop.call(this)) {
             is Pose2d -> string += value.toJava() + ", "
             is Vector2d -> string += value.toJava() + ", "

@@ -2,6 +2,7 @@ package com.amarcolini.joos.gui.rendering
 
 import com.amarcolini.joos.geometry.Pose2d
 import com.amarcolini.joos.geometry.Vector2d
+import com.amarcolini.joos.gui.Global
 import com.amarcolini.joos.gui.style.Theme
 import com.amarcolini.joos.trajectory.Trajectory
 import javafx.beans.property.SimpleDoubleProperty
@@ -15,7 +16,7 @@ import tornadofx.moveTo
 
 internal class Robot : FieldEntity() {
     override var pose: Pose2d = Pose2d()
-    var dimensions: Vector2d = Vector2d(18.0, 18.0)
+    var dimensions: Vector2d = Global.robotDimensions
         set(value) {
             node.elements.clear()
             node.moveTo(value.y / 2, 0.0)

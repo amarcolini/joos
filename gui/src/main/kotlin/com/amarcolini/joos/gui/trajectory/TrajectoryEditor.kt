@@ -319,13 +319,44 @@ internal class TrajectoryEditor() : View() {
                         }
                     }
                     form {
-                        fieldset("Constraints", labelPosition = Orientation.VERTICAL) {
+                        fieldset("Robot Properties", labelPosition = Orientation.VERTICAL) {
                             val type = SimpleObjectProperty(renderer.constraints.value.type)
 
-                            combobox<TrajectoryConstraints.DriveType>(
-                                type,
-                                TrajectoryConstraints.DriveType.values().toList()
-                            )
+                            field("Robot Dimensions:") {
+                                textfield(renderer.robot.dimensions.x.toString()) {
+                                    val formatter = TextFormatter(DoubleStringConverter(), renderer.robot.dimensions.x)
+                                    textFormatter = formatter
+                                    style {
+                                        maxWidth = 3.em
+                                        paddingAll = 0.0
+                                    }
+                                    whenVisible { requestFocus() }
+                                    action {
+                                        renderer.robot.dimensions =
+                                            renderer.robot.dimensions.copy(x = formatter.value.toDouble())
+                                    }
+                                }
+                                text("by").addClass(Theme.editorText)
+                                textfield(renderer.robot.dimensions.y.toString()) {
+                                    val formatter = TextFormatter(DoubleStringConverter(), renderer.robot.dimensions.y)
+                                    textFormatter = formatter
+                                    style {
+                                        maxWidth = 3.em
+                                        paddingAll = 0.0
+                                    }
+                                    whenVisible { requestFocus() }
+                                    action {
+                                        renderer.robot.dimensions =
+                                            renderer.robot.dimensions.copy(y = formatter.value.toDouble())
+                                    }
+                                }
+                            }
+                            field("Drive Type:", Orientation.HORIZONTAL) {
+                                combobox<TrajectoryConstraints.DriveType>(
+                                    type,
+                                    TrajectoryConstraints.DriveType.values().toList()
+                                )
+                            }
 
                             val maxWheelVel = SimpleDoubleProperty(312.0)
                             val trackWidth = SimpleDoubleProperty(1.0)

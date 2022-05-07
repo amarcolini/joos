@@ -399,7 +399,7 @@ internal class TrajectoryEntity(private val getScale: () -> Double) : FieldEntit
                                 }
                                 is StrafeLeft -> {
                                     val c = pose.vec()
-                                    val b = (tangent.radians + Angle(90.0, AngleUnit.Degrees)).vec()
+                                    val b = (tangent + Angle(90.0, AngleUnit.Degrees)).vec()
                                     val numerator = (pos - c) dot b
                                     val result =
                                         (b * (numerator / (b dot b))) + c
@@ -413,7 +413,7 @@ internal class TrajectoryEntity(private val getScale: () -> Double) : FieldEntit
                                 }
                                 is StrafeRight -> {
                                     val c = pose.vec()
-                                    val b = (tangent.radians - Angle(90.0, AngleUnit.Degrees)).vec()
+                                    val b = (tangent - Angle(90.0, AngleUnit.Degrees)).vec()
                                     val numerator = (pos - c) dot b
                                     val result =
                                         (b * (numerator / (b dot b))) + c

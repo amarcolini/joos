@@ -6,9 +6,9 @@ import com.amarcolini.joos.util.*
  * Class for representing 2D robot poses (x, y, and heading) and their derivatives.
  */
 data class Pose2d @JvmOverloads constructor(
-    @JvmField val x: Double = 0.0,
-    @JvmField val y: Double = 0.0,
-    @JvmField val heading: Angle = Angle()
+    @JvmField var x: Double = 0.0,
+    @JvmField var y: Double = 0.0,
+    @JvmField var heading: Angle = Angle()
 ) {
     /**
      * Constructs a pose where [heading] is in [Angle.defaultUnits].

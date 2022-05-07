@@ -8,6 +8,7 @@ module joos.gui {
     uses kotlin.reflect.jvm.internal.impl.resolve.ExternalOverridabilityCondition;
     uses kotlin.reflect.jvm.internal.impl.util.ModuleVisibilityHelper;
     requires io.github.classgraph;
+//    requires joos.navigation;
     exports com.amarcolini.joos.gui;
     exports com.amarcolini.joos.gui.rendering;
     exports com.amarcolini.joos.gui.style;

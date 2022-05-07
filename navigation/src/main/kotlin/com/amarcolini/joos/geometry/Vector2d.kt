@@ -9,8 +9,8 @@ import kotlin.math.sqrt
  * Class for representing 2D vectors (x and y).
  */
 data class Vector2d @JvmOverloads constructor(
-    @JvmField val x: Double = 0.0,
-    @JvmField val y: Double = 0.0
+    @JvmField var x: Double = 0.0,
+    @JvmField var y: Double = 0.0
 ) {
     companion object Static {
         /**

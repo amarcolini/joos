@@ -3,7 +3,6 @@ plugins {
     id 'org.openjfx.javafxplugin' version '0.0.10'
     id 'kotlin'
     id 'maven-publish'
-//    id "com.github.johnrengelman.shadow" version "7.1.0"
     id 'org.beryx.jlink' version '2.25.0'
 }
 
@@ -19,15 +18,8 @@ application {
 
 javafx {
     version = "15.0.1"
-    modules = ['javafx.controls']
+    modules = ['javafx.controls', 'javafx.graphics', 'javafx.base']
 }
-
-//shadowJar {
-//    destinationDirectory.set(buildDir)
-//    archiveBaseName.set("$rootProject.name-gui")
-//    archiveClassifier.set("all")
-//    archiveVersion.set(lib_version)
-//}
 
 java {
     toolchain {
@@ -50,9 +42,9 @@ dependencies {
 
     implementation 'io.github.classgraph:classgraph:4.8.146'
 
-    imageDependency "org.openjfx:javafx-controls:$javafx.version:win"
-    imageDependency "org.openjfx:javafx-controls:$javafx.version:mac"
-    imageDependency "org.openjfx:javafx-controls:$javafx.version:linux"
+    imageDependency "org.openjfx:javafx-graphics:$javafx.version:win"
+    imageDependency "org.openjfx:javafx-graphics:$javafx.version:mac"
+    imageDependency "org.openjfx:javafx-graphics:$javafx.version:linux"
 }
 
 compileKotlin {
@@ -64,7 +56,9 @@ compileKotlin {
 }
 
 task windowsJar(type: Jar) {
-    from sourceSets.main.allSource
+    from(jar.source) {
+        exclude 'MANIFEST.MF'
+    }
     dependencies {
         implementation "org.openjfx:javafx-controls:$javafx.version:win"
     }
@@ -72,7 +66,9 @@ task windowsJar(type: Jar) {
 }
 
 task linuxJar(type: Jar) {
-    from sourceSets.main.allSource
+    from(jar.source) {
+        exclude 'MANIFEST.MF'
+    }
     dependencies {
         implementation "org.openjfx:javafx-controls:$javafx.version:linux"
     }
@@ -80,7 +76,9 @@ task linuxJar(type: Jar) {
 }
 
 task macJar(type: Jar) {
-    from sourceSets.main.allSource
+    from(jar.source) {
+        exclude 'MANIFEST.MF'
+    }
     dependencies {
         implementation "org.openjfx:javafx-controls:$javafx.version:mac"
     }
@@ -90,7 +88,7 @@ task macJar(type: Jar) {
 publishing {
     publications {
         release(MavenPublication) {
-            from components.java
+//            from components.java
             artifactId = "gui"
             artifact windowsJar
             artifact linuxJar
@@ -131,7 +129,7 @@ jlink {
     }
 
     launcher {
-        jvmArgs = ['--add-opens=javafx.graphics/javafx.scene=tornadofx']
+        jvmArgs = ['--add-opens=javafx.graphics/javafx.scene=com.amarcolini.joos.merged.module']
         noConsole = true
     }
 
