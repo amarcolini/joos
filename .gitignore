@@ -1,6 +1,7 @@
 /particle/
 /projectFilesBackup/
 /testRepo/
+/gui/jdks/
 build/
 .gradle
 .idea

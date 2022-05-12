@@ -25,13 +25,60 @@ java {
     toolchain {
         languageVersion = JavaLanguageVersion.of(11)
     }
-    withSourcesJar()
+    registerFeature("win") {
+        usingSourceSet(sourceSets.main)
+//        capability("com.amarcolini.joos", "gui", lib_version)
+    }
+    registerFeature("mac") {
+        usingSourceSet(sourceSets.main)
+//        capability("com.amarcolini.joos", "gui", lib_version)
+    }
+    registerFeature("linux") {
+        usingSourceSet(sourceSets.main)
+//        capability("com.amarcolini.joos", "gui", lib_version)
+    }
 }
 
 configurations {
     imageDependency {
         extendsFrom implementation
         canBeResolved(true)
+    }
+
+    winRuntimeElements {
+        attributes {
+            attribute(OperatingSystemFamily.OPERATING_SYSTEM_ATTRIBUTE, objects.named(OperatingSystemFamily, OperatingSystemFamily.WINDOWS))
+        }
+    }
+
+    winApiElements {
+        attributes {
+            attribute(OperatingSystemFamily.OPERATING_SYSTEM_ATTRIBUTE, objects.named(OperatingSystemFamily, OperatingSystemFamily.WINDOWS))
+        }
+    }
+
+    macRuntimeElements {
+        attributes {
+            attribute(OperatingSystemFamily.OPERATING_SYSTEM_ATTRIBUTE, objects.named(OperatingSystemFamily, OperatingSystemFamily.MACOS))
+        }
+    }
+
+    macApiElements {
+        attributes {
+            attribute(OperatingSystemFamily.OPERATING_SYSTEM_ATTRIBUTE, objects.named(OperatingSystemFamily, OperatingSystemFamily.MACOS))
+        }
+    }
+
+    linuxRuntimeElements {
+        attributes {
+            attribute(OperatingSystemFamily.OPERATING_SYSTEM_ATTRIBUTE, objects.named(OperatingSystemFamily, OperatingSystemFamily.LINUX))
+        }
+    }
+
+    linuxApiElements {
+        attributes {
+            attribute(OperatingSystemFamily.OPERATING_SYSTEM_ATTRIBUTE, objects.named(OperatingSystemFamily, OperatingSystemFamily.LINUX))
+        }
     }
 }
 
@@ -41,6 +88,10 @@ dependencies {
     implementation "org.jetbrains.kotlin:kotlin-reflect:$kotlin_version"
 
     implementation 'io.github.classgraph:classgraph:4.8.146'
+
+    winImplementation "org.openjfx:javafx-controls:$javafx.version:win"
+    macImplementation "org.openjfx:javafx-controls:$javafx.version:mac"
+    linuxImplementation "org.openjfx:javafx-controls:$javafx.version:linux"
 
     imageDependency "org.openjfx:javafx-graphics:$javafx.version:win"
     imageDependency "org.openjfx:javafx-graphics:$javafx.version:mac"
@@ -55,44 +106,11 @@ compileKotlin {
     destinationDirectory.set(compileJava.destinationDirectory.get())
 }
 
-task windowsJar(type: Jar) {
-    from(jar.source) {
-        exclude 'MANIFEST.MF'
-    }
-    dependencies {
-        implementation "org.openjfx:javafx-controls:$javafx.version:win"
-    }
-    classifier('win')
-}
-
-task linuxJar(type: Jar) {
-    from(jar.source) {
-        exclude 'MANIFEST.MF'
-    }
-    dependencies {
-        implementation "org.openjfx:javafx-controls:$javafx.version:linux"
-    }
-    classifier('linux')
-}
-
-task macJar(type: Jar) {
-    from(jar.source) {
-        exclude 'MANIFEST.MF'
-    }
-    dependencies {
-        implementation "org.openjfx:javafx-controls:$javafx.version:mac"
-    }
-    classifier('mac')
-}
-
 publishing {
     publications {
         release(MavenPublication) {
-//            from components.java
+            from components.java
             artifactId = "gui"
-            artifact windowsJar
-            artifact linuxJar
-            artifact macJar
             pom {
                 name = "Joos"
                 description = "A comprehensive kotlin library designed for FTC."
@@ -129,24 +147,28 @@ jlink {
     }
 
     launcher {
+        name = "launcher"
         jvmArgs = ['--add-opens=javafx.graphics/javafx.scene=com.amarcolini.joos.merged.module']
         noConsole = true
     }
 
-    targetPlatform("linux") {
+    targetPlatform("linux") {platform ->
         jdkHome = jdkDownload("https://api.adoptium.net/v3/binary/latest/11/ga/linux/x64/jdk/hotspot/normal/eclipse") {
+            downloadDir = "./jdks/$platform.name/"
             archiveExtension = 'tar.gz'
         }
     }
 
-    targetPlatform("win") {
+    targetPlatform("win") {platform ->
         jdkHome = jdkDownload("https://api.adoptium.net/v3/binary/latest/11/ga/windows/x64/jdk/hotspot/normal/eclipse") {
+            downloadDir = "./jdks/$platform.name/"
             archiveExtension = 'zip'
         }
     }
 
-    targetPlatform("mac") {
+    targetPlatform("mac") {platform ->
         jdkHome = jdkDownload("https://api.adoptium.net/v3/binary/latest/11/ga/mac/x64/jdk/hotspot/normal/eclipse") {
+            downloadDir = "./jdks/$platform.name/"
             archiveExtension = 'tar.gz'
         }
     }

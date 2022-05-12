@@ -1,14 +1,13 @@
 plugins {
     id "kotlin"
     id "java"
-    id "maven-publish"
+    id 'com.google.devtools.ksp' version '1.6.21-1.0.5'
+    id 'maven-publish'
 }
-apply plugin: 'kotlin-kapt'
 
 java {
     sourceCompatibility = JavaVersion.VERSION_1_8
     targetCompatibility = JavaVersion.VERSION_1_8
-    withSourcesJar()
 }
 
 compileKotlin {
@@ -22,10 +21,13 @@ dependencies {
     implementation "org.jetbrains.kotlin:kotlin-stdlib:$kotlin_version"
     implementation "org.jetbrains.kotlin:kotlin-reflect:$kotlin_version"
 
-    implementation "com.squareup:javapoet:1.13.0"
+    implementation 'com.google.devtools.ksp:symbol-processing-api:1.6.21-1.0.5'
 
-    kapt 'com.google.auto.service:auto-service:1.0.1'
-    compileOnly 'com.google.auto.service:auto-service-annotations:1.0.1'
+    implementation "com.squareup:javapoet:1.13.0"
+    implementation "com.squareup:kotlinpoet:1.11.0"
+
+    ksp 'com.google.auto.service:auto-service:1.0.1'
+    implementation 'com.google.auto.service:auto-service-annotations:1.0.1'
 }
 
 publishing {

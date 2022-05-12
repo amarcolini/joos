@@ -3,7 +3,7 @@ plugins {
     id("java")
     id("maven-publish")
     id("org.jetbrains.dokka") version "$kotlin_version"
-    id "com.github.johnrengelman.shadow" version "7.1.0"
+//    id "com.github.johnrengelman.shadow" version "7.1.0"
 }
 
 repositories {
@@ -26,12 +26,12 @@ compileKotlin {
     }
 }
 
-shadowJar {
-    destinationDirectory.set(buildDir)
-    archiveBaseName.set("$rootProject.name-navigation")
-    archiveClassifier.set("all")
-    archiveVersion.set(project.version)
-}
+//shadowJar {
+//    destinationDirectory.set(buildDir)
+//    archiveBaseName.set("$rootProject.name-navigation")
+//    archiveClassifier.set("all")
+//    archiveVersion.set(project.version)
+//}
 
 dependencies {
     api "org.jetbrains.kotlin:kotlin-stdlib:$kotlin_version"

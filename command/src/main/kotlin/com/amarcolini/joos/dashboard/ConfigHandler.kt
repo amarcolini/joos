@@ -2,7 +2,6 @@ package com.amarcolini.joos.dashboard
 
 import android.util.Log
 import com.acmerobotics.dashboard.FtcDashboard
-import com.acmerobotics.dashboard.config.ValueProvider
 import com.acmerobotics.dashboard.config.reflection.FieldProvider
 import com.acmerobotics.dashboard.config.variable.BasicVariable
 import com.acmerobotics.dashboard.config.variable.ConfigVariable
@@ -14,7 +13,9 @@ import com.amarcolini.joos.geometry.Vector2d
 import org.firstinspires.ftc.ftccommon.external.OnCreateEventLoop
 import java.lang.reflect.Field
 import java.lang.reflect.Modifier
-import kotlin.reflect.full.createInstance
+import kotlin.reflect.*
+import kotlin.reflect.full.*
+import kotlin.reflect.jvm.jvmErasure
 
 
 /**
@@ -23,21 +24,37 @@ import kotlin.reflect.full.createInstance
  */
 @Suppress("UNCHECKED_CAST")
 object ConfigHandler {
-    @JvmStatic
     private val initTasks = ArrayList<() -> Unit>()
 
-    private val results = try {
-        Class.forName("com.amarcolini.joos.dashboard.ConfigResults").getDeclaredMethod("getResults")
-            .invoke(null) as List<Pair<String, Field>>
-    } catch (_: Exception) {
-        null
+    private val javaResults: List<Pair<String, Field>>?
+    private val kotlinResults: List<Pair<String, KProperty0<Any>>>?
+
+    init {
+        val (java, kotlin) = try {
+            val resultClass = Class.forName("com.amarcolini.joos.dashboard.ConfigResults")
+            val isKotlin = resultClass.getDeclaredField("isKotlin").get(null) as Boolean
+            val resultList = resultClass.getDeclaredMethod("getResults").invoke(null)
+            if (isKotlin) {
+                null to resultList as List<Pair<String, KProperty0<Any>>>
+            } else {
+                resultList as List<Pair<String, Field>> to null
+            }
+        } catch (_: Exception) {
+            null to null
+        }
+        javaResults = java
+        kotlinResults = kotlin
     }
 
-    @JvmStatic
     @OnCreateEventLoop
+    @JvmStatic
     fun init() {
-        results?.forEach { (group, field) ->
+        javaResults?.forEach { (group, field) ->
             parseField(field, group)
+        }
+
+        kotlinResults?.forEach { (group, property) ->
+            parseProperty(property, group)
         }
 
         initTasks.forEach { it() }
@@ -45,38 +62,38 @@ object ConfigHandler {
     }
 
     private fun parse(value: Any?): ConfigVariable<*>? {
-        fun internalParse(field: Field, parent: Any?): ConfigVariable<*>? {
-            val fieldClass = field.type
-            //TODO: kotlin type reflection?
-            return when (val type = VariableType.fromClass(fieldClass)) {
+        fun internalParse(property: KProperty1<Any, Any>, parent: Any): ConfigVariable<*>? {
+            val propertyClass = property.returnType.jvmErasure
+            return when (VariableType.fromClass(propertyClass.java)) {
                 VariableType.BOOLEAN, VariableType.INT, VariableType.DOUBLE, VariableType.STRING, VariableType.ENUM -> {
-                    if (Modifier.isFinal(field.modifiers)) null
-                    else BasicVariable(type, FieldProvider<Boolean>(field, parent))
+                    if (property !is KMutableProperty<*>) null
+                    else ConfigUtils.createVariable(property as KMutableProperty1<Any, *>, parent)
                 }
                 VariableType.CUSTOM -> {
                     val providedConfig: ConfigVariable<*>? = try {
-                        val provider = field.type.getAnnotation(WithConfig::class.java)?.provider
-                        (provider?.createInstance() as? ConfigProvider<Any>)?.parse(field.get(null)!!)
+                        val provider = propertyClass.java.getAnnotation(WithConfig::class.java)?.provider
+                        (provider?.createInstance() as? ConfigProvider<Any>)?.parse(property.get(parent))
                     } catch (_: Exception) {
                         null
                     }
                     if (providedConfig != null) return providedConfig
                     val customVariable = CustomVariable()
-                    for (nestedField in fieldClass.fields) {
-                        val name = nestedField.name
+                    for (memberProperty in propertyClass.declaredMemberProperties) {
+                        val name = memberProperty.name
                         try {
-                            val nestedVariable = internalParse(nestedField, field[parent])
+                            val nestedVariable =
+                                internalParse(memberProperty as KProperty1<Any, Any>, property.get(parent))
                             if (nestedVariable != null) {
                                 customVariable.putVariable(name, nestedVariable)
                             }
-                        } catch (e: IllegalAccessException) {
+                        } catch (e: Exception) {
                             Log.w("ConfigHandler", e)
                         }
                     }
                     customVariable
                 }
                 else -> throw RuntimeException(
-                    "Unsupported field type: ${fieldClass.name}"
+                    "Unsupported field type: ${propertyClass.qualifiedName}"
                 )
             }
         }
@@ -96,14 +113,14 @@ object ConfigHandler {
                 }
                 if (providedConfig != null) return providedConfig
                 val customVariable = CustomVariable()
-                for (nestedField in value::class.java.fields) {
-                    val name = nestedField.name
+                for (memberProperty in value::class.declaredMemberProperties) {
+                    val name = memberProperty.name
                     try {
-                        val nestedVariable = internalParse(nestedField, value)
+                        val nestedVariable = internalParse(memberProperty as KProperty1<Any, Any>, value)
                         if (nestedVariable != null) {
                             customVariable.putVariable(name, nestedVariable)
                         }
-                    } catch (e: IllegalAccessException) {
+                    } catch (e: Exception) {
                         Log.w("ConfigHandler", e)
                     }
                 }
@@ -117,9 +134,27 @@ object ConfigHandler {
             val rootVariable = configRoot.getVariable(group) as? CustomVariable ?: CustomVariable().also {
                 configRoot.putVariable(group, it)
             }
-            val variable = parse(field.get(null))
+            val type = VariableType.fromClass(field.type)
+            val variable = if (!Modifier.isFinal(field.modifiers) && type != VariableType.CUSTOM)
+                BasicVariable(type, FieldProvider<Boolean>(field, null))
+            else parse(field.get(null))
             if (variable != null) {
                 rootVariable.putVariable(field.name, variable)
+            }
+        }
+    }
+
+    private fun parseProperty(property: KProperty0<Any>, group: String) {
+        FtcDashboard.getInstance().withConfigRoot { configRoot ->
+            val rootVariable = configRoot.getVariable(group) as? CustomVariable ?: CustomVariable().also {
+                configRoot.putVariable(group, it)
+            }
+            val type = VariableType.fromClass(property.returnType.jvmErasure.java)
+            val variable = if (property is KMutableProperty0<Any> && type != VariableType.CUSTOM)
+                ConfigUtils.createVariable(property)
+            else parse(property.get())
+            if (variable != null) {
+                rootVariable.putVariable(property.name, variable)
             }
         }
     }
@@ -146,24 +181,17 @@ object ConfigHandler {
 
     private fun parse(pose: Pose2d): ConfigVariable<*> = CustomVariable().apply {
         putVariable("heading", parse(pose.heading))
-        putVariable("x", BasicVariable(PropertyProvider(pose::x)))
-        putVariable("y", BasicVariable(PropertyProvider(pose::y)))
+        putVariable("x", ConfigUtils.createVariable(pose::x))
+        putVariable("y", ConfigUtils.createVariable(pose::y))
     }
 
     private fun parse(pos: Vector2d): ConfigVariable<*> = CustomVariable().apply {
-        putVariable("x", BasicVariable(PropertyProvider(pos::x)))
-        putVariable("y", BasicVariable(PropertyProvider(pos::y)))
+        putVariable("x", ConfigUtils.createVariable(pos::x))
+        putVariable("y", ConfigUtils.createVariable(pos::y))
     }
 
-    private fun parse(angle: Angle): ConfigVariable<Double> =
-        BasicVariable(VariableType.DOUBLE, object : ValueProvider<Double> {
-            override fun get(): Double = angle.defaultValue
-
-            override fun set(value: Double?) {
-                if (value != null) {
-                    angle.value = value
-                    angle.units = Angle.defaultUnits
-                }
-            }
-        })
+    private fun parse(angle: Angle): ConfigVariable<Double> = ConfigUtils.createVariable(angle::defaultValue) {
+        angle.value = it
+        angle.units = Angle.defaultUnits
+    }
 }

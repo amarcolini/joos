@@ -27,7 +27,7 @@ repositories {
 }
 
 dependencies {
-  implementation "com.github.amarcolini.joos:$module:0.4.4-alpha"
+  implementation "com.github.amarcolini.joos:$module:0.4.5-alpha"
 }
 ```
 
@@ -35,7 +35,7 @@ Note that since the `command` module implicitly imports the `navigation` module,
 only one implementation statement is needed.
 
 To use the GUI, you can either download the image specific to your platform from the releases page (the launcher is
-in the bin folder), or import it like so:
+in the bin folder), or import it into an empty java module like so:
 
 ### Gradle
 
@@ -44,8 +44,14 @@ repositories {
   maven { url 'https://jitpack.io' }
 }
 
+//Don't forget to set java version to 11
+java {
+    sourceCompatibility = JavaVersion.VERSION_11
+    targetCompatibility = JavaVersion.VERSION_11
+}
+
 dependencies {
-    // Change 'win' to 'linux' or 'mac' depending on your operating system
-  implementation "com.github.amarcolini.joos:gui:0.4.4-alpha:win"
+    //Gradle will automatically retrieve the correct dependencies based on your operating system
+    implementation "com.github.amarcolini.joos:gui:0.4.5-alpha"
 }
 ````

@@ -333,7 +333,7 @@ internal fun Collection<Waypoint>.mapPose(): List<Pair<Waypoint, Pair<Pose2d, An
                 tangent = pose.heading
             }
             is Turn -> {
-                pose = Pose2d(pose.vec(), pose.heading + it.angle.radians)
+                pose = Pose2d(pose.vec(), pose.heading + it.angle)
                 tangent = pose.heading
             }
             else -> {

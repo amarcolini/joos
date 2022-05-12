@@ -12,13 +12,14 @@ import org.firstinspires.ftc.robotcore.external.navigation.DistanceUnit
 import org.firstinspires.ftc.robotcore.external.navigation.Position
 import org.firstinspires.ftc.robotcore.external.navigation.Velocity
 import kotlin.math.abs
+import kotlin.math.sign
 
 /**
  * A wrapper class for the [BNO055IMU] object in the FTC SDK.
  *
  * @param imu the IMU for this wrapper to use
  */
-//TODO: Test Imu on actual hardware to test if it works.
+//TODO: Test Imu on actual hardware to see if it works.
 class Imu constructor(val imu: BNO055IMU) {
 
     /**
@@ -100,7 +101,7 @@ class Imu constructor(val imu: BNO055IMU) {
     /**
      * Returns the heading of the IMU using the gyroscope.
      */
-    val heading: Angle get() = imu.angularOrientation.firstAngle.toDouble().rad
+    val heading: Angle get() = imu.angularOrientation.firstAngle.toDouble().rad * if (reversed) -1.0 else 1.0
 
     /**
      * Returns the heading velocity of IMU using the gyroscope.
@@ -122,15 +123,9 @@ class Imu constructor(val imu: BNO055IMU) {
      */
     fun autoDetectUpAxis(): Axis? {
         val gravity = imu.gravity
-        val autoAxis =
-            when (listOf(gravity.xAccel, gravity.yAccel, gravity.zAccel).zip(Axis.values())
-                .maxByOrNull { abs(it.first) }?.second) {
-                Axis.X -> Axis.Y
-                Axis.Y -> Axis.Z
-                Axis.Z -> Axis.X
-                null -> null
-            }
-        if (autoAxis != null) axis = autoAxis
-        return autoAxis
+        val result = listOf(gravity.xAccel, gravity.yAccel, gravity.zAccel).zip(Axis.values())
+            .maxByOrNull { abs(it.first) } ?: return null
+        if (result.first.sign < 0) reversed = true
+        return result.second
     }
 }

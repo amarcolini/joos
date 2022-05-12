@@ -4,9 +4,9 @@ module joos.gui {
     requires tornadofx;
     requires transitive kotlin.stdlib;
     requires kotlin.reflect;
-    uses kotlin.reflect.jvm.internal.impl.builtins.BuiltInsLoader;
-    uses kotlin.reflect.jvm.internal.impl.resolve.ExternalOverridabilityCondition;
-    uses kotlin.reflect.jvm.internal.impl.util.ModuleVisibilityHelper;
+//    uses kotlin.reflect.jvm.internal.impl.builtins.BuiltInsLoader;
+//    uses kotlin.reflect.jvm.internal.impl.resolve.ExternalOverridabilityCondition;
+//    uses kotlin.reflect.jvm.internal.impl.util.ModuleVisibilityHelper;
     requires io.github.classgraph;
 //    requires joos.navigation;
     exports com.amarcolini.joos.gui;
