@@ -10,7 +10,10 @@ import kotlin.reflect.KProperty0
 import kotlin.io.*
 import kotlin.reflect.KClass
 
-class ConfigSymbolProcessor(private val environment: SymbolProcessorEnvironment, private val logger: KSPLogger = environment.logger) : SymbolProcessor {
+class ConfigSymbolProcessor(
+    private val environment: SymbolProcessorEnvironment,
+    private val logger: KSPLogger = environment.logger
+) : SymbolProcessor {
     private val results = ArrayList<Pair<String, String>>()
     private val processedClasses = ArrayList<KSClassDeclaration>()
 
@@ -47,9 +50,13 @@ class ConfigSymbolProcessor(private val environment: SymbolProcessorEnvironment,
                     .initializer(
                         CodeBlock.builder()
                             .beginControlFlow("try")
-                            .addStatement("listOf(${results.joinToString {
-                                "\"${it.first}\"" + " to " + it.second
-                            }})")
+                            .addStatement(
+                                "listOf(${
+                                    results.joinToString {
+                                        "\"${it.first}\"" + " to " + it.second
+                                    }
+                                })"
+                            )
                             .nextControlFlow("catch(_: %T)", Exception::class)
                             .addStatement("emptyList()")
                             .endControlFlow()
@@ -103,19 +110,22 @@ class ConfigSymbolProcessor(private val environment: SymbolProcessorEnvironment,
             }
             val closestClass = property.closestClassDeclaration()
             if (closestClass?.classKind != ClassKind.OBJECT && !property.modifiers.contains(Modifier.JAVA_STATIC)) return
-            val parentClass = if (closestClass?.isCompanionObject == true) closestClass.parentDeclaration as KSClassDeclaration else closestClass
+            val parentClass =
+                if (closestClass?.isCompanionObject == true) closestClass.parentDeclaration as KSClassDeclaration else closestClass
             val name = property.qualifiedName ?: return
             val parentClassName = parentClass?.simpleName?.asString()?.ifEmpty { null }
             val parentClassAltName = parentClass?.let { getAltName(it)?.ifEmpty { null } }
             val propertyAltName = getAltName(property)?.ifEmpty { null }
-            logger.info(property.type.toString())
-            results += (propertyAltName ?: parentClassAltName ?: parentClassName ?: return) to (name.getQualifier() + "::" + name.getShortName())
+            results += (propertyAltName ?: parentClassAltName ?: parentClassName
+            ?: return) to (name.getQualifier() + "::" + name.getShortName())
         }
 
         private fun getAltName(node: KSAnnotated): String? {
             val joosConfig = joosConfig
             return if (joosConfig != null) {
-                node.annotations.find { it.shortName == joosConfig.simpleName && it.annotationType.resolve().declaration.qualifiedName == joosConfig.qualifiedName  }?.arguments?.get(0)?.value?.toString()
+                node.annotations.find { it.shortName == joosConfig.simpleName && it.annotationType.resolve().declaration.qualifiedName == joosConfig.qualifiedName }?.arguments?.get(
+                    0
+                )?.value?.toString()
             } else null
         }
 

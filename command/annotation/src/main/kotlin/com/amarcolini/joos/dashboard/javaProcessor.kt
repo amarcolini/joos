@@ -60,25 +60,33 @@ class ConfigProcessor : AbstractProcessor() {
 class ConfigElementVisitor : ElementVisitor<List<Pair<String, Pair<String, String>>>, TypeElement?> {
     override fun visit(p0: Element?, p1: TypeElement?): List<Pair<String, Pair<String, String>>> = emptyList()
 
-    override fun visitPackage(p0: PackageElement?, p1: TypeElement?): List<Pair<String, Pair<String, String>>> = emptyList()
+    override fun visitPackage(p0: PackageElement?, p1: TypeElement?): List<Pair<String, Pair<String, String>>> =
+        emptyList()
 
     override fun visitType(p0: TypeElement?, p1: TypeElement?): List<Pair<String, Pair<String, String>>> {
         val configMembers = ArrayList<Pair<String, Pair<String, String>>>()
         val name = getAltName(p0, p1) ?: p0?.simpleName.toString()
         p0?.enclosedElements?.forEach { member ->
-            if (member.kind == ElementKind.FIELD && member.modifiers.containsAll(listOf(
-                    Modifier.PUBLIC, Modifier.STATIC
-                ))) {
-                    configMembers += (getAltName(member, p1) ?: name) to (p0.qualifiedName.toString() to member.simpleName.toString())
+            if (member.kind == ElementKind.FIELD && member.modifiers.containsAll(
+                    listOf(
+                        Modifier.PUBLIC, Modifier.STATIC
+                    )
+                )
+            ) {
+                configMembers += (getAltName(member, p1)
+                    ?: name) to (p0.qualifiedName.toString() to member.simpleName.toString())
             }
         }
         return configMembers
     }
 
     override fun visitVariable(p0: VariableElement, p1: TypeElement?): List<Pair<String, Pair<String, String>>> {
-        if (p0.kind == ElementKind.FIELD && p0.modifiers.containsAll(listOf(
-                Modifier.PUBLIC, Modifier.STATIC
-        ))) {
+        if (p0.kind == ElementKind.FIELD && p0.modifiers.containsAll(
+                listOf(
+                    Modifier.PUBLIC, Modifier.STATIC
+                )
+            )
+        ) {
             var traverser: Element? = p0.enclosingElement
             var possibleParent: TypeElement? = traverser as? TypeElement
             if (traverser != null && possibleParent == null) {
@@ -90,20 +98,29 @@ class ConfigElementVisitor : ElementVisitor<List<Pair<String, Pair<String, Strin
                 }
             }
             val parent = possibleParent ?: return emptyList()
-            return listOf((getAltName(p0, p1) ?: getAltName(parent, p1) ?: parent.simpleName.toString()) to (parent.qualifiedName.toString() to p0.simpleName.toString()))
+            return listOf(
+                (getAltName(p0, p1) ?: getAltName(parent, p1)
+                ?: parent.simpleName.toString()) to (parent.qualifiedName.toString() to p0.simpleName.toString())
+            )
         }
         return emptyList()
     }
 
     private fun getAltName(element: Element?, joosConfig: TypeElement?): String? {
         if (element == null || joosConfig == null) return null
-        val annotation = element.annotationMirrors?.find { it.annotationType.toString() == joosConfig.qualifiedName?.toString() } ?: return null
+        val annotation =
+            element.annotationMirrors?.find { it.annotationType.toString() == joosConfig.qualifiedName?.toString() }
+                ?: return null
         return annotation.elementValues?.values?.firstOrNull()?.value?.toString()?.ifEmpty { null }
     }
 
-    override fun visitExecutable(p0: ExecutableElement?, p1: TypeElement?): List<Pair<String, Pair<String, String>>> = emptyList()
+    override fun visitExecutable(p0: ExecutableElement?, p1: TypeElement?): List<Pair<String, Pair<String, String>>> =
+        emptyList()
 
-    override fun visitTypeParameter(p0: TypeParameterElement?, p1: TypeElement?): List<Pair<String, Pair<String, String>>> = emptyList()
+    override fun visitTypeParameter(
+        p0: TypeParameterElement?,
+        p1: TypeElement?
+    ): List<Pair<String, Pair<String, String>>> = emptyList()
 
     override fun visitUnknown(p0: Element?, p1: TypeElement?): List<Pair<String, Pair<String, String>>> = emptyList()
 }
