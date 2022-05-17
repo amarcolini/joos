@@ -96,8 +96,6 @@ open class DiffSwerveDrive(
         )
         leftModuleController.targetPosition = leftOrientation.radians
         rightModuleController.targetPosition = rightOrientation.radians
-        leftModuleController.setOutputBounds(-abs(leftAngVel.radians), abs(leftAngVel.radians))
-        rightModuleController.setOutputBounds(-abs(rightAngVel.radians), abs(rightAngVel.radians))
     }
 
     override fun setDrivePower(drivePower: Pose2d) {
