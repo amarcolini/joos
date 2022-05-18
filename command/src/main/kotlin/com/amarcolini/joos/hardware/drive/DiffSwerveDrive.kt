@@ -90,8 +90,8 @@ open class DiffSwerveDrive(
             constraints.trackWidth
         )
         val (leftAngVel, rightAngVel) = DiffSwerveKinematics.robotToModuleAngularVelocities(
-            driveSignal.accel,
             driveSignal.vel,
+            driveSignal.accel,
             constraints.trackWidth
         )
         leftModuleController.targetPosition = leftOrientation.radians
