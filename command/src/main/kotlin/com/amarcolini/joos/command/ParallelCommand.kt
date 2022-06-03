@@ -1,7 +1,7 @@
 package com.amarcolini.joos.command
 
 /**
- * A command that runs commands in parallel (Runs them all simultaneously until they finish).
+ * A command that runs commands in parallel until they all finish.
  */
 class ParallelCommand @JvmOverloads constructor(
     override val isInterruptable: Boolean = true,

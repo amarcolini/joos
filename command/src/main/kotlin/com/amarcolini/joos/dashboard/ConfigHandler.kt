@@ -1,5 +1,6 @@
 package com.amarcolini.joos.dashboard
 
+import android.content.Context
 import android.util.Log
 import com.acmerobotics.dashboard.FtcDashboard
 import com.acmerobotics.dashboard.config.reflection.FieldProvider
@@ -10,6 +11,7 @@ import com.acmerobotics.dashboard.config.variable.VariableType
 import com.amarcolini.joos.geometry.Angle
 import com.amarcolini.joos.geometry.Pose2d
 import com.amarcolini.joos.geometry.Vector2d
+import com.qualcomm.ftccommon.FtcEventLoop
 import org.firstinspires.ftc.ftccommon.external.OnCreateEventLoop
 import java.lang.reflect.Field
 import java.lang.reflect.Modifier
@@ -48,7 +50,7 @@ object ConfigHandler {
 
     @OnCreateEventLoop
     @JvmStatic
-    fun init() {
+    fun init(context: Context, eventLoop: FtcEventLoop) {
         javaResults?.forEach { (group, field) ->
             parseField(field, group)
         }

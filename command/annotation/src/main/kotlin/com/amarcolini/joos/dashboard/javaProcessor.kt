@@ -1,15 +1,12 @@
 package com.amarcolini.joos.dashboard
 
-import com.google.auto.service.AutoService
 import com.squareup.javapoet.*
-import com.squareup.kotlinpoet.asTypeName
 import java.util.*
 import javax.annotation.processing.*
 import javax.lang.model.SourceVersion
 import javax.lang.model.element.*
 import kotlin.collections.ArrayList
 
-@AutoService(Processor::class)
 @SupportedSourceVersion(SourceVersion.RELEASE_8)
 class ConfigProcessor : AbstractProcessor() {
     private val results = ArrayList<Pair<String, Pair<String, String>>>()
@@ -64,9 +61,10 @@ class ConfigElementVisitor : ElementVisitor<List<Pair<String, Pair<String, Strin
         emptyList()
 
     override fun visitType(p0: TypeElement?, p1: TypeElement?): List<Pair<String, Pair<String, String>>> {
+        if (p0?.modifiers?.contains(Modifier.PUBLIC) != true) return emptyList()
         val configMembers = ArrayList<Pair<String, Pair<String, String>>>()
-        val name = getAltName(p0, p1) ?: p0?.simpleName.toString()
-        p0?.enclosedElements?.forEach { member ->
+        val name = getAltName(p0, p1) ?: p0.simpleName.toString()
+        p0.enclosedElements?.forEach { member ->
             if (member.kind == ElementKind.FIELD && member.modifiers.containsAll(
                     listOf(
                         Modifier.PUBLIC, Modifier.STATIC
@@ -98,6 +96,7 @@ class ConfigElementVisitor : ElementVisitor<List<Pair<String, Pair<String, Strin
                 }
             }
             val parent = possibleParent ?: return emptyList()
+            if (!parent.modifiers.contains(Modifier.PUBLIC)) return emptyList()
             return listOf(
                 (getAltName(p0, p1) ?: getAltName(parent, p1)
                 ?: parent.simpleName.toString()) to (parent.qualifiedName.toString() to p0.simpleName.toString())

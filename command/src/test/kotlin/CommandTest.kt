@@ -8,12 +8,7 @@ import kotlin.math.abs
 private const val logOutput: Boolean = true
 
 class CommandTest {
-    private lateinit var scheduler: CommandScheduler
-
-    @BeforeEach
-    fun init() {
-        scheduler = CommandScheduler()
-    }
+    private val scheduler = CommandScheduler
 
     @Test
     fun testCommandLifeCycle() {
@@ -49,7 +44,7 @@ class CommandTest {
     @Test
     fun testConcurrentModification() {
         var result = false
-        val cmd = Command.emptyCommand().runUntil(false)
+        val cmd = Command.emptyCommand().runForever()
             .onEnd {
                 result = true
             }

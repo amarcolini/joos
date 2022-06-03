@@ -21,13 +21,14 @@ import kotlin.math.min
 class Servo @JvmOverloads constructor(
     private val servo: Servo,
     @JvmField
-    val range: Angle = 180.deg,
+    val range: Angle = 300.deg,
     private val clock: NanoClock = NanoClock.system()
 ) : Component {
     /**
      * @param servo the servo for this wrapper to use
      * @param range the range of the servo in [Angle.defaultUnits]
      */
+    @JvmOverloads
     constructor(servo: Servo, range: Double, clock: NanoClock = NanoClock.system()) : this(servo, Angle(range), clock)
 
     /**

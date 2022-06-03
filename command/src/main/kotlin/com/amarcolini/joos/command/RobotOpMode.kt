@@ -1,15 +1,16 @@
 package com.amarcolini.joos.command
 
+import com.acmerobotics.dashboard.FtcDashboard
+import com.amarcolini.joos.gamepad.MultipleGamepad
 import com.qualcomm.robotcore.eventloop.opmode.*
-import kotlin.reflect.KClass
-import kotlin.reflect.full.createInstance
 import kotlin.reflect.full.hasAnnotation
 import kotlin.reflect.full.primaryConstructor
 
 /**
  * An OpMode made for [Robot]s.
  */
-abstract class RobotOpMode<T : Robot> : OpMode() {
+abstract class RobotOpMode<T : Robot> : OpMode(),
+    CommandInterface {
     /**
      * Whether this OpMode is a teleop OpMode.
      */
@@ -29,8 +30,26 @@ abstract class RobotOpMode<T : Robot> : OpMode() {
         private set
 
     /**
+     * The global [SuperTelemetry] instance.
+     */
+    @JvmField
+    protected val telem: SuperTelemetry = CommandScheduler.telemetry
+
+    /**
+     * The FtcDashboard instance.
+     */
+    @JvmField
+    protected val dashboard: FtcDashboard = FtcDashboard.getInstance()
+
+    /**
+     * A handy [MultipleGamepad].
+     */
+    @JvmField
+    protected val gamepad: MultipleGamepad = MultipleGamepad(gamepad1, gamepad2)
+
+    /**
      * This method is called on initialization. Any commands scheduled here will be
-     * run in the init loop. [initialize] **must** be called here.
+     * run in the init loop. [initialize] should be called here.
      */
     abstract fun preInit()
 
@@ -40,38 +59,27 @@ abstract class RobotOpMode<T : Robot> : OpMode() {
      */
     abstract fun preStart()
 
-    final override fun init() = preInit()
-    final override fun init_loop() = robot.update()
+    final override fun init() {
+        preInit()
+    }
+
     final override fun start() {
-        robot.start()
+        CommandScheduler.cancelAll()
+        if (::robot.isInitialized) robot.start()
         preStart()
     }
 
-    final override fun loop() = robot.update()
-    override fun stop() = robot.reset()
+    override fun internalPostInitLoop() = CommandScheduler.update()
+
+    override fun internalPostLoop() = CommandScheduler.update()
+
+    override fun loop() {}
 
     /**
-     * Initializes the given robot with this OpMode. This method **must** be called
-     * in order for this OpMode to work correctly.
+     * Initializes the given robot with this OpMode. This method should be called in init.
      */
     protected fun initialize(robot: T) {
         this.robot = robot
         robot.init()
-    }
-
-    /**
-     * Initializes the given robot with this OpMode. This method **must** be called
-     * in order for this OpMode to work correctly.
-     */
-    protected fun initialize(robot: (OpMode) -> T) {
-        initialize(robot(this))
-    }
-
-    /**
-     * Initializes the given robot with this OpMode. This method **must** be called
-     * in order for this OpMode to work correctly.
-     */
-    protected inline fun <reified B : T> initialize() {
-        initialize(B::class.primaryConstructor?.call(this) ?: return)
     }
 }

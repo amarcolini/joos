@@ -27,7 +27,7 @@ repositories {
 }
 
 dependencies {
-  implementation "com.github.amarcolini.joos:$module:0.4.5-alpha"
+  implementation "com.github.amarcolini.joos:$module:0.4.6-alpha"
 }
 ```
 
@@ -52,6 +52,6 @@ java {
 
 dependencies {
     //Gradle will automatically retrieve the correct dependencies based on your operating system
-    implementation "com.github.amarcolini.joos:gui:0.4.5-alpha"
+    implementation "com.github.amarcolini.joos:gui:0.4.6-alpha"
 }
 ````

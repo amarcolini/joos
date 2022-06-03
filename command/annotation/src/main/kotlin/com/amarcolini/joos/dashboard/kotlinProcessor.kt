@@ -1,6 +1,5 @@
 package com.amarcolini.joos.dashboard
 
-import com.google.auto.service.AutoService
 import com.google.devtools.ksp.*
 import com.google.devtools.ksp.processing.*
 import com.google.devtools.ksp.symbol.*
@@ -8,7 +7,6 @@ import com.google.devtools.ksp.visitor.KSEmptyVisitor
 import com.squareup.kotlinpoet.*
 import kotlin.reflect.KProperty0
 import kotlin.io.*
-import kotlin.reflect.KClass
 
 class ConfigSymbolProcessor(
     private val environment: SymbolProcessorEnvironment,
@@ -79,6 +77,7 @@ class ConfigSymbolProcessor(
     inner class ConfigVisitor : KSEmptyVisitor<Resolver, Unit>() {
         override fun visitClassDeclaration(classDeclaration: KSClassDeclaration, data: Resolver) {
             processedClasses += classDeclaration
+            if (!classDeclaration.modifiers.contains(Modifier.PUBLIC)) return
             when (classDeclaration.classKind) {
                 ClassKind.INTERFACE, ClassKind.ENUM_CLASS, ClassKind.ENUM_ENTRY, ClassKind.ANNOTATION_CLASS -> return
                 ClassKind.OBJECT -> {
@@ -112,6 +111,7 @@ class ConfigSymbolProcessor(
             if (closestClass?.classKind != ClassKind.OBJECT && !property.modifiers.contains(Modifier.JAVA_STATIC)) return
             val parentClass =
                 if (closestClass?.isCompanionObject == true) closestClass.parentDeclaration as KSClassDeclaration else closestClass
+            if (!property.isPublic()) return
             val name = property.qualifiedName ?: return
             val parentClassName = parentClass?.simpleName?.asString()?.ifEmpty { null }
             val parentClassAltName = parentClass?.let { getAltName(it)?.ifEmpty { null } }
@@ -133,7 +133,6 @@ class ConfigSymbolProcessor(
     }
 }
 
-@AutoService(SymbolProcessorProvider::class)
 class ConfigSymbolProcessorProvider : SymbolProcessorProvider {
     override fun create(environment: SymbolProcessorEnvironment): SymbolProcessor {
         return ConfigSymbolProcessor(environment)

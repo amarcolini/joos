@@ -1,12 +1,17 @@
 package com.amarcolini.joos.hardware
 
 import com.amarcolini.joos.command.Command
+import com.amarcolini.joos.command.Command.Companion.emptyCommand
 import com.amarcolini.joos.command.Component
 import com.amarcolini.joos.control.FeedforwardCoefficients
 import com.amarcolini.joos.control.PIDCoefficients
 import com.amarcolini.joos.geometry.Angle
 import com.amarcolini.joos.hardware.Motor.RunMode
+import com.amarcolini.joos.util.NanoClock
+import com.amarcolini.joos.util.rad
 import com.qualcomm.robotcore.hardware.HardwareMap
+import kotlin.math.PI
+import kotlin.math.roundToInt
 
 /**
  * A class that runs multiple motors together as a unit.
@@ -20,8 +25,8 @@ class MotorGroup(vararg val motors: Motor) : Component {
 
     /**
      * @param hMap the hardware map from the OpMode
-     * @param maxRPM the maximum revolutions per minute of the motor
-     * @param TPR the ticks per revolution of the motor
+     * @param maxRPM the maximum revolutions per minute of all the motors
+     * @param TPR the ticks per revolution of all the motors
      * @param ids the device ids from the RC config
      */
     @JvmOverloads
@@ -29,13 +34,64 @@ class MotorGroup(vararg val motors: Motor) : Component {
         *ids.map { Motor(hMap, it, maxRPM, TPR) }.toTypedArray()
     )
 
+    /**
+     * @param hMap the hardware map from the OpMode
+     * @param kind the kind of all the motors
+     * @param ids the device ids from the RC config
+     */
+    constructor(hMap: HardwareMap, kind: Motor.Kind, vararg ids: String) : this(
+        *ids.map { Motor(hMap, it, kind.maxRPM, kind.TPR) }.toTypedArray()
+    )
 
     /**
      * @param hMap the hardware map from the OpMode
-     * @param maxRPM the revolutions per minute of the motor
-     * @param TPR the ticks per revolution of the motor
-     * @param wheelRadius the radius of the wheel the motor is turning
-     * @param gearRatio the gear ratio from the output shaft to the wheel the motor is turning
+     * @param maxRPM the maximum revolutions per minute of all the motors
+     * @param TPR the ticks per revolution of all the motors
+     * @param ids the device ids from the RC config and whether those motors should be reversed
+     */
+    @JvmOverloads
+    constructor(hMap: HardwareMap, maxRPM: Double, TPR: Double = 1.0, vararg ids: Pair<String, Boolean>) : this(
+        *ids.map { Motor(hMap, it.first, maxRPM, TPR).apply { reversed = it.second } }.toTypedArray()
+    )
+
+    /**
+     * @param hMap the hardware map from the OpMode
+     * @param kind the kind of all the motors
+     * @param wheelRadius the radius of the wheels each motor is turning
+     * @param gearRatio the gear ratio from the output shaft to the wheel each motor is turning
+     * @param ids the device ids from the RC config and whether those motors should be reversed
+     */
+    @JvmOverloads
+    constructor(
+        hMap: HardwareMap,
+        kind: Motor.Kind,
+        wheelRadius: Double,
+        gearRatio: Double = 1.0,
+        vararg ids: Pair<String, Boolean>
+    ) : this(hMap, kind.maxRPM, kind.TPR, wheelRadius, gearRatio, *ids)
+
+    /**
+     * @param hMap the hardware map from the OpMode
+     * @param kind the kind of all the motors
+     * @param wheelRadius the radius of the wheels each motor is turning
+     * @param gearRatio the gear ratio from the output shaft to the wheel each motor is turning
+     * @param ids the device ids from the RC config
+     */
+    @JvmOverloads
+    constructor(
+        hMap: HardwareMap,
+        kind: Motor.Kind,
+        wheelRadius: Double,
+        gearRatio: Double = 1.0,
+        vararg ids: String
+    ) : this(hMap, kind.maxRPM, kind.TPR, wheelRadius, gearRatio, *ids)
+
+    /**
+     * @param hMap the hardware map from the OpMode
+     * @param maxRPM the revolutions per minute of all the motors
+     * @param TPR the ticks per revolution of all the motors
+     * @param wheelRadius the radius of the wheels each motor is turning
+     * @param gearRatio the gear ratio from the output shaft to the wheel each motor is turning
      * @param ids the device ids from the RC config
      */
     @JvmOverloads
@@ -50,7 +106,28 @@ class MotorGroup(vararg val motors: Motor) : Component {
         *ids.map { Motor(hMap, it, maxRPM, TPR, wheelRadius, gearRatio) }.toTypedArray()
     )
 
-    private val states = motors.map { it to it.reversed }.toMap()
+    /**
+     * @param hMap the hardware map from the OpMode
+     * @param maxRPM the revolutions per minute of all the motors
+     * @param TPR the ticks per revolution of all the motors
+     * @param wheelRadius the radius of the wheels each motor is turning
+     * @param gearRatio the gear ratio from the output shaft to the wheel each motor is turning
+     * @param ids the device ids from the RC config and whether those motors should be reversed
+     */
+    @JvmOverloads
+    constructor(
+        hMap: HardwareMap,
+        maxRPM: Double,
+        TPR: Double = 1.0,
+        wheelRadius: Double,
+        gearRatio: Double,
+        vararg ids: Pair<String, Boolean>,
+    ) : this(
+        *ids.map { Motor(hMap, it.first, maxRPM, TPR, wheelRadius, gearRatio).apply { reversed = it.second } }
+            .toTypedArray()
+    )
+
+    private val states = motors.associateWith { it.reversed }
 
     /**
      * The maximum revolutions per minute that all motors in the group can achieve.
@@ -183,6 +260,26 @@ class MotorGroup(vararg val motors: Motor) : Component {
         }
 
     /**
+     * Sets [targetPosition] with the target [angle].
+     */
+    fun setTargetAngle(angle: Angle) {
+        motors.forEach { it.setTargetAngle(angle) }
+    }
+
+    /**
+     * Sets [targetPosition] with the target [angle], where [angle] is in [Angle.defaultUnits].
+     */
+    fun setTargetAngle(angle: Double) = setTargetAngle(Angle(angle))
+
+    /**
+     * Sets [targetPosition] with the target [distance].
+     */
+    fun setTargetDistance(distance: Double) {
+        motors.forEach { it.setTargetDistance(distance) }
+    }
+
+
+    /**
      * The position error considered tolerable for [RunMode.RUN_TO_POSITION] to be considered at the set point.
      */
     var positionTolerance: Int = 10
@@ -192,12 +289,10 @@ class MotorGroup(vararg val motors: Motor) : Component {
         }
 
     /**
-     * Returns a command that runs all the motors in the group until all of them have reached the desired position.
+     * Returns a command that runs all the motors in the group until
+     * all of them have reached the desired [position].
      */
-    fun goToPosition(position: Int): Command = Command.of {
-        runMode = RunMode.RUN_TO_POSITION
-        targetPosition = position
-    }
+    fun goToPosition(position: Int): Command = emptyCommand()
         .onInit {
             runMode = RunMode.RUN_TO_POSITION
             targetPosition = position
@@ -207,23 +302,37 @@ class MotorGroup(vararg val motors: Motor) : Component {
         .onEnd { setSpeed(0.0) }
 
     /**
-     * Returns a command that runs all the motors in the group until all of them have reached the desired distance.
+     * Returns a command that runs all the motors in the group until
+     * all of them have reached the desired [distance].
      */
-    fun goToDistance(distance: Double): Command = Command.of {
-        runMode = RunMode.RUN_TO_POSITION
-        motors.forEach {
-            it.targetPosition = (distance / it.distancePerRev * it.TPR).toInt()
-        }
-    }
+    fun goToDistance(distance: Double): Command = emptyCommand()
         .onInit {
             runMode = RunMode.RUN_TO_POSITION
-            motors.forEach {
-                it.targetPosition = (distance / it.distancePerRev * it.TPR).toInt()
-            }
+            setTargetDistance(distance)
         }
         .requires(this)
         .runUntil { !isBusy() }
         .onEnd { setSpeed(0.0) }
+
+    /**
+     * Returns a command that runs all the motors in the group until
+     * all of them have reached the desired [angle].
+     */
+    fun goToAngle(angle: Angle): Command = emptyCommand()
+        .onInit {
+            runMode = RunMode.RUN_TO_POSITION
+            setTargetAngle(angle)
+        }
+        .requires(this)
+        .runUntil { !isBusy() }
+        .onEnd { setSpeed(0.0) }
+
+    /**
+     * Returns a command that runs all the motors in the group until
+     * all of them have reached the desired [angle], where [angle] is
+     * in [Angle.defaultUnits].
+     */
+    fun goToAngle(angle: Double): Command = goToAngle(Angle(angle))
 
     /**
      * Resets the encoders of all the motors in the group.

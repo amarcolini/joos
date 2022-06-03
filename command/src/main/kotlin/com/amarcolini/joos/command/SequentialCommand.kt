@@ -6,7 +6,7 @@ package com.amarcolini.joos.command
 class SequentialCommand @JvmOverloads constructor(
     override val isInterruptable: Boolean = true,
     vararg val commands: Command
-) : CommandGroup(false, *commands) {
+) : CommandGroup(false, commands = commands) {
     private var index = -1
 
     override fun init() {
@@ -30,7 +30,6 @@ class SequentialCommand @JvmOverloads constructor(
 
     override fun end(interrupted: Boolean) {
         if (index < 0) return
-        if (interrupted) commands[index].end(interrupted)
-        super.end(interrupted)
+        if (interrupted) commands[index].end(true)
     }
 }

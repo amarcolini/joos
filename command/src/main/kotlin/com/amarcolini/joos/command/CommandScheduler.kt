@@ -1,23 +1,84 @@
 package com.amarcolini.joos.command
 
-import com.acmerobotics.dashboard.FtcDashboard
-import com.acmerobotics.dashboard.telemetry.TelemetryPacket
+import android.content.Context
+import com.amarcolini.joos.gamepad.MultipleGamepad
+import com.qualcomm.ftccommon.FtcEventLoop
+import com.qualcomm.robotcore.eventloop.opmode.*
+import com.qualcomm.robotcore.hardware.HardwareMap
+import org.firstinspires.ftc.ftccommon.external.OnCreateEventLoop
 import java.util.function.BooleanSupplier
+import kotlin.reflect.full.hasAnnotation
 
 /**
  * The main orchestrator for [Command]s and [Component]s.
  */
-open class CommandScheduler {
+object CommandScheduler : OpModeManagerNotifier.Notifications {
+    /**
+     * The global telemetry object used for both FTC Dashboard and the Driver Station.
+     */
+    @JvmField
+    val telemetry: SuperTelemetry = SuperTelemetry()
 
-    companion object Static {
-        /**
-         * The global telemetry object used for both FtcDashboard and the Driver Station.
-         */
-        @JvmField
-        val telemetry = SuperTelemetry()
+    /**
+     * Resets [telemetry].
+     */
+    @JvmStatic
+    fun resetTelemetry(): Unit = telemetry.reset()
 
-        @JvmStatic
-        fun resetTelemetry() = telemetry.reset()
+    /**
+     * The current gamepads being used, or null if no OpMode is active.
+     */
+    @JvmStatic
+    var gamepad: MultipleGamepad? = null
+        private set
+
+    /**
+     * The currently active OpMode, or null if no OpMode is active.
+     */
+    @JvmStatic
+    var opMode: OpMode? = null
+        internal set(value) {
+            gamepad = if (value == null) {
+                reset()
+                null
+            } else MultipleGamepad(value.gamepad1, value.gamepad2).also {
+                gamepad?.unregister()
+                telemetry.register(value.telemetry)
+                it.register()
+            }
+            field = value
+        }
+
+    /**
+     * Whether the current OpMode is a teleop OpMode.
+     */
+    @JvmStatic
+    val isInTeleOp: Boolean
+        get() = opMode?.let { it::class.hasAnnotation<TeleOp>() } ?: false
+
+    /**
+     * Whether the current OpMode is an autonomous OpMode.
+     */
+    @JvmStatic
+    val isInAutonomous: Boolean
+        get() = opMode?.let { it::class.hasAnnotation<Autonomous>() } ?: false
+
+    /**
+     * The current hardware map, or null if no OpMode is active.
+     */
+    @JvmStatic
+    val hMap: HardwareMap?
+        get() = opMode?.hardwareMap
+
+    /**
+     * This method attaches itself to the robot controller event loop to automatically
+     * add/remove telemetries from the global telemetry, register any gamepads or hardware maps, and provide
+     * other useful features.
+     */
+    @OnCreateEventLoop
+    @JvmStatic
+    fun attachEventLoop(context: Context, eventLoop: FtcEventLoop) {
+        eventLoop.opModeManager.registerListener(this)
     }
 
     private val scheduledCommands = LinkedHashSet<Command>()
@@ -48,7 +109,6 @@ open class CommandScheduler {
             .isEmpty()
 
     private fun initCommand(command: Command) {
-        command.scheduler = this
         command.init()
         scheduledCommands.add(command)
         command.requirements.forEach { requirements[it] = command }
@@ -75,7 +135,6 @@ open class CommandScheduler {
                     .forEach { (_, command) ->
                         scheduledCommands.remove(command)
                         command.end(true)
-                        command.scheduler = null
                     }
                 initCommand(command)
                 true
@@ -95,6 +154,18 @@ open class CommandScheduler {
      */
     fun schedule(vararg runnables: Runnable): Boolean = schedule(*runnables.map { BasicCommand(it) }.toTypedArray())
 
+    /**
+     * Schedules commands for execution.
+     *
+     * @return `true` if all commands were successfully scheduled immediately, and `false` if they were not. Note that if
+     * the scheduler is currently updating, this method will return `false`, but the scheduler will attempt to
+     * schedule the commands when it can. If [schedulePolicy] is `true`, all commands will be successfully scheduled.
+     *
+     * @param repeat whether the provided [runnable] should run repeatedly or not
+     * @see schedulePolicy
+     */
+    fun schedule(runnable: Runnable, repeat: Boolean): Boolean = schedule(BasicCommand(runnable).runUntil { !repeat })
+
     private var isBusy = false
     fun update() {
         //Updates all registered components
@@ -111,7 +182,6 @@ open class CommandScheduler {
             if (finished) {
                 requirements.keys.removeAll(it.requirements)
                 it.end(false)
-                it.scheduler = null
             }
             //Removes them if they are finished
             finished
@@ -140,9 +210,6 @@ open class CommandScheduler {
      * Registers the given components to this CommandScheduler so that their update functions are called and their default commands are scheduled.
      */
     fun register(vararg components: Component) {
-        components.forEach {
-            if (it is AbstractComponent) it.scheduler = this
-        }
         this.components += components
     }
 
@@ -150,16 +217,13 @@ open class CommandScheduler {
      * Unregisters the given components from this CommandScheduler so that their update functions are no longer called and their default commands are no longer scheduled.
      */
     fun unregister(vararg components: Component) {
-        components.forEach {
-            if (it is AbstractComponent && it.scheduler == this) it.scheduler = null
-        }
-        this.components -= components
+        this.components -= components.toSet()
     }
 
     /**
      * Returns whether the given components are registered with this CommandScheduler.
      */
-    fun isRegistered(vararg components: Component) =
+    fun isRegistered(vararg components: Component): Boolean =
         this.components.containsAll(components.toList())
 
     /**
@@ -178,7 +242,6 @@ open class CommandScheduler {
                 scheduledCommands.remove(command)
                 requirements.keys.removeAll(command.requirements)
                 command.end(true)
-                command.scheduler = null
             }
         }
     }
@@ -195,8 +258,8 @@ open class CommandScheduler {
      * Maps a condition to commands. If the condition returns true, the commands are scheduled.
      * A command can be mapped to multiple conditions.
      */
-    fun map(condition: BooleanSupplier, vararg commands: Runnable) {
-        map(condition, *commands.map { Command.of(it) }.toTypedArray())
+    fun map(condition: BooleanSupplier, vararg runnables: Runnable) {
+        map(condition, *runnables.map { Command.of(it) }.toTypedArray())
     }
 
     /**
@@ -221,6 +284,7 @@ open class CommandScheduler {
     /**
      * Resets this [CommandScheduler]. The telemetry is reset, all commands are cancelled, and all commands, components, and conditions are cleared.
      */
+    @JvmStatic
     fun reset() {
         val reset = {
             cancelAll()
@@ -238,10 +302,22 @@ open class CommandScheduler {
     /**
      * Returns whether all the given commands are scheduled.
      */
-    fun isScheduled(vararg commands: Command) = scheduledCommands.containsAll(commands.asList())
+    fun isScheduled(vararg commands: Command): Boolean = scheduledCommands.containsAll(commands.asList())
 
     /**
      * Returns the command currently requiring a given component.
      */
-    fun requiring(component: Component) = requirements[component]
+    fun requiring(component: Component): Command? = requirements[component]
+
+    override fun onOpModePreInit(opMode: OpMode) {
+        this.opMode = opMode
+    }
+
+    override fun onOpModePreStart(opMode: OpMode) {}
+
+    override fun onOpModePostStop(opMode: OpMode) {
+        reset()
+        this.opMode = null
+        gamepad = null
+    }
 }

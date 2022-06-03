@@ -15,7 +15,11 @@ import kotlin.math.ceil
 /**
  * A powerful telemetry for both the Driver Station and [FTC Dashboard](https://github.com/acmerobotics/ftc-dashboard).
  */
-class SuperTelemetry {
+class SuperTelemetry() {
+    constructor(telemetry: Telemetry) : this() {
+        register(telemetry)
+    }
+
     private var packet: TelemetryPacket = TelemetryPacket()
     val lines: MutableList<Lineable> = ArrayList()
     private val telemetries: MutableList<Telemetry> = ArrayList()
@@ -62,7 +66,7 @@ class SuperTelemetry {
     }
 
     inner class Item internal constructor(var caption: String, var value: String) : Lineable {
-        internal lateinit var parent: Line
+        internal var parent: Line? = null
 
         fun setCaption(caption: String): Item {
             this.caption = caption
@@ -88,14 +92,17 @@ class SuperTelemetry {
             return this
         }
 
-        private fun getIndex(): Int = lines.indexOf(parent)
-
         fun addData(caption: String, format: String, arg1: Any, vararg args: Any): Item =
             addData(caption, String.format(format, arg1, *args))
 
         fun addData(caption: String, value: Any): Item {
+            val parent = parent
             val item = Item(caption, value.toString())
-            lines.add(getIndex() + 1, Line(item))
+            if (parent == null) {
+                lines.add(lines.indexOf(this) + 1, item)
+            } else {
+                parent.items.add(parent.items.indexOf(this) + 1, item)
+            }
             return item
         }
     }

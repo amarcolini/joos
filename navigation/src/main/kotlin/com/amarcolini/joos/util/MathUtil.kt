@@ -45,6 +45,33 @@ object MathUtil {
     fun wrap(n: Int, min: Int, max: Int): Int =
         if (n < min) max - (min - n) % (max - min)
         else min + (n - min) % (max - min)
+
+    /**
+     * Ensures that [n] lies in the range [min]..[max].
+     */
+    @JvmStatic
+    fun clamp(n: Double, min: Double, max: Double): Double = n.coerceIn(min, max)
+
+    @JvmStatic
+    fun cos(angle: Angle): Double = angle.cos()
+
+    @JvmStatic
+    fun sin(angle: Angle): Double = angle.sin()
+
+    @JvmStatic
+    fun tan(angle: Angle): Double = angle.tan()
+
+    @JvmStatic
+    fun abs(angle: Angle): Angle = angle.abs()
+
+    @JvmStatic
+    fun min(angle1: Angle, angle2: Angle): Angle = min(angle1.radians, angle2.radians).rad
+
+    @JvmStatic
+    fun max(angle1: Angle, angle2: Angle): Angle = max(angle1.radians, angle2.radians).rad
+
+    @JvmStatic
+    fun sign(angle: Angle): Double = sign(angle.radians)
 }
 
 fun cos(angle: Angle): Double = angle.cos()

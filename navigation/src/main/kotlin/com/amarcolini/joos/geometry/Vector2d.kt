@@ -29,13 +29,13 @@ data class Vector2d @JvmOverloads constructor(
     /**
      * Returns the angle of this vector.
      */
-    fun angle(): Angle = Angle(FastMath.atan2(y, x), AngleUnit.Radians)
+    fun angle(): Angle = FastMath.atan2(y, x).rad
 
     /**
      * Calculates the angle between two vectors (in radians).
      */
     infix fun angleBetween(other: Vector2d): Angle =
-        Angle(acos((this dot other) / (norm() * other.norm())), AngleUnit.Radians)
+        acos((this dot other) / (norm() * other.norm())).rad
 
     /**
      * Adds two vectors.
