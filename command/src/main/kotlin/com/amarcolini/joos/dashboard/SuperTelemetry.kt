@@ -1,4 +1,4 @@
-package com.amarcolini.joos.command
+package com.amarcolini.joos.dashboard
 
 import com.acmerobotics.dashboard.FtcDashboard
 import com.acmerobotics.dashboard.canvas.Canvas
@@ -10,6 +10,7 @@ import com.amarcolini.joos.trajectory.Trajectory
 import com.amarcolini.joos.trajectory.TurnSegment
 import com.amarcolini.joos.trajectory.WaitSegment
 import org.firstinspires.ftc.robotcore.external.Telemetry
+import java.util.function.Supplier
 import kotlin.math.ceil
 
 /**
@@ -21,7 +22,7 @@ class SuperTelemetry() {
     }
 
     private var packet: TelemetryPacket = TelemetryPacket()
-    val lines: MutableList<Lineable> = ArrayList()
+    val lines: MutableList<Linable> = ArrayList()
     private val telemetries: MutableList<Telemetry> = ArrayList()
 
     var isAutoClear: Boolean = true
@@ -39,34 +40,87 @@ class SuperTelemetry() {
 
     fun fieldOverlay(): Canvas = packet.fieldOverlay()
 
-    interface Lineable {
-        fun composed(): String
+    abstract inner class Linable {
+        abstract fun composed(): String
+
+        var isRetained: Boolean = false
+
+        open fun add(item: Linable): Linable {
+            lines.add(lines.indexOf(this) + 1, item)
+            return item
+        }
     }
 
-    inner class Line(var caption: String, vararg items: Item) : Lineable {
-        internal constructor(vararg items: Item) : this("", *items)
+    abstract inner class Inlinable : Linable() {
+        var parent: Line? = null
+            internal set
 
-        val items: MutableList<Item> = items.toMutableList()
+        open fun addData(caption: String, format: String, arg1: Any, vararg args: Any): Item =
+            Item(caption, String.format(format, arg1, *args)).also { add(it) }
+
+        open fun addData(caption: String, value: Any): Item =
+            Item(caption, value.toString()).also { add(it) }
+
+        open fun addDataProvider(caption: String, provider: Supplier<Any>): ItemProvider =
+            ItemProvider(caption, provider).also { add(it) }
+
+        open fun add(item: Inlinable): Inlinable {
+            val parent = parent
+            if (parent == null) {
+                lines.add(lines.indexOf(this) + 1, item)
+            } else {
+                parent.items.add(parent.items.indexOf(this) + 1, item)
+            }
+            return item
+        }
+
+        override fun add(item: Linable): Linable {
+            val parent = parent
+            if (parent == null)
+                lines.add(lines.indexOf(this) + 1, item)
+            else lines.add(lines.indexOf(parent) + 1, item)
+            return item
+        }
+    }
+
+    inner class Line(var caption: String, vararg items: Inlinable) : Linable() {
+        internal constructor(vararg items: Inlinable) : this("", *items)
+
+        val items: MutableList<Inlinable> = items.toMutableList()
 
         init {
             items.forEach { it.parent = this }
         }
 
-        override fun composed(): String = caption + items.joinToString(itemSeparator, transform = Item::composed)
+        override fun composed(): String = caption + items.joinToString(itemSeparator, transform = Linable::composed)
+
+        fun setRetained(retained: Boolean): Line {
+            isRetained = retained
+            return this
+        }
+
+        fun setCaption(caption: String): Line {
+            this.caption = caption
+            return this
+        }
 
         fun addData(caption: String, format: String, arg1: Any, vararg args: Any): Line =
-            addData(caption, String.format(format, arg1, *args))
+            add(Item(caption, String.format(format, arg1, *args)))
 
-        fun addData(caption: String, value: Any): Line {
-            val item = Item(caption, value.toString())
+        fun addData(caption: String, value: Any): Line =
+            add(Item(caption, value.toString()))
+
+        fun addDataProvider(caption: String, provider: Supplier<Any>): Line =
+            add(ItemProvider(caption, provider))
+
+        fun add(item: Inlinable): Line {
             item.parent = this
             items += item
             return this
         }
     }
 
-    inner class Item internal constructor(var caption: String, var value: String) : Lineable {
-        internal var parent: Line? = null
+    inner class Item(var caption: String, var value: String) : Inlinable() {
 
         fun setCaption(caption: String): Item {
             this.caption = caption
@@ -85,25 +139,32 @@ class SuperTelemetry() {
 
         override fun composed(): String = "$caption$captionValueSeparator$value"
 
-        var isRetained: Boolean = false
-
         fun setRetained(retained: Boolean): Item {
             isRetained = retained
             return this
         }
+    }
 
-        fun addData(caption: String, format: String, arg1: Any, vararg args: Any): Item =
-            addData(caption, String.format(format, arg1, *args))
+    inner class ItemProvider(var caption: String, var provider: Supplier<Any>) : Inlinable() {
+        fun setCaption(caption: String): ItemProvider {
+            this.caption = caption
+            return this
+        }
 
-        fun addData(caption: String, value: Any): Item {
-            val parent = parent
-            val item = Item(caption, value.toString())
-            if (parent == null) {
-                lines.add(lines.indexOf(this) + 1, item)
-            } else {
-                parent.items.add(parent.items.indexOf(this) + 1, item)
-            }
-            return item
+        fun setProvider(provider: Supplier<Any>): ItemProvider {
+            this.provider = provider
+            return this
+        }
+
+        override fun composed(): String = "$caption$captionValueSeparator${provider.get()}"
+
+        init {
+            isRetained = true
+        }
+
+        fun setRetained(retained: Boolean): ItemProvider {
+            isRetained = retained
+            return this
         }
     }
 
@@ -127,6 +188,12 @@ class SuperTelemetry() {
         return item
     }
 
+    fun addDataProvider(caption: String, provider: Supplier<Any>): ItemProvider {
+        val item = ItemProvider(caption, provider)
+        lines += item
+        return item
+    }
+
     fun removeItem(item: Item): Boolean =
         lines.remove(item) || lines.filterIsInstance<Line>().any { it.items.remove(item) }
 
@@ -136,11 +203,10 @@ class SuperTelemetry() {
                 is Line -> {
                     if (lineable.items.isNotEmpty()) {
                         lineable.items.removeIf { !it.isRetained }
-                        lineable.items.isEmpty()
-                    } else false
+                        lineable.items.isEmpty() && !lineable.isRetained
+                    } else !lineable.isRetained
                 }
-                is Item -> !lineable.isRetained
-                else -> true
+                else -> !lineable.isRetained
             }
         }
     }

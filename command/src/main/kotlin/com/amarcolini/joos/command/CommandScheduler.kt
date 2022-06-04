@@ -1,6 +1,7 @@
 package com.amarcolini.joos.command
 
 import android.content.Context
+import com.amarcolini.joos.dashboard.SuperTelemetry
 import com.amarcolini.joos.gamepad.MultipleGamepad
 import com.qualcomm.ftccommon.FtcEventLoop
 import com.qualcomm.robotcore.eventloop.opmode.*

@@ -1,6 +1,7 @@
 package com.amarcolini.joos.command
 
 import com.acmerobotics.dashboard.FtcDashboard
+import com.amarcolini.joos.dashboard.SuperTelemetry
 import com.amarcolini.joos.gamepad.MultipleGamepad
 import com.qualcomm.robotcore.eventloop.opmode.OpMode
 

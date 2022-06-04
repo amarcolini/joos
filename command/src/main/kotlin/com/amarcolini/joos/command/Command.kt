@@ -1,5 +1,6 @@
 package com.amarcolini.joos.command
 
+import com.amarcolini.joos.dashboard.SuperTelemetry
 import java.util.function.BooleanSupplier
 import java.util.function.Consumer
 import java.util.function.Supplier

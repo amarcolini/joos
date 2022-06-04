@@ -1,5 +1,4 @@
-import com.amarcolini.joos.command.CommandScheduler
-import com.amarcolini.joos.command.SuperTelemetry
+import com.amarcolini.joos.dashboard.SuperTelemetry
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 

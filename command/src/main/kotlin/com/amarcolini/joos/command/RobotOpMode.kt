@@ -1,10 +1,10 @@
 package com.amarcolini.joos.command
 
 import com.acmerobotics.dashboard.FtcDashboard
+import com.amarcolini.joos.dashboard.SuperTelemetry
 import com.amarcolini.joos.gamepad.MultipleGamepad
 import com.qualcomm.robotcore.eventloop.opmode.*
 import kotlin.reflect.full.hasAnnotation
-import kotlin.reflect.full.primaryConstructor
 
 /**
  * An OpMode made for [Robot]s.
