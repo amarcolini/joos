@@ -1,9 +1,13 @@
 package com.amarcolini.joos.path
 
+import com.amarcolini.joos.geometry.Angle
+import com.amarcolini.joos.geometry.AngleUnit
 import com.amarcolini.joos.geometry.Pose2d
 import com.amarcolini.joos.geometry.Vector2d
 import com.amarcolini.joos.util.DoubleProgression
 import com.amarcolini.joos.util.epsilonEquals
+import com.amarcolini.joos.util.rad
+import org.apache.commons.math3.util.FastMath
 import kotlin.math.max
 import kotlin.math.min
 import kotlin.math.roundToInt
@@ -68,6 +72,16 @@ class Path(val segments: List<PathSegment>) {
         val (segment, remainingDisplacement) = segment(s)
         return segment.secondDeriv(remainingDisplacement, t)
     }
+
+    /**
+     * Returns the angle of the tangent line [s] units along the path.
+     */
+    @JvmOverloads
+    fun tangentAngle(s: Double, t: Double = reparam(s)): Angle {
+        val (segment, remainingDisplacement) = segment(s)
+        return segment.tangentAngle(remainingDisplacement, t)
+    }
+
 
     @JvmOverloads
     internal fun internalDeriv(s: Double, t: Double = reparam(s)): Pose2d {

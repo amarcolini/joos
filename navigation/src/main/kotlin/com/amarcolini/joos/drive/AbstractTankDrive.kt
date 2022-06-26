@@ -28,8 +28,7 @@ abstract class AbstractTankDrive constructor(
     override fun setDriveSignal(driveSignal: DriveSignal) {
         val velocities = TankKinematics.robotToWheelVelocities(driveSignal.vel, trackWidth)
         val accelerations = TankKinematics.robotToWheelAccelerations(driveSignal.accel, trackWidth)
-        val powers =
-            Kinematics.calculateMotorFeedforward(velocities, accelerations, feedforward)
+        val powers = feedforward.calculate(velocities, accelerations)
         setMotorPowers(powers[0], powers[1])
     }
 

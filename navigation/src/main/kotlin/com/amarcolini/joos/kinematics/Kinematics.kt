@@ -1,11 +1,9 @@
 package com.amarcolini.joos.kinematics
 
-import com.amarcolini.joos.control.FeedforwardCoefficients
 import com.amarcolini.joos.geometry.Pose2d
 import com.amarcolini.joos.geometry.Vector2d
 import com.amarcolini.joos.util.*
 import kotlin.math.cos
-import kotlin.math.sign
 import kotlin.math.sin
 
 /**
@@ -57,49 +55,16 @@ object Kinematics {
     }
 
     /**
-     * Computes the motor feedforward (i.e., open loop powers) for the given set of coefficients.
-     */
-    @JvmStatic
-    fun calculateMotorFeedforward(
-        vels: List<Double>,
-        accels: List<Double>,
-        coeffs: FeedforwardCoefficients,
-    ) =
-        vels.zip(accels)
-            .map { (vel, accel) -> calculateMotorFeedforward(vel, accel, coeffs) }
-
-    /**
-     * Computes the motor feedforward (i.e., open loop power) for the given set of coefficients
-     * on top of the given base output.
-     */
-    @JvmStatic
-    @JvmOverloads
-    fun calculateMotorFeedforward(
-        vel: Double,
-        accel: Double,
-        coeffs: FeedforwardCoefficients,
-        base: Double = 0.0
-    ): Double {
-        val basePower = vel * coeffs.kV + accel * coeffs.kA + base
-        return if (basePower epsilonEquals 0.0) {
-            0.0
-        } else {
-            basePower + sign(basePower) * coeffs.kStatic
-        }
-    }
-
-    /**
      * Performs a relative odometry update. Note: this assumes that the robot moves with constant velocity over the
      * measurement interval.
      */
     @JvmStatic
     fun relativeOdometryUpdate(fieldPose: Pose2d, robotPoseDelta: Pose2d): Pose2d {
         val dtheta = robotPoseDelta.heading.radians
-        val (sineTerm, cosTerm) = if (dtheta epsilonEquals 0.0) {
+        val (sineTerm, cosTerm) = if (dtheta epsilonEquals 0.0)
             1.0 - dtheta * dtheta / 6.0 to dtheta / 2.0
-        } else {
+        else
             sin(dtheta) / dtheta to (1 - cos(dtheta)) / dtheta
-        }
 
         val fieldPositionDelta = Vector2d(
             sineTerm * robotPoseDelta.x - cosTerm * robotPoseDelta.y,

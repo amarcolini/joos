@@ -19,7 +19,7 @@ import com.amarcolini.joos.trajectory.config.TrajectoryConstraints
  * A [Component] implementation of [Drive].
  */
 abstract class DriveComponent : Drive(), Component {
-    protected abstract val trajectoryFollower: TrajectoryFollower
+    abstract val trajectoryFollower: TrajectoryFollower
     abstract val constraints: TrajectoryConstraints
     protected abstract val imu: Imu?
     private val poseHistory = ArrayList<Pose2d>()

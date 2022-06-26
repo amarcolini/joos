@@ -3,7 +3,7 @@ import com.amarcolini.joos.command.RobotOpMode
 import com.qualcomm.robotcore.eventloop.opmode.OpMode
 import org.junit.jupiter.api.Test
 
-class DummyRobot(opmode: OpMode) : Robot(opmode) {
+class DummyRobot() : Robot() {
     val specialNumber = 42
 
     override fun init() {
@@ -26,7 +26,7 @@ class TestOpMode : RobotOpMode<DummyRobot>() {
     }
 
     override fun preInit() {
-        initialize<DummyRobot>()
+        initialize(DummyRobot())
         assert(robot.specialNumber == 42)
     }
 

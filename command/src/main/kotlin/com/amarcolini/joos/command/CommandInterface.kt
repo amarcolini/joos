@@ -104,4 +104,9 @@ interface CommandInterface {
      * Returns the command currently requiring a given component.
      */
     fun requiring(component: Component) = CommandScheduler.requiring(component)
+
+    /**
+     * Stops the currently active OpMode.
+     */
+    fun stopOpMode() = CommandScheduler.stopOpMode()
 }

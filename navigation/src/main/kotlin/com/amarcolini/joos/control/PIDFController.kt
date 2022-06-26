@@ -7,17 +7,14 @@ import kotlin.math.abs
 import kotlin.math.sign
 
 /**
- * PID controller with various feedforward components. The [feedforward] coefficients are designed for DC motor feedforward
- * control (the most common kind of feedforward in FTC). [kF] provides a custom feedforward term for other plants.
+ * PID controller with [kF] as a custom feedforward term for other plants.
  *
  * @param pid traditional PID coefficients
- * @param feedforward optional motor feedforward coefficients
  * @param kF custom feedforward that depends on position and/or velocity (e.g., a gravity term for arms)
  * @param clock clock
  */
 class PIDFController @JvmOverloads constructor(
     pid: PIDCoefficients,
-    var feedforward: FeedforwardCoefficients = FeedforwardCoefficients(),
     var kF: (Double, Double?) -> Double = { _, _ -> 0.0 },
     private val clock: NanoClock = NanoClock.system()
 ) {
@@ -147,22 +144,16 @@ class PIDFController @JvmOverloads constructor(
                 errorSum = 0.0
             }
             val errorDeriv =
-                (measuredVelocity?.let { targetVelocity - it } ?: (error - lastError) / dt)
+                measuredVelocity?.let { targetVelocity - it } ?: ((error - lastError) / dt)
             val filteredDeriv = (errorDeriv * pid.N) / (errorSum + pid.N)
 
             lastError = error
             lastUpdateTimestamp = currentTimestamp
 
-            val baseOutput = pid.kP * error + pid.kI * errorSum +
+            val output = pid.kP * error + pid.kI * errorSum +
                     pid.kD * filteredDeriv + kF(
                 measuredPosition,
                 measuredVelocity
-            )
-            val output = Kinematics.calculateMotorFeedforward(
-                targetVelocity,
-                targetAcceleration,
-                feedforward,
-                baseOutput
             )
 
             if (outputBounded) {

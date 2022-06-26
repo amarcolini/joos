@@ -12,7 +12,9 @@ import com.amarcolini.joos.kinematics.MecanumKinematics
 import com.amarcolini.joos.localization.Localizer
 import com.amarcolini.joos.localization.MecanumLocalizer
 import com.amarcolini.joos.trajectory.config.MecanumConstraints
+import com.amarcolini.joos.trajectory.config.TrajectoryConstraints
 import com.amarcolini.joos.util.deg
+import com.amarcolini.joos.util.rad
 import kotlin.math.abs
 
 /**
@@ -24,7 +26,7 @@ open class MecanumDrive @JvmOverloads constructor(
     private val backRight: Motor,
     private val frontRight: Motor,
     final override val imu: Imu? = null,
-    final override val constraints: MecanumConstraints = MecanumConstraints(
+    constraints: MecanumConstraints = MecanumConstraints(
         listOf(
             frontLeft,
             backLeft,
@@ -35,6 +37,23 @@ open class MecanumDrive @JvmOverloads constructor(
     translationalPID: PIDCoefficients = PIDCoefficients(1.0, 0.0, 0.5),
     headingPID: PIDCoefficients = PIDCoefficients(1.0, 0.0, 0.5)
 ) : DriveComponent() {
+    /**
+     * Constructs a mecanum drive from a [MotorGroup] that contains all of its motors.
+     */
+    @JvmOverloads
+    constructor(
+        motors: MotorGroup,
+        imu: Imu? = null,
+        constraints: MecanumConstraints = MecanumConstraints(motors.maxDistanceVelocity),
+        translationalPID: PIDCoefficients = PIDCoefficients(1.0, 0.0, 0.5),
+        headingPID: PIDCoefficients = PIDCoefficients(1.0, 0.0, 0.5)
+    ) : this(
+        motors.motors[0],
+        motors.motors[1],
+        motors.motors[2],
+        motors.motors[3],
+        imu, constraints, translationalPID, headingPID
+    )
 
     private val wheels = listOf(frontLeft, backLeft, backRight, frontRight)
 
@@ -43,6 +62,10 @@ open class MecanumDrive @JvmOverloads constructor(
      */
     @JvmField
     val motors: MotorGroup = MotorGroup(frontLeft, backLeft, backRight, frontRight)
+
+    final override val constraints: MecanumConstraints =
+        if (constraints.maxWheelVel <= 0) constraints.copy(maxWheelVel = motors.maxDistanceVelocity)
+        else constraints
 
     override val trajectoryFollower = HolonomicPIDVAFollower(
         translationalPID, translationalPID,
@@ -86,7 +109,7 @@ open class MecanumDrive @JvmOverloads constructor(
     override fun setDrivePower(drivePower: Pose2d) {
         wheels.zip(
             MecanumKinematics.robotToWheelVelocities(
-                drivePower,
+                drivePower.copy(heading = drivePower.heading.value.rad),
                 1.0,
                 1.0,
                 constraints.lateralMultiplier
@@ -103,9 +126,9 @@ open class MecanumDrive @JvmOverloads constructor(
     ) {
         var vel = drivePower
 
-        if (abs(vel.x) + abs(vel.y) + abs(vel.heading.defaultValue) > 1) {
+        if (abs(vel.x) + abs(vel.y) + abs(vel.heading.value) > 1) {
             val denom =
-                xWeight * abs(vel.x) + yWeight * abs(vel.y) + headingWeight * abs(vel.heading.defaultValue)
+                xWeight * abs(vel.x) + yWeight * abs(vel.y) + headingWeight * abs(vel.heading.value)
             vel = Pose2d(vel.x * xWeight, vel.y * yWeight, vel.heading * headingWeight) / denom
         }
 

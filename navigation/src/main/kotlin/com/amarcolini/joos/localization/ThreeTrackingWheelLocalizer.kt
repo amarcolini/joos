@@ -2,6 +2,7 @@ package com.amarcolini.joos.localization
 
 import com.amarcolini.joos.geometry.Pose2d
 import com.amarcolini.joos.kinematics.Kinematics
+import com.amarcolini.joos.util.rad
 import org.apache.commons.math3.linear.Array2DRowRealMatrix
 import org.apache.commons.math3.linear.DecompositionSolver
 import org.apache.commons.math3.linear.LUDecomposition
@@ -57,7 +58,7 @@ abstract class ThreeTrackingWheelLocalizer(
         return Pose2d(
             rawPoseDelta.getEntry(0, 0),
             rawPoseDelta.getEntry(1, 0),
-            rawPoseDelta.getEntry(2, 0)
+            rawPoseDelta.getEntry(2, 0).rad
         )
     }
 

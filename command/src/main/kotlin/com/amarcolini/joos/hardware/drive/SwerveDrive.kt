@@ -14,7 +14,9 @@ import com.amarcolini.joos.kinematics.SwerveKinematics
 import com.amarcolini.joos.localization.Localizer
 import com.amarcolini.joos.localization.SwerveLocalizer
 import com.amarcolini.joos.trajectory.config.SwerveConstraints
+import com.amarcolini.joos.trajectory.config.TrajectoryConstraints
 import com.amarcolini.joos.util.deg
+import com.amarcolini.joos.util.rad
 import kotlin.math.abs
 
 /**
@@ -26,7 +28,7 @@ open class SwerveDrive @JvmOverloads constructor(
     private val backRight: Pair<Motor, Servo>,
     private val frontRight: Pair<Motor, Servo>,
     final override val imu: Imu? = null,
-    final override val constraints: SwerveConstraints = SwerveConstraints(
+    constraints: SwerveConstraints = SwerveConstraints(
         listOf(
             frontLeft,
             backLeft,
@@ -47,6 +49,10 @@ open class SwerveDrive @JvmOverloads constructor(
      */
     @JvmField
     val motors: MotorGroup = MotorGroup(frontLeft.first, backLeft.first, backRight.first, frontRight.first)
+
+    final override val constraints: SwerveConstraints =
+        if (constraints.maxWheelVel <= 0) constraints.copy(motors.maxDistanceVelocity)
+        else constraints
 
     override val trajectoryFollower = HolonomicPIDVAFollower(
         translationalPID, translationalPID,
@@ -92,17 +98,18 @@ open class SwerveDrive @JvmOverloads constructor(
     }
 
     override fun setDrivePower(drivePower: Pose2d) {
+        val power = drivePower.copy(heading = drivePower.heading.value.rad)
         val avg = (constraints.trackWidth + constraints.wheelBase) / 2.0
         wheels.zip(
             SwerveKinematics.robotToWheelVelocities(
-                drivePower,
+                power,
                 constraints.trackWidth / avg,
                 constraints.wheelBase / avg,
             )
         ).forEach { (motor, speed) -> motor.power = speed }
         servos.zip(
             SwerveKinematics.robotToModuleOrientations(
-                drivePower,
+                power,
                 constraints.trackWidth / avg,
                 constraints.wheelBase / avg
             )
@@ -120,9 +127,9 @@ open class SwerveDrive @JvmOverloads constructor(
     ) {
         var vel = drivePower
 
-        if (abs(vel.x) + abs(vel.y) + abs(vel.heading.radians) > 1) {
+        if (abs(vel.x) + abs(vel.y) + abs(vel.heading.value) > 1) {
             val denom =
-                xWeight * abs(vel.x) + yWeight * abs(vel.y) + headingWeight * abs(vel.heading.radians)
+                xWeight * abs(vel.x) + yWeight * abs(vel.y) + headingWeight * abs(vel.heading.value)
             vel = Pose2d(vel.x * xWeight, vel.y * yWeight, vel.heading * headingWeight) / denom
         }
 

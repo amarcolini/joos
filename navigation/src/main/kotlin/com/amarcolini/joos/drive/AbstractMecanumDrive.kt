@@ -42,8 +42,7 @@ abstract class AbstractMecanumDrive @JvmOverloads constructor(
             wheelBase,
             lateralMultiplier
         )
-        val powers =
-            Kinematics.calculateMotorFeedforward(velocities, accelerations, feedforward)
+        val powers = feedforward.calculate(velocities, accelerations)
         setMotorPowers(powers[0], powers[1], powers[2], powers[3])
     }
 

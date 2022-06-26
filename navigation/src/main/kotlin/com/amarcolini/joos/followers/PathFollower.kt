@@ -44,7 +44,7 @@ abstract class PathFollower @JvmOverloads constructor(
     }
 
     /**
-     * Returns true if the current path has finished executing.
+     * Returns false if the current path has finished executing.
      */
     fun isFollowing(): Boolean {
         return !admissible

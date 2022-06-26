@@ -1,14 +1,21 @@
 import com.amarcolini.joos.command.*
 import com.amarcolini.joos.gamepad.Button
 import com.amarcolini.joos.util.NanoClock
+import com.amarcolini.joos.util.epsilonEquals
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import kotlin.math.abs
+import kotlin.math.log
 
 private const val logOutput: Boolean = true
 
 class CommandTest {
     private val scheduler = CommandScheduler
+
+    @BeforeEach
+    fun reset() {
+        scheduler.reset()
+    }
 
     @Test
     fun testCommandLifeCycle() {
@@ -269,6 +276,25 @@ class CommandTest {
         }
         cmd.run()
         assert(number == 1)
+    }
+
+    @Test
+    fun testTimeCommand() {
+        if (logOutput) println("   **testTimeCommand**")
+        var time = 0.0
+        var compounded = 0.0
+        scheduler.schedule(TimeCommand({ t, dt ->
+            compounded += dt
+            t > 3
+        }, object : NanoClock() {
+            override fun seconds() = time
+        }))
+        repeat(40) {
+            scheduler.update()
+            time += 0.1
+        }
+        if (logOutput) println(compounded)
+        assert(compounded epsilonEquals 3.0)
     }
 }
 

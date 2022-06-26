@@ -29,19 +29,19 @@ class TurnSegment(
 
     override fun deriv(time: Double) = Pose2d(
         get(time).heading.vec(),
-        profile[time].v
+        profile[time].v.rad
     )
 
     override fun secondDeriv(time: Double) = acceleration(time)
 
     override fun velocity(time: Double) = Pose2d(
         Vector2d(),
-        profile[time].v
+        profile[time].v.rad
     )
 
     override fun acceleration(time: Double) = Pose2d(
         Vector2d(),
-        profile[time].a
+        profile[time].a.rad
     )
 
     override fun start() = pose

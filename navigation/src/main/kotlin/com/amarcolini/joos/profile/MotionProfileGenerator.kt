@@ -1,7 +1,7 @@
 package com.amarcolini.joos.profile
 
 import com.amarcolini.joos.util.DoubleProgression
-import com.amarcolini.joos.util.MathUtil.solveQuadratic
+import com.amarcolini.joos.util.solveQuadratic
 import com.amarcolini.joos.util.epsilonEquals
 import com.amarcolini.joos.util.minus
 import kotlin.math.abs

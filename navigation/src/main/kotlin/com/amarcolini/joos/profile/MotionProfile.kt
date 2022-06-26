@@ -39,7 +39,7 @@ class MotionProfile(val segments: List<MotionSegment>) {
     fun reversed() = MotionProfile(segments.map { it.reversed() }.reversed())
 
     /**
-     * Returns a flipped version of the motion profile.
+     * Returns a flipped (negated) version of the motion profile.
      */
     fun flipped() = MotionProfile(segments.map { it.flipped() })
 

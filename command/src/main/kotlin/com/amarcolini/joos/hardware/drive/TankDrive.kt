@@ -14,6 +14,7 @@ import com.amarcolini.joos.localization.Localizer
 import com.amarcolini.joos.localization.TankLocalizer
 import com.amarcolini.joos.trajectory.config.TankConstraints
 import com.amarcolini.joos.util.deg
+import com.amarcolini.joos.util.rad
 import kotlin.math.abs
 import kotlin.math.min
 
@@ -25,7 +26,7 @@ open class TankDrive @JvmOverloads constructor(
     private val left: MotorGroup,
     private val right: MotorGroup,
     final override val imu: Imu? = null,
-    final override val constraints: TankConstraints = TankConstraints(
+    constraints: TankConstraints = TankConstraints(
         min(
             left.maxDistanceVelocity,
             right.maxDistanceVelocity
@@ -42,6 +43,10 @@ open class TankDrive @JvmOverloads constructor(
      */
     @JvmField
     val motors: MotorGroup = MotorGroup(left, right)
+
+    final override val constraints: TankConstraints =
+        if (constraints.maxWheelVel <= 0) constraints.copy(motors.maxDistanceVelocity)
+        else constraints
 
     override val trajectoryFollower: TrajectoryFollower = TankPIDVAFollower(
         axialPID, headingPID, Pose2d(0.5, 0.5, 5.deg), 0.5
@@ -73,7 +78,7 @@ open class TankDrive @JvmOverloads constructor(
     override fun setDrivePower(drivePower: Pose2d) {
         wheels.zip(
             TankKinematics.robotToWheelVelocities(
-                Pose2d(drivePower.x, 0.0, drivePower.heading), 1.0
+                drivePower.copy(heading = drivePower.heading.value.rad), 2.0
             )
         ).forEach { (motor, speed) -> motor.setPower(speed) }
     }
@@ -86,10 +91,10 @@ open class TankDrive @JvmOverloads constructor(
     ) {
         var vel = drivePower
 
-        if (abs(vel.x) + abs(vel.heading.defaultValue) > 1) {
+        if (abs(vel.x) + abs(vel.heading.value) > 1) {
             val denom =
-                xWeight * abs(vel.x) + headingWeight * abs(vel.heading.defaultValue)
-            vel = Pose2d(vel.x * xWeight, 0.0, vel.heading.defaultValue * headingWeight) / denom
+                xWeight * abs(vel.x) + headingWeight * abs(vel.heading.value)
+            vel = Pose2d(vel.x * xWeight, 0.0, vel.heading * headingWeight) / denom
         }
 
         setDrivePower(vel)

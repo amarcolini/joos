@@ -61,6 +61,8 @@ object ConfigHandler {
 
         initTasks.forEach { it() }
         initTasks.clear()
+
+        FtcDashboard.getInstance().updateConfig()
     }
 
     private fun parse(value: Any?): ConfigVariable<*>? {
@@ -68,7 +70,7 @@ object ConfigHandler {
             val propertyClass = property.returnType.jvmErasure
             return when (VariableType.fromClass(propertyClass.java)) {
                 VariableType.BOOLEAN, VariableType.INT, VariableType.DOUBLE, VariableType.STRING, VariableType.ENUM -> {
-                    if (property !is KMutableProperty<*>) null
+                    if (property !is KMutableProperty<*> || property.setter.visibility != KVisibility.PUBLIC) null
                     else ConfigUtils.createVariable(property as KMutableProperty1<Any, *>, parent)
                 }
                 VariableType.CUSTOM -> {
@@ -81,6 +83,7 @@ object ConfigHandler {
                     if (providedConfig != null) return providedConfig
                     val customVariable = CustomVariable()
                     for (memberProperty in propertyClass.declaredMemberProperties) {
+                        if (property.visibility != KVisibility.PUBLIC || (property is KMutableProperty<*> && property.setter.visibility != KVisibility.PUBLIC)) continue
                         val name = memberProperty.name
                         try {
                             val nestedVariable =
@@ -116,6 +119,7 @@ object ConfigHandler {
                 if (providedConfig != null) return providedConfig
                 val customVariable = CustomVariable()
                 for (memberProperty in value::class.declaredMemberProperties) {
+                    if (memberProperty.visibility != KVisibility.PUBLIC || (memberProperty is KMutableProperty<*> && memberProperty.setter.visibility != KVisibility.PUBLIC)) continue
                     val name = memberProperty.name
                     try {
                         val nestedVariable = internalParse(memberProperty as KProperty1<Any, Any>, value)
@@ -132,6 +136,7 @@ object ConfigHandler {
     }
 
     private fun parseField(field: Field, group: String) {
+        if (!Modifier.isPublic(field.modifiers)) return
         FtcDashboard.getInstance().withConfigRoot { configRoot ->
             val rootVariable = configRoot.getVariable(group) as? CustomVariable ?: CustomVariable().also {
                 configRoot.putVariable(group, it)
@@ -147,6 +152,7 @@ object ConfigHandler {
     }
 
     private fun parseProperty(property: KProperty0<Any>, group: String) {
+        if (property.visibility != KVisibility.PUBLIC) return
         FtcDashboard.getInstance().withConfigRoot { configRoot ->
             val rootVariable = configRoot.getVariable(group) as? CustomVariable ?: CustomVariable().also {
                 configRoot.putVariable(group, it)

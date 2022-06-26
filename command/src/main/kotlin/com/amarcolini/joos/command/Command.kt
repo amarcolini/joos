@@ -95,12 +95,17 @@ abstract class Command : CommandInterface {
         requirements.forEach { it.update() }
         init()
         CommandScheduler.telemetry.update()
+        var interrupted = false
         do {
             requirements.forEach { it.update() }
             execute()
             CommandScheduler.telemetry.update()
+            if (Thread.currentThread().isInterrupted) {
+                interrupted = true
+                break
+            }
         } while (!isFinished())
-        end(false)
+        end(interrupted)
         CommandScheduler.telemetry.update()
     }
 
@@ -109,8 +114,9 @@ abstract class Command : CommandInterface {
     /**
      * Adds a command to run after this one.
      */
-    infix fun then(other: Command): SequentialCommand =
-        SequentialCommand(isInterruptable && other.isInterruptable, this, other)
+    infix fun then(other: Command): SequentialCommand = if (this is SequentialCommand)
+        this.apply { add(other) }
+    else SequentialCommand(isInterruptable && other.isInterruptable, this, other)
 
     /**
      * Adds a runnable to run after this one.
@@ -127,8 +133,9 @@ abstract class Command : CommandInterface {
     /**
      * Adds a command to run in parallel with this one (Both run simultaneously until they finish).
      */
-    infix fun and(other: Command): ParallelCommand =
-        ParallelCommand(isInterruptable && other.isInterruptable, this, other)
+    infix fun and(other: Command): ParallelCommand = if (this is ParallelCommand)
+        this.apply { add(other) }
+    else ParallelCommand(isInterruptable && other.isInterruptable, this, other)
 
     /**
      * Adds a runnable to run in parallel with this one (Both run simultaneously until they finish).
@@ -139,8 +146,9 @@ abstract class Command : CommandInterface {
     /**
      * Adds a command to run in parallel with this one (Both run simultaneously until one finishes).
      */
-    infix fun race(other: Command): RaceCommand =
-        RaceCommand(isInterruptable && other.isInterruptable, this, other)
+    infix fun race(other: Command): RaceCommand = if (this is RaceCommand)
+        this.apply { add(other) }
+    else RaceCommand(isInterruptable && other.isInterruptable, this, other)
 
     /**
      * Adds a runnable to run in parallel with this one (Both run simultaneously until one finishes).
@@ -157,15 +165,18 @@ abstract class Command : CommandInterface {
     /**
      * Overrides this command's [isFinished] function to finish when [condition] returns true.
      */
-    fun runUntil(condition: BooleanSupplier): FunctionalCommand =
-        FunctionalCommand(
-            this::init,
-            this::execute,
-            this::end,
-            condition,
-            isInterruptable,
-            requirements
-        )
+    fun runUntil(condition: BooleanSupplier): FunctionalCommand = if (this is FunctionalCommand)
+        this.apply {
+            isFinished = condition
+        }
+    else FunctionalCommand(
+        this::init,
+        this::execute,
+        this::end,
+        condition,
+        isInterruptable,
+        requirements
+    )
 
     /**
      * Overrides this command's [isFinished] function to finish when [condition] returns true, or, if it doesn't,
@@ -185,9 +196,21 @@ abstract class Command : CommandInterface {
     fun runOnce(): FunctionalCommand = runUntil { true }
 
     /**
+     * Repeats this command [times] times.
+     */
+    fun repeat(times: Int): RepeatCommand = RepeatCommand(this, times)
+
+    /**
+     * Repeats this command indefinitely.
+     */
+    fun repeatForever(): RepeatCommand = RepeatCommand(this, -1)
+
+    /**
      * Overrides this command's [init] function.
      */
-    fun init(action: Runnable): FunctionalCommand = FunctionalCommand(
+    fun init(action: Runnable): FunctionalCommand = if (this is FunctionalCommand)
+        this.apply { init = action }
+    else FunctionalCommand(
         action,
         this::execute,
         this::end,
@@ -199,7 +222,9 @@ abstract class Command : CommandInterface {
     /**
      * Overrides this command's [execute] function.
      */
-    fun execute(action: Runnable): FunctionalCommand = FunctionalCommand(
+    fun execute(action: Runnable): FunctionalCommand = if (this is FunctionalCommand)
+        this.apply { execute = action }
+    else FunctionalCommand(
         this::init,
         action,
         this::end,
@@ -211,7 +236,9 @@ abstract class Command : CommandInterface {
     /**
      * Overrides this command's [end] function.
      */
-    fun end(action: Consumer<Boolean>): FunctionalCommand = FunctionalCommand(
+    fun end(action: Consumer<Boolean>): FunctionalCommand = if (this is FunctionalCommand)
+        this.apply { end = action }
+    else FunctionalCommand(
         this::init,
         this::execute,
         action,
@@ -223,52 +250,61 @@ abstract class Command : CommandInterface {
     /**
      * Returns a [ListenerCommand] that runs the specified action when this command initializes.
      */
-    fun onInit(action: Runnable): ListenerCommand =
-        ListenerCommand(this, action, {}, {})
+    fun onInit(action: Runnable): ListenerCommand = if (this is ListenerCommand)
+        this.apply { onInit = action }
+    else ListenerCommand(this, action, {}, {})
 
     /**
      * Returns a [ListenerCommand] that runs the specified action whenever this command updates.
      */
-    fun onExecute(action: Runnable): ListenerCommand =
-        ListenerCommand(this, {}, action, {})
+    fun onExecute(action: Runnable): ListenerCommand = if (this is ListenerCommand)
+        this.apply { onExecute = action }
+    else ListenerCommand(this, {}, action, {})
 
     /**
      * Returns a [ListenerCommand] that runs the specified action when this command is ended.
      */
-    fun onEnd(action: Consumer<Boolean>): ListenerCommand =
-        ListenerCommand(this, {}, {}, action)
+    fun onEnd(action: Consumer<Boolean>): ListenerCommand = if (this is ListenerCommand)
+        this.apply { onEnd = action }
+    else ListenerCommand(this, {}, {}, action)
 
     /**
      * Adds [requirements] to this command's list of required components.
      */
-    fun requires(requirements: Set<Component>): FunctionalCommand =
-        FunctionalCommand(
-            this::init,
-            this::execute,
-            this::end,
-            this::isFinished,
-            this.isInterruptable,
-            this.requirements + requirements
-        )
+    fun requires(requirements: Set<Component>): FunctionalCommand = if (
+        this is FunctionalCommand
+    ) this.apply { this.requirements += requirements }
+    else FunctionalCommand(
+        this::init,
+        this::execute,
+        this::end,
+        this::isFinished,
+        this.isInterruptable,
+        this.requirements + requirements
+    )
 
     /**
      * Adds [requirements] to this command's list of required components.
      */
-    fun requires(vararg requirements: Component): FunctionalCommand =
-        FunctionalCommand(
-            this::init,
-            this::execute,
-            this::end,
-            this::isFinished,
-            this.isInterruptable,
-            this.requirements + requirements
-        )
+    fun requires(vararg requirements: Component): FunctionalCommand = if (
+        this is FunctionalCommand
+    ) this.apply { this.requirements += requirements }
+    else FunctionalCommand(
+        this::init,
+        this::execute,
+        this::end,
+        this::isFinished,
+        this.isInterruptable,
+        this.requirements + requirements
+    )
 
     /**
      * Sets whether this command is interruptable.
      */
-    fun isInterruptable(interruptable: Boolean): FunctionalCommand =
-        FunctionalCommand(
+    fun setInterruptable(interruptable: Boolean): Command = when (this) {
+        is FunctionalCommand -> this.apply { isInterruptable = interruptable }
+        is CommandGroup -> this.apply { isInterruptable = interruptable }
+        else -> FunctionalCommand(
             this::init,
             this::execute,
             this::end,
@@ -276,4 +312,10 @@ abstract class Command : CommandInterface {
             interruptable,
             requirements
         )
+    }
+
+    /**
+     * Stops the currently active OpMode after this command ends.
+     */
+    fun thenStopOpMode(): SequentialCommand = this then CommandScheduler::stopOpMode
 }

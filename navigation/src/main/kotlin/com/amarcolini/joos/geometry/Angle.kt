@@ -33,7 +33,7 @@ enum class AngleUnit {
 class Angle @JvmOverloads constructor(
     @JvmField var value: Double = 0.0,
     @JvmField var units: AngleUnit = defaultUnits
-) {
+) : Comparable<Angle> {
 
     companion object Static {
         /**
@@ -216,7 +216,7 @@ class Angle @JvmOverloads constructor(
      * Returns 1 if this angle is greater than [other], 0 if they are equal, and -1 if this angle
      * is less than [other].
      */
-    operator fun compareTo(other: Angle): Int {
+    override operator fun compareTo(other: Angle): Int {
         return if (this == other) 0
         else if (this.getValue(other.units) > other.value) 1 else -1
     }

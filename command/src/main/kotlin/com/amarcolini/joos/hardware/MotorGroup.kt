@@ -7,11 +7,7 @@ import com.amarcolini.joos.control.FeedforwardCoefficients
 import com.amarcolini.joos.control.PIDCoefficients
 import com.amarcolini.joos.geometry.Angle
 import com.amarcolini.joos.hardware.Motor.RunMode
-import com.amarcolini.joos.util.NanoClock
-import com.amarcolini.joos.util.rad
 import com.qualcomm.robotcore.hardware.HardwareMap
-import kotlin.math.PI
-import kotlin.math.roundToInt
 
 /**
  * A class that runs multiple motors together as a unit.
@@ -50,8 +46,19 @@ class MotorGroup(vararg val motors: Motor) : Component {
      * @param ids the device ids from the RC config and whether those motors should be reversed
      */
     @JvmOverloads
+    @SafeVarargs
     constructor(hMap: HardwareMap, maxRPM: Double, TPR: Double = 1.0, vararg ids: Pair<String, Boolean>) : this(
         *ids.map { Motor(hMap, it.first, maxRPM, TPR).apply { reversed = it.second } }.toTypedArray()
+    )
+
+    /**
+     * @param hMap the hardware map from the OpMode
+     * @param kind the kind of all the motors
+     * @param ids the device ids from the RC config and whether those motors should be reversed
+     */
+    @SafeVarargs
+    constructor(hMap: HardwareMap, kind: Motor.Kind, vararg ids: Pair<String, Boolean>) : this(
+        hMap, kind.maxRPM, kind.TPR, *ids
     )
 
     /**
@@ -62,6 +69,7 @@ class MotorGroup(vararg val motors: Motor) : Component {
      * @param ids the device ids from the RC config and whether those motors should be reversed
      */
     @JvmOverloads
+    @SafeVarargs
     constructor(
         hMap: HardwareMap,
         kind: Motor.Kind,
@@ -115,6 +123,7 @@ class MotorGroup(vararg val motors: Motor) : Component {
      * @param ids the device ids from the RC config and whether those motors should be reversed
      */
     @JvmOverloads
+    @SafeVarargs
     constructor(
         hMap: HardwareMap,
         maxRPM: Double,
@@ -138,8 +147,7 @@ class MotorGroup(vararg val motors: Motor) : Component {
     /**
      * The maximum distance velocity that all motors in the group can achieve.
      */
-    @JvmField
-    val maxDistanceVelocity: Double = motors.minOf { it.maxDistanceVelocity }
+    val maxDistanceVelocity: Double get() = motors.minOf { it.maxDistanceVelocity }
 
     /**
      * The maximum ticks per second velocity that all motors in the group can achieve.
@@ -153,15 +161,15 @@ class MotorGroup(vararg val motors: Motor) : Component {
     val rotation: List<Angle> get() = motors.map { it.rotation }
 
     /**
-     * The maximum distance that all motors in the group have travelled.
+     * The average distance that all motors in the group have travelled.
      * @see distanceVelocity
      */
-    val distance: Double get() = motors.minOf { it.distance }
+    val distance: Double get() = motors.map { it.distance }.average()
 
     /**
-     * The minimum distance velocity out of all motors in the group.
+     * The average distance velocity of all motors in the group.
      */
-    val distanceVelocity: Double get() = motors.minOf { it.distanceVelocity }
+    val distanceVelocity: Double get() = motors.map { it.distanceVelocity }.average()
 
     /**
      * Whether the motor group is reversed.

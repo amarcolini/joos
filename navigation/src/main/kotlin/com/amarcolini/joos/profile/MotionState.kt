@@ -6,10 +6,10 @@ import org.apache.commons.math3.util.FastMath
  * Kinematic state of a motion profile at any given time.
  */
 class MotionState @JvmOverloads constructor(
-    val x: Double,
-    val v: Double,
-    val a: Double = 0.0,
-    val j: Double = 0.0
+    @JvmField val x: Double,
+    @JvmField val v: Double,
+    @JvmField val a: Double = 0.0,
+    @JvmField val j: Double = 0.0
 ) {
 
     /**

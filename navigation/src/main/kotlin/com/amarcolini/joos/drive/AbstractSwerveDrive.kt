@@ -41,8 +41,7 @@ abstract class AbstractSwerveDrive @JvmOverloads constructor(
             trackWidth,
             wheelBase
         )
-        val powers =
-            Kinematics.calculateMotorFeedforward(velocities, accelerations, feedforward)
+        val powers = feedforward.calculate(velocities, accelerations)
         val orientations = SwerveKinematics.robotToModuleOrientations(
             driveSignal.vel,
             trackWidth,

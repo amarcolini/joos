@@ -51,6 +51,13 @@ object CommandScheduler : OpModeManagerNotifier.Notifications {
         }
 
     /**
+     * Stops the currently active OpMode.
+     */
+    fun stopOpMode() {
+        opMode?.requestOpModeStop()
+    }
+
+    /**
      * Whether the current OpMode is a teleop OpMode.
      */
     @JvmStatic

@@ -9,7 +9,6 @@ import com.amarcolini.joos.kinematics.DiffSwerveKinematics
 import com.amarcolini.joos.kinematics.Kinematics
 import com.amarcolini.joos.localization.DiffSwerveLocalizer
 import com.amarcolini.joos.localization.Localizer
-import com.amarcolini.joos.util.rad
 import com.amarcolini.joos.util.wrap
 import kotlin.math.PI
 import kotlin.math.abs
@@ -122,7 +121,7 @@ abstract class AbstractDiffSwerveDrive(
             leftAccel * leftDirection, -leftAccel * leftDirection,
             rightAccel * rightDirection, -rightAccel * rightDirection
         )
-        val powers = Kinematics.calculateMotorFeedforward(velocities, accelerations, feedforward)
+        val powers = feedforward.calculate(velocities, accelerations)
         setMotorPowers(powers[0], powers[1], powers[2], powers[3])
     }
 

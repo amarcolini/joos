@@ -40,6 +40,9 @@ class SuperTelemetry() {
 
     fun fieldOverlay(): Canvas = packet.fieldOverlay()
 
+    /**
+     * The basic telemetry line.
+     */
     abstract inner class Linable {
         abstract fun composed(): String
 
@@ -51,6 +54,9 @@ class SuperTelemetry() {
         }
     }
 
+    /**
+     * A [Linable] that can share a line with other [Inlinable]s.
+     */
     abstract inner class Inlinable : Linable() {
         var parent: Line? = null
             internal set
@@ -83,6 +89,9 @@ class SuperTelemetry() {
         }
     }
 
+    /**
+     * A container for [Inlinable]s with a caption.
+     */
     inner class Line(var caption: String, vararg items: Inlinable) : Linable() {
         internal constructor(vararg items: Inlinable) : this("", *items)
 
@@ -120,6 +129,9 @@ class SuperTelemetry() {
         }
     }
 
+    /**
+     * A telemetry item containing a caption and a value. Can share a line with other items.
+     */
     inner class Item(var caption: String, var value: String) : Inlinable() {
 
         fun setCaption(caption: String): Item {
@@ -145,6 +157,9 @@ class SuperTelemetry() {
         }
     }
 
+    /**
+     * A telemetry item that holds a data provider. Useful for changing data.
+     */
     inner class ItemProvider(var caption: String, var provider: Supplier<Any>) : Inlinable() {
         fun setCaption(caption: String): ItemProvider {
             this.caption = caption
@@ -224,7 +239,6 @@ class SuperTelemetry() {
         telemetries.forEach { it.speak(text, languageCode, countryCode) }
 
     fun update() {
-        telemetries.forEach { it.clearAll() }
         lines.forEach { line ->
             when (line) {
                 is Item -> {
@@ -242,6 +256,7 @@ class SuperTelemetry() {
         FtcDashboard.getInstance()?.sendTelemetryPacket(packet)
         packet = TelemetryPacket()
         telemetries.forEach { it.update() }
+        telemetries.forEach { it.clearAll() }
         if (isAutoClear) clear()
     }
 

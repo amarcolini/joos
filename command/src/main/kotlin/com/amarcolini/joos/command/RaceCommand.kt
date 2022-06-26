@@ -4,9 +4,14 @@ package com.amarcolini.joos.command
  * A command that runs commands in parallel until one of them finishes.
  */
 class RaceCommand @JvmOverloads constructor(
-    override val isInterruptable: Boolean = true,
-    private vararg val commands: Command
-) : CommandGroup(commands = commands) {
+    isInterruptable: Boolean = true,
+    vararg commands: Command
+) : CommandGroup(true, commands, isInterruptable) {
+    private val commands = commands.toMutableList()
+    override fun add(command: Command) {
+        commands += command
+        isInterruptable = isInterruptable && command.isInterruptable
+    }
 
     override fun init() {
         commands.forEach { it.init() }

@@ -44,7 +44,7 @@ class MotorTest {
         val tpr = 69.0
         val internal = DummyMotor(rpm, tpr)
         val motor = Motor(internal, rpm, tpr)
-        motor.distancePerRev = 2.0
+        motor.distancePerOutputRev = 2.0
         motor.power = 1.0
         internal.update()
         internal.update()

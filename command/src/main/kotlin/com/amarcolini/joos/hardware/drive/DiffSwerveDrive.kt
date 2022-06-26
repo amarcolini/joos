@@ -14,7 +14,9 @@ import com.amarcolini.joos.kinematics.DiffSwerveKinematics
 import com.amarcolini.joos.localization.DiffSwerveLocalizer
 import com.amarcolini.joos.localization.Localizer
 import com.amarcolini.joos.trajectory.config.DiffSwerveConstraints
+import com.amarcolini.joos.trajectory.config.TrajectoryConstraints
 import com.amarcolini.joos.util.deg
+import com.amarcolini.joos.util.rad
 import com.amarcolini.joos.util.wrap
 import kotlin.math.PI
 import kotlin.math.abs
@@ -26,7 +28,7 @@ open class DiffSwerveDrive(
     private val leftModule: Pair<Motor, Motor>,
     private val rightModule: Pair<Motor, Motor>,
     final override val imu: Imu? = null,
-    final override val constraints: DiffSwerveConstraints = DiffSwerveConstraints(
+    constraints: DiffSwerveConstraints = DiffSwerveConstraints(
         listOf(
             leftModule.first,
             leftModule.second,
@@ -38,6 +40,25 @@ open class DiffSwerveDrive(
     translationalPID: PIDCoefficients = PIDCoefficients(4.0, 0.0, 0.5),
     headingPID: PIDCoefficients = PIDCoefficients(4.0, 0.0, 0.5)
 ) : DriveComponent() {
+    /**
+     * Constructs a differential swerve drive from two [MotorGroup]s containing the motors of each module.
+     */
+    @JvmOverloads
+    constructor(
+        leftModule: MotorGroup,
+        rightModule: MotorGroup,
+        imu: Imu? = null,
+        constraints: DiffSwerveConstraints = DiffSwerveConstraints(
+            listOf(leftModule, rightModule).minOf { it.maxDistanceVelocity }
+        ),
+        moduleOrientationPID: PIDCoefficients,
+        translationalPID: PIDCoefficients = PIDCoefficients(4.0, 0.0, 0.5),
+        headingPID: PIDCoefficients = PIDCoefficients(4.0, 0.0, 0.5)
+    ) : this(
+        leftModule.motors[0] to leftModule.motors[1],
+        rightModule.motors[0] to rightModule.motors[1],
+        imu, constraints, moduleOrientationPID, translationalPID, headingPID
+    )
 
     private val gears = listOf(leftModule.first, leftModule.second, rightModule.first, rightModule.second)
 
@@ -46,6 +67,10 @@ open class DiffSwerveDrive(
      */
     @JvmField
     val motors: MotorGroup = MotorGroup(leftModule.first, leftModule.second, rightModule.first, rightModule.second)
+
+    final override val constraints: DiffSwerveConstraints =
+        if (constraints.maxGearVel <= 0) constraints.copy(motors.maxDistanceVelocity)
+        else constraints
 
     override val trajectoryFollower: TrajectoryFollower = HolonomicPIDVAFollower(
         translationalPID, translationalPID, headingPID, Pose2d(0.5, 0.5, 5.deg), 0.5
@@ -67,6 +92,8 @@ open class DiffSwerveDrive(
     init {
         leftModuleController.setInputBounds(-PI * 0.5, PI * 0.5)
         rightModuleController.setInputBounds(-PI * 0.5, PI * 0.5)
+        leftModuleController.outputBounded = false
+        rightModuleController.outputBounded = false
     }
 
     private var targetSpeeds: List<Pair<Double, Double>> = listOf(
@@ -89,26 +116,38 @@ open class DiffSwerveDrive(
             driveSignal.vel,
             constraints.trackWidth
         )
-        val (leftAngVel, rightAngVel) = DiffSwerveKinematics.robotToModuleAngularVelocities(
-            driveSignal.vel,
-            driveSignal.accel,
-            constraints.trackWidth
-        )
         leftModuleController.targetPosition = leftOrientation.radians
         rightModuleController.targetPosition = rightOrientation.radians
     }
 
     override fun setDrivePower(drivePower: Pose2d) {
-        targetSpeeds = DiffSwerveKinematics.robotToWheelVelocities(drivePower, 1.0).map {
+        val power = drivePower.copy(heading = drivePower.heading.value.rad)
+        targetSpeeds = DiffSwerveKinematics.robotToWheelVelocities(power, 1.0).map {
             it * constraints.maxGearVel
         }.zip(listOf(0.0, 0.0))
         val (leftOrientation, rightOrientation) = DiffSwerveKinematics.robotToModuleOrientations(
-            drivePower, 1.0
+            power, 1.0
         )
         leftModuleController.targetPosition = leftOrientation.radians
         rightModuleController.targetPosition = rightOrientation.radians
-        leftModuleController.outputBounded = false
-        rightModuleController.outputBounded = false
+    }
+
+    @JvmOverloads
+    fun setWeightedDrivePower(
+        drivePower: Pose2d,
+        xWeight: Double = 1.0,
+        yWeight: Double = 1.0,
+        headingWeight: Double = 1.0
+    ) {
+        var vel = drivePower
+
+        if (abs(vel.x) + abs(vel.y) + abs(vel.heading.value) > 1) {
+            val denom =
+                xWeight * abs(vel.x) + yWeight * abs(vel.y) + headingWeight * abs(vel.heading.value)
+            vel = Pose2d(vel.x * xWeight, vel.y * yWeight, vel.heading * headingWeight) / denom
+        }
+
+        setDrivePower(vel)
     }
 
     override fun update() {
@@ -120,7 +159,7 @@ open class DiffSwerveDrive(
             leftModule.second.rotation
         )
         val leftDirection =
-            if (abs((leftModuleController.targetPosition - leftOrientation.radians).wrap(-PI, PI)) <= (PI * 0.5)) 1 
+            if (abs((leftModuleController.targetPosition - leftOrientation.radians).wrap(-PI, PI)) <= (PI * 0.5)) 1
             else -1
         val leftControl = leftModuleController.update(leftOrientation.radians)
         leftModule.first.setSpeed(

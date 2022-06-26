@@ -15,15 +15,15 @@ import com.amarcolini.joos.trajectory.constraints.TrajectoryVelocityConstraint
 /**
  * Builder for trajectories with *dynamic* constraints.
  */
-class TrajectoryBuilder private constructor(
+open class TrajectoryBuilder protected constructor(
     startPose: Pose2d,
     startDeriv: Pose2d,
     startSecondDeriv: Pose2d,
-    private val baseVelConstraint: TrajectoryVelocityConstraint,
-    private val baseAccelConstraint: TrajectoryAccelerationConstraint,
-    private val baseAngVel: Angle,
-    private val baseAngAccel: Angle,
-    private val baseAngJerk: Angle,
+    @JvmField val baseVelConstraint: TrajectoryVelocityConstraint,
+    @JvmField val baseAccelConstraint: TrajectoryAccelerationConstraint,
+    @JvmField val baseAngVel: Angle,
+    @JvmField val baseAngAccel: Angle,
+    @JvmField val baseAngJerk: Angle,
     start: MotionState,
     private val resolution: Double
 ) : BaseTrajectoryBuilder<TrajectoryBuilder>(startPose, startDeriv, startSecondDeriv) {
@@ -203,6 +203,27 @@ class TrajectoryBuilder private constructor(
         resolution
     )
 
+    /**
+     * Create a builder from an active trajectory. This is useful for interrupting a live trajectory and smoothly
+     * transitioning to a new one.
+     */
+    @JvmOverloads
+    constructor(
+        trajectory: Trajectory,
+        t: Double,
+        constraints: TrajectoryConstraints,
+        resolution: Double = 0.25
+    ) : this(
+        trajectory,
+        t,
+        constraints.velConstraint,
+        constraints.accelConstraint,
+        constraints.maxAngVel,
+        constraints.maxAngAccel,
+        constraints.maxAngJerk,
+        resolution
+    )
+
     private var currentVelConstraint = baseVelConstraint
     private var currentAccelConstraint = baseAccelConstraint
 
@@ -316,7 +337,7 @@ class TrajectoryBuilder private constructor(
      * Resets the path constraints to the default constructor-provided values.
      */
     fun resetConstraints(): TrajectoryBuilder {
-        currentVelConstraint = baseVelConstraint
+        currentVelConstraint
         currentAccelConstraint = baseAccelConstraint
         return this
     }
@@ -376,6 +397,7 @@ class TrajectoryBuilder private constructor(
      * @param angle angle to turn (in degrees)
      * @param constraintsOverride segment-specific constraints
      */
+    @JvmOverloads
     fun turn(
         angle: Angle,
         angVelOverride: Angle,
@@ -394,9 +416,10 @@ class TrajectoryBuilder private constructor(
      * @param endPosition end position
      * @param constraintsOverride segment-specific constraints
      */
+    @JvmOverloads
     fun lineTo(
         endPosition: Vector2d,
-        velConstraintOverride: TrajectoryVelocityConstraint = baseVelConstraint,
+        velConstraintOverride: TrajectoryVelocityConstraint,
         accelConstraintOverride: TrajectoryAccelerationConstraint = baseAccelConstraint
     ) =
         addSegment({ lineTo(endPosition) }, velConstraintOverride, accelConstraintOverride)
@@ -407,9 +430,10 @@ class TrajectoryBuilder private constructor(
      * @param endPosition end position
      * @param constraintsOverride segment-specific constraints
      */
+    @JvmOverloads
     fun lineToConstantHeading(
         endPosition: Vector2d,
-        velConstraintOverride: TrajectoryVelocityConstraint = baseVelConstraint,
+        velConstraintOverride: TrajectoryVelocityConstraint,
         accelConstraintOverride: TrajectoryAccelerationConstraint = baseAccelConstraint
     ) =
         addSegment(
@@ -424,9 +448,10 @@ class TrajectoryBuilder private constructor(
      * @param endPose end pose
      * @param constraintsOverride segment-specific constraints
      */
+    @JvmOverloads
     fun lineToLinearHeading(
         endPose: Pose2d,
-        velConstraintOverride: TrajectoryVelocityConstraint = baseVelConstraint,
+        velConstraintOverride: TrajectoryVelocityConstraint,
         accelConstraintOverride: TrajectoryAccelerationConstraint = baseAccelConstraint
     ) =
         addSegment({ lineToLinearHeading(endPose) }, velConstraintOverride, accelConstraintOverride)
@@ -437,9 +462,10 @@ class TrajectoryBuilder private constructor(
      * @param endPose end pose
      * @param constraintsOverride segment-specific constraints
      */
+    @JvmOverloads
     fun lineToSplineHeading(
         endPose: Pose2d,
-        velConstraintOverride: TrajectoryVelocityConstraint = baseVelConstraint,
+        velConstraintOverride: TrajectoryVelocityConstraint,
         accelConstraintOverride: TrajectoryAccelerationConstraint = baseAccelConstraint
     ) =
         addSegment({ lineToSplineHeading(endPose) }, velConstraintOverride, accelConstraintOverride)
@@ -450,9 +476,10 @@ class TrajectoryBuilder private constructor(
      * @param endPosition end position
      * @param constraintsOverride segment-specific constraints
      */
+    @JvmOverloads
     fun strafeTo(
         endPosition: Vector2d,
-        velConstraintOverride: TrajectoryVelocityConstraint = baseVelConstraint,
+        velConstraintOverride: TrajectoryVelocityConstraint,
         accelConstraintOverride: TrajectoryAccelerationConstraint = baseAccelConstraint
     ) =
         addSegment({ strafeTo(endPosition) }, velConstraintOverride, accelConstraintOverride)
@@ -463,9 +490,10 @@ class TrajectoryBuilder private constructor(
      * @param distance distance to travel forward
      * @param constraintsOverride segment-specific constraints
      */
+    @JvmOverloads
     fun forward(
         distance: Double,
-        velConstraintOverride: TrajectoryVelocityConstraint = baseVelConstraint,
+        velConstraintOverride: TrajectoryVelocityConstraint,
         accelConstraintOverride: TrajectoryAccelerationConstraint = baseAccelConstraint
     ) =
         addSegment({ forward(distance) }, velConstraintOverride, accelConstraintOverride)
@@ -476,9 +504,10 @@ class TrajectoryBuilder private constructor(
      * @param distance distance to travel backward
      * @param constraintsOverride segment-specific constraints
      */
+    @JvmOverloads
     fun back(
         distance: Double,
-        velConstraintOverride: TrajectoryVelocityConstraint = baseVelConstraint,
+        velConstraintOverride: TrajectoryVelocityConstraint,
         accelConstraintOverride: TrajectoryAccelerationConstraint = baseAccelConstraint
     ) =
         addSegment({ back(distance) }, velConstraintOverride, accelConstraintOverride)
@@ -489,9 +518,10 @@ class TrajectoryBuilder private constructor(
      * @param distance distance to strafe left
      * @param constraintsOverride segment-specific constraints
      */
+    @JvmOverloads
     fun strafeLeft(
         distance: Double,
-        velConstraintOverride: TrajectoryVelocityConstraint = baseVelConstraint,
+        velConstraintOverride: TrajectoryVelocityConstraint,
         accelConstraintOverride: TrajectoryAccelerationConstraint = baseAccelConstraint
     ) =
         addSegment({ strafeLeft(distance) }, velConstraintOverride, accelConstraintOverride)
@@ -502,9 +532,10 @@ class TrajectoryBuilder private constructor(
      * @param distance distance to strafe right
      * @param constraintsOverride segment-specific constraints
      */
+    @JvmOverloads
     fun strafeRight(
         distance: Double,
-        velConstraintOverride: TrajectoryVelocityConstraint = baseVelConstraint,
+        velConstraintOverride: TrajectoryVelocityConstraint,
         accelConstraintOverride: TrajectoryAccelerationConstraint = baseAccelConstraint
     ) =
         addSegment({ strafeRight(distance) }, velConstraintOverride, accelConstraintOverride)
@@ -516,10 +547,11 @@ class TrajectoryBuilder private constructor(
      * @param endTangent end tangent
      * @param constraintsOverride segment-specific constraints
      */
+    @JvmOverloads
     fun splineTo(
         endPosition: Vector2d,
         endTangent: Angle,
-        velConstraintOverride: TrajectoryVelocityConstraint = baseVelConstraint,
+        velConstraintOverride: TrajectoryVelocityConstraint,
         accelConstraintOverride: TrajectoryAccelerationConstraint = baseAccelConstraint
     ) =
         addSegment(
@@ -535,10 +567,11 @@ class TrajectoryBuilder private constructor(
      * @param endTangent end tangent in [Angle.defaultUnits]
      * @param constraintsOverride segment-specific constraints
      */
+    @JvmOverloads
     fun splineTo(
         endPosition: Vector2d,
         endTangent: Double,
-        velConstraintOverride: TrajectoryVelocityConstraint = baseVelConstraint,
+        velConstraintOverride: TrajectoryVelocityConstraint,
         accelConstraintOverride: TrajectoryAccelerationConstraint = baseAccelConstraint
     ) = splineTo(endPosition, Angle(endTangent), velConstraintOverride, accelConstraintOverride)
 
@@ -549,10 +582,11 @@ class TrajectoryBuilder private constructor(
      * @param endTangent end tangent
      * @param constraintsOverride segment-specific constraints
      */
+    @JvmOverloads
     fun splineToConstantHeading(
         endPosition: Vector2d,
         endTangent: Angle,
-        velConstraintOverride: TrajectoryVelocityConstraint = baseVelConstraint,
+        velConstraintOverride: TrajectoryVelocityConstraint,
         accelConstraintOverride: TrajectoryAccelerationConstraint = baseAccelConstraint
     ) =
         addSegment(
@@ -568,10 +602,11 @@ class TrajectoryBuilder private constructor(
      * @param endTangent end tangent in [Angle.defaultUnits]
      * @param constraintsOverride segment-specific constraints
      */
+    @JvmOverloads
     fun splineToConstantHeading(
         endPosition: Vector2d,
         endTangent: Double,
-        velConstraintOverride: TrajectoryVelocityConstraint = baseVelConstraint,
+        velConstraintOverride: TrajectoryVelocityConstraint,
         accelConstraintOverride: TrajectoryAccelerationConstraint = baseAccelConstraint
     ) = splineToConstantHeading(endPosition, Angle(endTangent), velConstraintOverride, accelConstraintOverride)
 
@@ -582,10 +617,11 @@ class TrajectoryBuilder private constructor(
      * @param endTangent end tangent
      * @param constraintsOverride segment-specific constraints
      */
+    @JvmOverloads
     fun splineToLinearHeading(
         endPose: Pose2d,
         endTangent: Angle,
-        velConstraintOverride: TrajectoryVelocityConstraint = baseVelConstraint,
+        velConstraintOverride: TrajectoryVelocityConstraint,
         accelConstraintOverride: TrajectoryAccelerationConstraint = baseAccelConstraint
     ) =
         addSegment(
@@ -601,10 +637,11 @@ class TrajectoryBuilder private constructor(
      * @param endTangent end tangent in [Angle.defaultUnits]
      * @param constraintsOverride segment-specific constraints
      */
+    @JvmOverloads
     fun splineToLinearHeading(
         endPose: Pose2d,
         endTangent: Double,
-        velConstraintOverride: TrajectoryVelocityConstraint = baseVelConstraint,
+        velConstraintOverride: TrajectoryVelocityConstraint,
         accelConstraintOverride: TrajectoryAccelerationConstraint = baseAccelConstraint
     ) = splineToLinearHeading(endPose, Angle(endTangent), velConstraintOverride, accelConstraintOverride)
 
@@ -615,10 +652,11 @@ class TrajectoryBuilder private constructor(
      * @param endTangent end tangent
      * @param constraintsOverride segment-specific constraints
      */
+    @JvmOverloads
     fun splineToSplineHeading(
         endPose: Pose2d,
         endTangent: Angle,
-        velConstraintOverride: TrajectoryVelocityConstraint = baseVelConstraint,
+        velConstraintOverride: TrajectoryVelocityConstraint,
         accelConstraintOverride: TrajectoryAccelerationConstraint = baseAccelConstraint
     ) =
         addSegment(
@@ -637,7 +675,7 @@ class TrajectoryBuilder private constructor(
     fun splineToSplineHeading(
         endPose: Pose2d,
         endTangent: Double,
-        velConstraintOverride: TrajectoryVelocityConstraint = baseVelConstraint,
+        velConstraintOverride: TrajectoryVelocityConstraint,
         accelConstraintOverride: TrajectoryAccelerationConstraint = baseAccelConstraint
     ) = splineToSplineHeading(endPose, Angle(endTangent), velConstraintOverride, accelConstraintOverride)
 

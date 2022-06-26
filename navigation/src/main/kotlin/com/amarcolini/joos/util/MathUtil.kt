@@ -1,85 +1,56 @@
+@file:JvmName("MathUtil")
+@file:JvmMultifileClass
+
 package com.amarcolini.joos.util
 
 import com.amarcolini.joos.geometry.Angle
 import com.amarcolini.joos.geometry.AngleUnit
 import com.amarcolini.joos.geometry.Pose2d
 import com.amarcolini.joos.geometry.Vector2d
-import com.amarcolini.joos.util.sign
 import kotlin.math.*
 
 /**
- * Various math utilities.
+ * Returns the real solutions to the quadratic ax^2 + bx + c.
  */
-object MathUtil {
-
-    /**
-     * Returns the real solutions to the quadratic ax^2 + bx + c.
-     */
-    @JvmStatic
-    fun solveQuadratic(a: Double, b: Double, c: Double): List<Double> {
-        val disc = b * b - 4 * a * c
-        return when {
-            disc epsilonEquals 0.0 -> listOf(-b / (2 * a))
-            disc > 0.0 -> listOf(
-                (-b + sqrt(disc)) / (2 * a),
-                (-b - sqrt(disc)) / (2 * a)
-            )
-            else -> emptyList()
-        }
+fun solveQuadratic(a: Double, b: Double, c: Double): List<Double> {
+    val disc = b * b - 4 * a * c
+    return when {
+        disc epsilonEquals 0.0 -> listOf(-b / (2 * a))
+        disc > 0.0 -> listOf(
+            (-b + sqrt(disc)) / (2 * a),
+            (-b - sqrt(disc)) / (2 * a)
+        )
+        else -> emptyList()
     }
-
-    /**
-     * Ensures that [n] lies in the range [min]..[max],
-     * where [min] and [max] are modularly-equivalent (that is, [n] wraps around).
-     */
-    @JvmStatic
-    fun wrap(n: Double, min: Double, max: Double): Double =
-        if (n < min) max - (min - n) % (max - min)
-        else min + (n - min) % (max - min)
-
-    /**
-     * Ensures that [n] lies in the range [min]..[max],
-     * where [min] and [max] are modularly-equivalent (that is, [n] wraps around).
-     */
-    @JvmStatic
-    fun wrap(n: Int, min: Int, max: Int): Int =
-        if (n < min) max - (min - n) % (max - min)
-        else min + (n - min) % (max - min)
-
-    /**
-     * Ensures that [n] lies in the range [min]..[max].
-     */
-    @JvmStatic
-    fun clamp(n: Double, min: Double, max: Double): Double = n.coerceIn(min, max)
-
-    @JvmStatic
-    fun cos(angle: Angle): Double = angle.cos()
-
-    @JvmStatic
-    fun sin(angle: Angle): Double = angle.sin()
-
-    @JvmStatic
-    fun tan(angle: Angle): Double = angle.tan()
-
-    @JvmStatic
-    fun abs(angle: Angle): Angle = angle.abs()
-
-    @JvmStatic
-    fun min(angle1: Angle, angle2: Angle): Angle = min(angle1.radians, angle2.radians).rad
-
-    @JvmStatic
-    fun max(angle1: Angle, angle2: Angle): Angle = max(angle1.radians, angle2.radians).rad
-
-    @JvmStatic
-    fun sign(angle: Angle): Double = sign(angle.radians)
 }
+
+/**
+ * Ensures that [n] lies in the range [min]..[max],
+ * where [min] and [max] are modularly-equivalent (that is, [n] wraps around).
+ */
+fun wrap(n: Double, min: Double, max: Double): Double =
+    if (n < min) max - (min - n) % (max - min)
+    else min + (n - min) % (max - min)
+
+/**
+ * Ensures that [n] lies in the range [min]..[max],
+ * where [min] and [max] are modularly-equivalent (that is, [n] wraps around).
+ */
+fun wrap(n: Int, min: Int, max: Int): Int =
+    if (n < min) max - (min - n) % (max - min)
+    else min + (n - min) % (max - min)
+
+/**
+ * Ensures that [n] lies in the range [min]..[max].
+ */
+fun clamp(n: Double, min: Double, max: Double): Double = n.coerceIn(min, max)
 
 fun cos(angle: Angle): Double = angle.cos()
 fun sin(angle: Angle): Double = angle.sin()
 fun tan(angle: Angle): Double = angle.tan()
 fun abs(angle: Angle): Angle = angle.abs()
-fun min(angle1: Angle, angle2: Angle): Angle = min(angle1.radians, angle2.radians).rad
-fun max(angle1: Angle, angle2: Angle): Angle = max(angle1.radians, angle2.radians).rad
+fun min(a: Angle, b: Angle): Angle = min(a.radians, b.radians).rad
+fun max(a: Angle, b: Angle): Angle = max(a.radians, b.radians).rad
 fun sign(angle: Angle): Double = sign(angle.radians)
 
 /**
@@ -93,14 +64,18 @@ const val EPSILON = 1e-6
 infix fun Double.epsilonEquals(other: Double): Boolean = abs(this - other) < EPSILON
 
 /**
- * @see MathUtil.wrap
+ * @see wrap
  */
-fun Double.wrap(min: Double, max: Double): Double = MathUtil.wrap(this, min, max)
+@JvmName("wrap1")
+@JvmSynthetic
+fun Double.wrap(min: Double, max: Double): Double = wrap(this, min, max)
 
 /**
- * @see MathUtil.wrap
+ * @see wrap
  */
-fun Int.wrap(min: Int, max: Int): Int = MathUtil.wrap(this, min, max)
+@JvmName("wrap1")
+@JvmSynthetic
+fun Int.wrap(min: Int, max: Int): Int = wrap(this, min, max)
 
 
 /**

@@ -22,11 +22,11 @@ import kotlin.math.sqrt
  * @param clock clock
  */
 class GVFFollower @JvmOverloads constructor(
-    private val maxVel: Double,
-    private val maxAccel: Double,
+    @JvmField var maxVel: Double,
+    @JvmField var maxAccel: Double,
     admissibleError: Pose2d,
-    private val kN: Double,
-    private val kOmega: Double,
+    @JvmField var kN: Double,
+    @JvmField var kOmega: Double,
     private val errorMapFunc: (Double) -> Double = { it },
     clock: NanoClock = NanoClock.system()
 ) : PathFollower(admissibleError, clock) {

@@ -4,10 +4,14 @@ package com.amarcolini.joos.command
  * A command that runs commands in parallel until they all finish.
  */
 class ParallelCommand @JvmOverloads constructor(
-    override val isInterruptable: Boolean = true,
+    isInterruptable: Boolean = true,
     vararg commands: Command
-) : CommandGroup(commands = commands) {
-    val commands = LinkedHashMap<Command, Boolean>()
+) : CommandGroup(true, commands, isInterruptable) {
+    private val commands = LinkedHashMap<Command, Boolean>()
+    override fun add(command: Command) {
+        commands += command to false
+        isInterruptable = isInterruptable && command.isInterruptable
+    }
 
     init {
         for (command in commands) {
