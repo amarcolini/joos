@@ -87,7 +87,7 @@ dependencies {
     implementation 'no.tornado:tornadofx:1.7.20'
     implementation "org.jetbrains.kotlin:kotlin-reflect:$kotlin_version"
 
-    implementation 'io.github.classgraph:classgraph:4.8.146'
+    implementation 'io.github.classgraph:classgraph:4.8.147'
 
     winImplementation "org.openjfx:javafx-controls:$javafx.version:win"
     macImplementation "org.openjfx:javafx-controls:$javafx.version:mac"

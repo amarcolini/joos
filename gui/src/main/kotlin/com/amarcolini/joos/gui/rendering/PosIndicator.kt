@@ -17,13 +17,14 @@ internal class PosIndicator : FixedEntity() {
             node.text = converter.toString(value)
             field = value
         }
-    override val alignment = Pos.TOP_LEFT
-    override val node: Label = Label()
+    override val topAnchor: Double = 10.0
+    override val bottomAnchor = null
+    override val leftAnchor: Double = 10.0
+    override val rightAnchor = null
+    override val node: Label = Label(converter.toString(pos))
 
     init {
         node.addClass(Theme.padding)
-        node.translateX = 10.0
-        node.translateY = 10.0
         Global.theme.onChange { style() }
         style()
     }

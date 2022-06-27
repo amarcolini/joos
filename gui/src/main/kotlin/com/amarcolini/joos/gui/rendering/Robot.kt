@@ -30,14 +30,6 @@ internal class Robot : FieldEntity() {
             field = value
         }
     override val node: Path = Path()
-        .moveTo(dimensions.y / 2, 0.0)
-        .lineTo(0.0, 0.0)
-        .lineTo(dimensions.y / 2, 0.0)
-        .lineTo(dimensions.y / 2, dimensions.x / 2)
-        .lineTo(-dimensions.y / 2, dimensions.x / 2)
-        .lineTo(-dimensions.y / 2, -dimensions.x / 2)
-        .lineTo(dimensions.y / 2, -dimensions.x / 2)
-        .closepath()
     var trajectory: Trajectory? = null
 
     private var last: Long? = null
@@ -49,7 +41,9 @@ internal class Robot : FieldEntity() {
             field = value
             timeProperty.set(value)
         }
+
     init {
+        dimensions = Global.robotDimensions
         node.isMouseTransparent = true
     }
 

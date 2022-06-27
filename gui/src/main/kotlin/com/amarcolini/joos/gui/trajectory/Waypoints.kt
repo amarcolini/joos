@@ -3,6 +3,7 @@ package com.amarcolini.joos.gui.trajectory
 import com.amarcolini.joos.geometry.Angle
 import com.amarcolini.joos.geometry.Pose2d
 import com.amarcolini.joos.geometry.Vector2d
+import com.amarcolini.joos.trajectory.Trajectory
 import com.amarcolini.joos.trajectory.config.GenericConstraints
 import com.amarcolini.joos.trajectory.config.TrajectoryConstraints
 import javafx.beans.property.SimpleObjectProperty
@@ -13,15 +14,16 @@ sealed class Waypoint {
 
 class WaypointTrajectory(
     val waypoints: List<Waypoint> = listOf(Start()),
-    val constraints: TrajectoryConstraints = GenericConstraints()
+    val constraints: TrajectoryConstraints = GenericConstraints(),
+    resolution: Double = 0.25
 ) {
     constructor(
         constraints: TrajectoryConstraints = GenericConstraints(),
         vararg waypoints: Waypoint = arrayOf(Start())
     ) : this(waypoints.toList(), constraints)
 
-    val trajectory by lazy {
-        waypoints.toTrajectory(constraints)
+    val trajectory: Trajectory? by lazy {
+        waypoints.toTrajectory(constraints, resolution)
     }
 }
 

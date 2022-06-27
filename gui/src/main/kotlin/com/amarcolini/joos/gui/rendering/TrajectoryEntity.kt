@@ -5,6 +5,7 @@ import com.amarcolini.joos.geometry.AngleUnit
 import com.amarcolini.joos.geometry.Pose2d
 import com.amarcolini.joos.geometry.Vector2d
 import com.amarcolini.joos.gui.trajectory.*
+import com.amarcolini.joos.gui.trajectory.LineTo
 import com.amarcolini.joos.trajectory.config.GenericConstraints
 import com.amarcolini.joos.util.*
 import javafx.beans.property.SimpleObjectProperty
@@ -12,15 +13,12 @@ import javafx.scene.CacheHint
 import javafx.scene.Group
 import javafx.scene.Node
 import javafx.scene.paint.Color
-import javafx.scene.shape.MoveTo
-import javafx.scene.shape.Path
-import javafx.scene.shape.StrokeLineCap
-import javafx.geometry.Point3D
-import javafx.scene.transform.Rotate
+import javafx.scene.shape.*
 import tornadofx.*
 import kotlin.math.*
 
 private const val SPATIAL_RESOLUTION = 1.0
+private const val DRAGGING_RESOLUTION = 2.0
 
 internal class TrajectoryEntity(private val getScale: () -> Double) : FieldEntity() {
     private val path: Path = Path()
@@ -29,12 +27,7 @@ internal class TrajectoryEntity(private val getScale: () -> Double) : FieldEntit
         private set
 
     override fun update(now: Long) {
-        pose = if (trajectory.waypoints.size > 1) {
-            val bounds = node.boundsInLocal
-            Pose2d(bounds.centerX, bounds.centerY)
-        } else {
-            Pose2d((trajectory.waypoints.first() as Start).pose.vec())
-        }
+        pose = Pose2d((trajectory.waypoints.first() as Start).pos)
     }
 
     init {
@@ -63,11 +56,12 @@ internal class TrajectoryEntity(private val getScale: () -> Double) : FieldEntit
             }
 
             val trajectory = value.trajectory
+            val resolution = if (beingDragged) DRAGGING_RESOLUTION else SPATIAL_RESOLUTION
 
             if (trajectory != null) {
                 // compute path samples
                 val displacementSamples =
-                    (trajectory.length() / SPATIAL_RESOLUTION).roundToInt()
+                    (trajectory.length() / resolution).roundToInt()
                 val displacements =
                     DoubleProgression.fromClosedInterval(
                         0.0,
@@ -98,17 +92,17 @@ internal class TrajectoryEntity(private val getScale: () -> Double) : FieldEntit
                             val turnAngle =
                                 if (abs(angle) < Angle(2.0, AngleUnit.Degrees)) 0.0
                                 else angle.degrees.coerceIn(-330.0, 330.0)
-                            val endAngle = lastPose.heading + Angle(turnAngle, AngleUnit.Degrees)
+                            val endAngle = lastPose.heading + Angle.deg(turnAngle)
                             val pos = lastPose.vec() + Vector2d.polar(radius, endAngle)
                             val line1 =
                                 pos + Vector2d.polar(
                                     1.0,
-                                    endAngle + Angle(90 * sign(endAngle - lastPose.heading) + 135, AngleUnit.Degrees)
+                                    endAngle + Angle.deg(90 * sign(turnAngle) + 135)
                                 )
                             val line2 =
                                 pos + Vector2d.polar(
                                     1.0,
-                                    endAngle + Angle(90 * sign(endAngle - lastPose.heading) - 135, AngleUnit.Degrees)
+                                    endAngle + Angle.deg(90 * sign(turnAngle) - 135)
                                 )
                             if (dragged) {
                                 arrow.arc(
@@ -178,7 +172,8 @@ internal class TrajectoryEntity(private val getScale: () -> Double) : FieldEntit
                             currentWaypoint = newWaypoint
                             this.trajectory = WaypointTrajectory(
                                 newList,
-                                this.trajectory.constraints
+                                this.trajectory.constraints,
+                                DRAGGING_RESOLUTION
                             )
                             arrow.toFront()
                             setAngle(newWaypoint.angle, true)
@@ -253,7 +248,8 @@ internal class TrajectoryEntity(private val getScale: () -> Double) : FieldEntit
                                 currentWaypoint = newWaypoint
                                 this.trajectory = WaypointTrajectory(
                                     newList,
-                                    this.trajectory.constraints
+                                    this.trajectory.constraints,
+                                    DRAGGING_RESOLUTION
                                 )
                             }
                             line.setOnMouseReleased {
@@ -322,7 +318,8 @@ internal class TrajectoryEntity(private val getScale: () -> Double) : FieldEntit
                                 currentWaypoint = newWaypoint
                                 this.trajectory = WaypointTrajectory(
                                     newList,
-                                    this.trajectory.constraints
+                                    this.trajectory.constraints,
+                                    DRAGGING_RESOLUTION
                                 )
                             }
                             group.setOnMouseReleased {
@@ -468,7 +465,8 @@ internal class TrajectoryEntity(private val getScale: () -> Double) : FieldEntit
                             currentWaypoint = newWaypoint
                             this.trajectory = WaypointTrajectory(
                                 newList,
-                                this.trajectory.constraints
+                                this.trajectory.constraints,
+                                DRAGGING_RESOLUTION
                             )
                             circle.stroke = Color.BLACK
                             circle.strokeWidth = 0.25
@@ -496,10 +494,20 @@ internal class TrajectoryEntity(private val getScale: () -> Double) : FieldEntit
 
     init {
         waypoints.onChange {
-            trajectory = WaypointTrajectory(it.list, constraints.value)
+            trajectory =
+                WaypointTrajectory(
+                    it.list,
+                    constraints.value,
+                    if (beingDragged) DRAGGING_RESOLUTION else SPATIAL_RESOLUTION
+                )
         }
         constraints.onChange {
-            trajectory = WaypointTrajectory(waypoints, it ?: return@onChange)
+            trajectory =
+                WaypointTrajectory(
+                    waypoints,
+                    it ?: return@onChange,
+                    if (beingDragged) DRAGGING_RESOLUTION else SPATIAL_RESOLUTION
+                )
         }
     }
 }

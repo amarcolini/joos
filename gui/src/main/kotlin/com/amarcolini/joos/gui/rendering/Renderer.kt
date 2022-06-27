@@ -5,17 +5,30 @@ import com.amarcolini.joos.geometry.Vector2d
 import com.amarcolini.joos.gui.trajectory.Start
 import com.amarcolini.joos.gui.trajectory.WaypointTrajectory
 import javafx.animation.AnimationTimer
+import javafx.geometry.Pos
+import javafx.scene.Group
+import javafx.scene.Node
+import javafx.scene.Parent
 import javafx.scene.input.KeyCode
+import javafx.scene.layout.AnchorPane
+import javafx.scene.layout.Background
+import javafx.scene.layout.Pane
 import javafx.scene.layout.StackPane
-import tornadofx.add
-import tornadofx.onChange
-import tornadofx.onLeftClick
+import javafx.scene.paint.Color
+import javafx.scene.shape.Circle
+import javafx.scene.transform.Affine
+import javafx.scene.transform.Transform
+import tornadofx.*
+import java.awt.font.TransformAttribute
 import kotlin.math.min
 
 internal class Renderer : StackPane() {
     val trajectoryRenderer = TrajectoryEntity { -min(width, height) / 144 }
     val robot = Robot()
     val fieldRenderer = FieldRenderer()
+    val field = Pane()
+    private lateinit var transform: Affine
+    val overlay = AnchorPane()
     val scrubBar = ScrubBarEntity()
     val posIndicator = PosIndicator()
     var trajectory: WaypointTrajectory = trajectoryRenderer.trajectory
@@ -28,7 +41,7 @@ internal class Renderer : StackPane() {
     val constraints get() = trajectoryRenderer.constraints
 
 
-    private val entities: List<Entity> = listOf(
+    private val entities: MutableList<Entity> = mutableListOf(
         trajectoryRenderer,
         robot,
         scrubBar,
@@ -37,17 +50,27 @@ internal class Renderer : StackPane() {
 
     private val timer = object : AnimationTimer() {
         override fun handle(now: Long) {
-            entities.forEach {
-                it.update(now)
-                if (it is FieldEntity) {
-                    val fieldSize = min(width, height)
-                    val offset = Pose2d(
-                        Vector2d(-it.pose.y, -it.pose.x) * (fieldSize / 144),
-                        -it.pose.heading
-                    )
-                    it.node.translateX = offset.x
-                    it.node.translateY = offset.y
-                    it.node.rotate = offset.heading.degrees + 90
+            entities.forEach { entity ->
+                entity.update(now)
+                if (entity is FieldEntity) {
+                    val node = entity.node
+                    val combinedTransform = Affine().apply {
+                        append(transform)
+                        appendTranslation(entity.pose.x, entity.pose.y)
+                        appendRotation(entity.pose.heading.degrees)
+                    }
+                    if (node is Group) node.children.forEach {
+                        it.transforms.setAll(Affine().apply {
+                            append(transform)
+                            appendTranslation(it.layoutX, it.layoutY)
+                            appendRotation(entity.pose.heading.degrees)
+                        })
+                    }
+                    else node.transforms.setAll(combinedTransform)
+//                    it.node.relocate(it.pose.x, it.pose.y)
+//                    it.node.translateX = it.pose.x
+//                    it.node.translateY = it.pose.y
+//                    it.node.rotate = it.pose.heading.degrees
                 }
             }
         }
@@ -55,17 +78,25 @@ internal class Renderer : StackPane() {
 
     init {
         add(fieldRenderer)
+        add(field)
+        add(overlay)
+        overlay.pickOnBoundsProperty().set(false)
         entities.forEach {
-            add(it.node)
             if (it is FixedEntity) {
-                setAlignment(it.node, it.alignment)
+                overlay.add(it.node)
+                AnchorPane.setTopAnchor(it.node, it.topAnchor)
+                AnchorPane.setBottomAnchor(it.node, it.bottomAnchor)
+                AnchorPane.setLeftAnchor(it.node, it.leftAnchor)
+                AnchorPane.setRightAnchor(it.node, it.rightAnchor)
+            } else {
+                field.add(it.node)
             }
         }
 
-        trajectoryRenderer.trajectoryProperty.onChange {
-            it?.trajectory?.duration()?.let { scrubBar.node.duration = it }
+        trajectoryRenderer.trajectoryProperty.onChange { trajectory ->
+            trajectory?.trajectory?.duration()?.let { scrubBar.node.duration = it }
             robot.stop()
-            robot.trajectory = it?.trajectory
+            robot.trajectory = trajectory?.trajectory
         }
         robot.timeProperty.bindBidirectional(scrubBar.node.timeProperty)
         robot.timeProperty.onChange {
@@ -115,14 +146,9 @@ internal class Renderer : StackPane() {
     override fun resize(width: Double, height: Double) {
         super.resize(width, height)
         val fieldSize = min(width, height)
-        val scaleY = fieldSize / 144
-        val scaleX = -scaleY
-        entities.forEach {
-            if (it is FieldEntity) {
-                it.node.scaleX = scaleX
-                it.node.scaleY = scaleY
-            }
-        }
+        field.maxHeight = fieldSize
+        field.maxWidth = fieldSize
+        transform = getFieldTransform(width, height)
     }
 
     override fun isResizable(): Boolean = true

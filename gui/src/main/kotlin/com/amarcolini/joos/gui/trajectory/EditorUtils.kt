@@ -291,7 +291,7 @@ internal fun Collection<Waypoint>.mapPose(): List<Pair<Waypoint, Pair<Pose2d, An
                 tangent = pose.heading
             }
             is SplineTo -> {
-                pose = Pose2d(it.pos, it.tangent)
+                pose = Pose2d(it.pos, pose.heading + (it.tangent - tangent))
                 tangent = it.tangent
             }
             is SplineToConstantHeading -> {

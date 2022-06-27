@@ -8,6 +8,7 @@ import com.amarcolini.joos.gui.rendering.Renderer
 import com.amarcolini.joos.gui.style.Theme
 import com.amarcolini.joos.trajectory.config.*
 import com.amarcolini.joos.util.DoubleProgression
+import javafx.application.Platform
 import javafx.beans.property.SimpleDoubleProperty
 import javafx.beans.property.SimpleObjectProperty
 import javafx.geometry.Orientation
@@ -89,10 +90,13 @@ internal class TrajectoryEditor() : View() {
                                         Vector2dStringConverter(),
                                         value
                                     )
-                                    is Pose2d -> TextFormatter(
-                                        Pose2dStringConverter(),
-                                        value
-                                    )
+                                    is Pose2d -> {
+                                        this.prefWidth = 150.0;
+                                        TextFormatter(
+                                            Pose2dStringConverter(),
+                                            value
+                                        )
+                                    }
                                     else -> textFormatter
                                 }
                                 removeWhen { editingProperty().not() }
@@ -106,7 +110,7 @@ internal class TrajectoryEditor() : View() {
                                             renderer.constraints.value
                                         )
 //                                        commitEdit(item)
-                                    }
+                                    } else Platform.runLater(::selectAll)
                                 }
                                 action {
                                     it.setter.call(item, textFormatter.value)

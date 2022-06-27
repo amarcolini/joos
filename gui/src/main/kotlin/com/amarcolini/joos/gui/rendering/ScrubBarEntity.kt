@@ -7,6 +7,9 @@ import javafx.beans.property.SimpleObjectProperty
 import javafx.geometry.Pos
 
 internal class ScrubBarEntity : FixedEntity() {
+    override val topAnchor = null
+    override val bottomAnchor: Double = 0.0
+    override val leftAnchor: Double = 0.0
+    override val rightAnchor: Double = 0.0
     override val node: ScrubBar = ScrubBar()
-    override val alignment = Pos.BOTTOM_CENTER
 }

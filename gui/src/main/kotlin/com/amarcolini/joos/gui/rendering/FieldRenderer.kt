@@ -10,9 +10,9 @@ internal fun getFieldTransform(width: Double, height: Double): Affine {
     val fieldSize = min(width, height)
 
     val affine = Affine()
-    affine.appendTranslation(width / 2, height / 2)
-    affine.appendScale(fieldSize / 144, fieldSize / 144)
     affine.appendRotation(90.0)
+    affine.appendTranslation(fieldSize / 2, -fieldSize / 2)
+    affine.appendScale(fieldSize / 144, fieldSize / 144)
     affine.appendScale(-1.0, 1.0)
     return affine
 }

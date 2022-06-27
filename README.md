@@ -27,19 +27,19 @@ repositories {
 }
 
 dependencies {
-  implementation "com.github.amarcolini.joos:$module:0.4.6-alpha"
+  implementation "com.github.amarcolini.joos:$module:0.4.7-alpha"
 }
 ```
 
 Note that since the `command` module implicitly imports the `navigation` module,
 only one implementation statement is needed.
 
-To use the GUI, you can either download the image specific to your platform from the releases page (the launcher is
+To use the GUI, you can either download the image specific to your platform from the releases page (the launcher is located 
 in the bin folder), or import it into an empty java module like so:
 
 ### Gradle
 
-````groovy
+```groovy
 repositories {
   maven { url 'https://jitpack.io' }
 }
@@ -52,6 +52,8 @@ java {
 
 dependencies {
     //Gradle will automatically retrieve the correct dependencies based on your operating system
-    implementation "com.github.amarcolini.joos:gui:0.4.6-alpha"
+    implementation "com.github.amarcolini.joos:gui:0.4.7-alpha"
 }
-````
+```
+
+That's it? Where's the documentation? Don't worry, documentation is currently in the works.
