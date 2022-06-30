@@ -16,7 +16,6 @@ class ConfigProcessor : AbstractProcessor() {
     override fun process(annotations: MutableSet<out TypeElement>, roundEnv: RoundEnvironment): Boolean {
         val utils = processingEnv.elementUtils
         val joosConfig: TypeElement? = utils.getTypeElement(joosConfigName)
-        val withConfig: TypeElement? = utils.getTypeElement(withConfigName)
         val disabled: TypeElement? = utils.getTypeElement(disabledName)
         if (joosConfig != null) {
             val disabledElements = roundEnv.getElementsAnnotatedWith(disabled)

@@ -1,25 +1,18 @@
 package com.amarcolini.joos.gui.rendering
 
-import com.amarcolini.joos.geometry.Pose2d
 import com.amarcolini.joos.geometry.Vector2d
 import com.amarcolini.joos.gui.trajectory.Start
 import com.amarcolini.joos.gui.trajectory.WaypointTrajectory
 import javafx.animation.AnimationTimer
-import javafx.geometry.Pos
 import javafx.scene.Group
-import javafx.scene.Node
-import javafx.scene.Parent
 import javafx.scene.input.KeyCode
 import javafx.scene.layout.AnchorPane
-import javafx.scene.layout.Background
 import javafx.scene.layout.Pane
 import javafx.scene.layout.StackPane
-import javafx.scene.paint.Color
-import javafx.scene.shape.Circle
 import javafx.scene.transform.Affine
-import javafx.scene.transform.Transform
-import tornadofx.*
-import java.awt.font.TransformAttribute
+import tornadofx.add
+import tornadofx.onChange
+import tornadofx.onLeftClick
 import kotlin.math.min
 
 internal class Renderer : StackPane() {
