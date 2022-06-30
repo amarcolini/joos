@@ -31,6 +31,8 @@ allprojects {
         }
     }
 
+    tasks.findByPath(":gui:mergeClasses").configure { duplicatesStrategy 'exclude' }
+
 //    tasks.withType(GenerateModuleMetadata) {
 //        enabled = false
 //    }
