@@ -131,6 +131,12 @@ abstract class Command : CommandInterface {
         this then WaitCommand(duration)
 
     /**
+     * Interrupts this command if it does not finish after [duration] seconds.
+     */
+    fun withTimeout(duration: Double): RaceCommand =
+        this race WaitCommand(duration)
+
+    /**
      * Adds a command to run in parallel with this one (Both run simultaneously until they finish).
      */
     infix fun and(other: Command): ParallelCommand = if (this is ParallelCommand)
