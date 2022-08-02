@@ -10,14 +10,52 @@ import java.util.function.Supplier
 interface Component : CommandInterface {
     companion object {
         /**
+         * Creates a component using the provided [runnable].
+         */
+        @JvmStatic
+        fun of(runnable: Runnable): Component =
+            object : Component {
+                override fun update() = runnable.run()
+            }
+
+        /**
+         * Creates a component using the provided [runnable] and [defaultCommandSupplier].
+         */
+        @JvmSynthetic
+        fun of(defaultCommandSupplier: () -> Command? = { null }, runnable: () -> Unit): Component =
+            object : Component {
+                override fun update() = runnable()
+                override fun getDefaultCommand() = defaultCommandSupplier()
+            }
+
+        /**
+         * Creates a component using the provided [runnable] and [defaultCommand].
+         */
+        @JvmSynthetic
+        fun of(defaultCommand: Command, runnable: () -> Unit): Component =
+            object : Component {
+                override fun update() = runnable()
+                override fun getDefaultCommand() = defaultCommand
+            }
+
+        /**
+         * Creates a component using the provided [runnable] and [defaultCommandSupplier].
+         */
+        @JvmStatic
+        fun of(runnable: Runnable, defaultCommandSupplier: Supplier<Command?>): Component =
+            object : Component {
+                override fun update() = runnable.run()
+                override fun getDefaultCommand() = defaultCommandSupplier.get()
+            }
+
+        /**
          * Creates a component using the provided [runnable] and [defaultCommand].
          */
         @JvmStatic
-        @JvmOverloads
-        fun of(runnable: Runnable, defaultCommand: Supplier<Command?> = Supplier { null }): Component =
+        fun of(runnable: Runnable, defaultCommand: Command): Component =
             object : Component {
                 override fun update() = runnable.run()
-                override fun getDefaultCommand() = defaultCommand.get()
+                override fun getDefaultCommand() = defaultCommand
             }
     }
 

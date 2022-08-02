@@ -19,19 +19,19 @@ abstract class Command : CommandInterface {
          * Creates a [BasicCommand] out of the provided [runnable].
          */
         @JvmStatic
-        fun of(runnable: Runnable) = BasicCommand(runnable)
+        fun of(runnable: Runnable): BasicCommand = BasicCommand(runnable)
 
         /**
          * Creates a [SelectCommand] out of the provided [command].
          */
         @JvmStatic
-        fun select(command: Supplier<Command>) = SelectCommand(command)
+        fun select(command: Supplier<Command>): SelectCommand = SelectCommand(command)
 
         /**
          * Creates a command that does nothing.
          */
         @JvmStatic
-        fun emptyCommand() = InstantCommand {}
+        fun emptyCommand(): InstantCommand = InstantCommand {}
     }
 
     /**
@@ -73,12 +73,12 @@ abstract class Command : CommandInterface {
     /**
      * Cancels this command.
      */
-    fun cancel() = cancel(this)
+    fun cancel(): Unit = cancel(this)
 
     /**
      * Schedules this command.
      */
-    fun schedule() = schedule(this)
+    fun schedule(): Boolean = schedule(this)
 
     /**
      * Returns whether this command is currently registered with the [CommandScheduler].

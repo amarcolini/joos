@@ -4,7 +4,7 @@ import com.acmerobotics.dashboard.FtcDashboard
 import com.amarcolini.joos.dashboard.SuperTelemetry
 import com.amarcolini.joos.gamepad.MultipleGamepad
 import com.qualcomm.robotcore.eventloop.opmode.Autonomous
-import com.qualcomm.robotcore.eventloop.opmode.OpMode
+import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp
 import kotlin.reflect.full.hasAnnotation
 import kotlin.reflect.full.instanceParameter
@@ -13,7 +13,7 @@ import kotlin.reflect.full.starProjectedType
 /**
  * An OpMode that uses a [CommandScheduler], and optionally, a [Robot].
  */
-abstract class CommandOpMode : OpMode(), CommandInterface {
+abstract class CommandOpMode : LinearOpMode(), CommandInterface {
     /**
      * Whether this OpMode is a teleop OpMode.
      */
@@ -30,7 +30,7 @@ abstract class CommandOpMode : OpMode(), CommandInterface {
      * The global [SuperTelemetry] instance.
      */
     @JvmField
-    protected val telem: SuperTelemetry = CommandScheduler.telemetry
+    protected val telemetry: SuperTelemetry = CommandScheduler.telemetry
 
     /**
      * The FtcDashboard instance.
@@ -43,12 +43,6 @@ abstract class CommandOpMode : OpMode(), CommandInterface {
      */
     @JvmField
     protected val gamepad: MultipleGamepad = MultipleGamepad(gamepad1, gamepad2)
-
-    override fun internalPostInitLoop() {
-        if (isStartOverridden && initLoop) CommandScheduler.update()
-    }
-
-    override fun internalPostLoop(): Unit = CommandScheduler.update()
 
     abstract fun preInit()
     open fun preStart() {}
@@ -68,23 +62,27 @@ abstract class CommandOpMode : OpMode(), CommandInterface {
      */
     protected var cancelBeforeStart: Boolean = true
 
-    final override fun init() {
+    private var hasInitialized = false
+    final override fun runOpMode() {
         preInit()
-    }
+        hasInitialized = true
 
-    final override fun start() {
+        if (isStartOverridden && initLoop) while (!isStarted) CommandScheduler.update()
+        else telemetry.update()
+
         if (isStartOverridden && cancelBeforeStart) cancelAll()
         robot?.start()
         preStart()
+        while (opModeIsActive()) CommandScheduler.update()
     }
 
     fun <T : Robot> registerRobot(robot: T): T {
         if (this.robot != null)
             throw IllegalArgumentException("Only one Robot is allowed to be registered with a CommandOpMode.")
+        if (hasInitialized)
+            throw Exception("registerRobot() can only be called in preInit().")
         this.robot = robot
         robot.init()
         return robot
     }
-
-    override fun loop() {}
 }
