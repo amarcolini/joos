@@ -11,8 +11,7 @@ import com.amarcolini.joos.hardware.MotorGroup
 import com.amarcolini.joos.kinematics.MecanumKinematics
 import com.amarcolini.joos.localization.Localizer
 import com.amarcolini.joos.localization.MecanumLocalizer
-import com.amarcolini.joos.trajectory.config.MecanumConstraints
-import com.amarcolini.joos.trajectory.config.TrajectoryConstraints
+import com.amarcolini.joos.trajectory.constraints.MecanumConstraints
 import com.amarcolini.joos.util.deg
 import com.amarcolini.joos.util.rad
 import kotlin.math.abs

@@ -7,6 +7,7 @@ import com.fasterxml.jackson.dataformat.yaml.util.StringQuotingChecker
 import com.fasterxml.jackson.module.kotlin.registerKotlinModule
 import com.amarcolini.joos.trajectory.Trajectory
 import com.amarcolini.joos.trajectory.TrajectoryBuilder
+import com.amarcolini.joos.trajectory.constraints.TrajectoryConstraints
 import java.io.File
 import java.io.InputStream
 
@@ -14,9 +15,7 @@ import java.io.InputStream
  * Class containing methods for saving (loading) trajectory configurations to (from) YAML files.
  */
 object TrajectoryConfigManager {
-    @JvmField
-    @Suppress("MayBeConst")
-    val GROUP_FILENAME = "_group.yaml"
+    const val GROUP_FILENAME = "_group.yaml"
 
     private val MAPPER: YAMLMapper
 

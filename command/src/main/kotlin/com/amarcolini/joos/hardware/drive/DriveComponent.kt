@@ -13,7 +13,7 @@ import com.amarcolini.joos.hardware.Imu
 import com.amarcolini.joos.hardware.Motor
 import com.amarcolini.joos.trajectory.Trajectory
 import com.amarcolini.joos.trajectory.TrajectoryBuilder
-import com.amarcolini.joos.trajectory.config.TrajectoryConstraints
+import com.amarcolini.joos.trajectory.constraints.TrajectoryConstraints
 
 /**
  * A [Component] implementation of [Drive].

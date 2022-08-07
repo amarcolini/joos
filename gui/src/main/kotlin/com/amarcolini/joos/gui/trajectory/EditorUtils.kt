@@ -8,9 +8,8 @@ import com.amarcolini.joos.trajectory.Trajectory
 import com.amarcolini.joos.trajectory.TrajectoryBuilder
 import com.amarcolini.joos.trajectory.WaitSegment
 import com.amarcolini.joos.trajectory.config.TrajectoryConfig
-import com.amarcolini.joos.trajectory.config.TrajectoryConstraints
+import com.amarcolini.joos.trajectory.constraints.TrajectoryConstraints
 import com.amarcolini.joos.util.deg
-import kotlin.math.PI
 import kotlin.reflect.KVisibility
 import kotlin.reflect.full.declaredMemberProperties
 

@@ -6,7 +6,7 @@ import com.amarcolini.joos.geometry.Vector2d
 import com.amarcolini.joos.util.*
 import com.amarcolini.joos.path.Path
 import com.amarcolini.joos.profile.MotionState
-import com.amarcolini.joos.trajectory.config.TrajectoryConstraints
+import com.amarcolini.joos.trajectory.constraints.TrajectoryConstraints
 import com.amarcolini.joos.trajectory.constraints.MinAccelerationConstraint
 import com.amarcolini.joos.trajectory.constraints.MinVelocityConstraint
 import com.amarcolini.joos.trajectory.constraints.TrajectoryAccelerationConstraint

@@ -15,6 +15,10 @@ A comprehensive kotlin library designed for FTC. Based on [Road Runner](https://
 - Easy to use GUI for trajectory generation
 - [FTC Dashboard](https://github.com/acmerobotics/ftc-dashboard) built in
 
+<br>
+
+You can find the full documentation :sparkles: [here](https://amarcolini.github.io/joos_docs/) :sparkles:
+
 ## Installation
 
 For the `command` and `navigation` modules, installation is as follows:
@@ -27,7 +31,7 @@ repositories {
 }
 
 dependencies {
-  implementation "com.github.amarcolini.joos:$module:0.4.7-alpha"
+  implementation "com.github.amarcolini.joos:$module:0.4.8-alpha"
 }
 ```
 
@@ -52,8 +56,6 @@ java {
 
 dependencies {
     //Gradle will automatically retrieve the correct dependencies based on your operating system
-    implementation "com.github.amarcolini.joos:gui:0.4.7-alpha"
+    implementation "com.github.amarcolini.joos:gui:0.4.8"
 }
 ```
-
-That's it? Where's the documentation? Don't worry, documentation is currently in the works.

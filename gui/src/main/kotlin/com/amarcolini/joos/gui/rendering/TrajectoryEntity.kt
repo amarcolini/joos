@@ -6,7 +6,7 @@ import com.amarcolini.joos.geometry.Pose2d
 import com.amarcolini.joos.geometry.Vector2d
 import com.amarcolini.joos.gui.trajectory.*
 import com.amarcolini.joos.gui.trajectory.LineTo
-import com.amarcolini.joos.trajectory.config.GenericConstraints
+import com.amarcolini.joos.trajectory.constraints.GenericConstraints
 import com.amarcolini.joos.util.*
 import javafx.beans.property.SimpleObjectProperty
 import javafx.scene.CacheHint

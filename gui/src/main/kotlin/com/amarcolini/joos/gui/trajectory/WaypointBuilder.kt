@@ -3,8 +3,8 @@ package com.amarcolini.joos.gui.trajectory
 import com.amarcolini.joos.geometry.Angle
 import com.amarcolini.joos.geometry.Pose2d
 import com.amarcolini.joos.geometry.Vector2d
-import com.amarcolini.joos.trajectory.config.GenericConstraints
-import com.amarcolini.joos.trajectory.config.TrajectoryConstraints
+import com.amarcolini.joos.trajectory.constraints.GenericConstraints
+import com.amarcolini.joos.trajectory.constraints.TrajectoryConstraints
 
 /**
  * A class that makes interacting with the GUI just that much easier.

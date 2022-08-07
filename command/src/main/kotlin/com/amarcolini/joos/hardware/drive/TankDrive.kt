@@ -12,7 +12,7 @@ import com.amarcolini.joos.hardware.MotorGroup
 import com.amarcolini.joos.kinematics.TankKinematics
 import com.amarcolini.joos.localization.Localizer
 import com.amarcolini.joos.localization.TankLocalizer
-import com.amarcolini.joos.trajectory.config.TankConstraints
+import com.amarcolini.joos.trajectory.constraints.TankConstraints
 import com.amarcolini.joos.util.deg
 import com.amarcolini.joos.util.rad
 import kotlin.math.abs

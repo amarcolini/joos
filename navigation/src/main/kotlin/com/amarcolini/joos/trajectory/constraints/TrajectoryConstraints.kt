@@ -1,8 +1,7 @@
-package com.amarcolini.joos.trajectory.config
+package com.amarcolini.joos.trajectory.constraints
 
 import com.amarcolini.joos.geometry.Angle
 import com.amarcolini.joos.util.*
-import com.amarcolini.joos.trajectory.constraints.*
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties
 import com.fasterxml.jackson.annotation.JsonSubTypes
 import com.fasterxml.jackson.annotation.JsonTypeInfo

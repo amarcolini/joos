@@ -13,8 +13,7 @@ import com.amarcolini.joos.hardware.MotorGroup
 import com.amarcolini.joos.kinematics.DiffSwerveKinematics
 import com.amarcolini.joos.localization.DiffSwerveLocalizer
 import com.amarcolini.joos.localization.Localizer
-import com.amarcolini.joos.trajectory.config.DiffSwerveConstraints
-import com.amarcolini.joos.trajectory.config.TrajectoryConstraints
+import com.amarcolini.joos.trajectory.constraints.DiffSwerveConstraints
 import com.amarcolini.joos.util.deg
 import com.amarcolini.joos.util.rad
 import com.amarcolini.joos.util.wrap

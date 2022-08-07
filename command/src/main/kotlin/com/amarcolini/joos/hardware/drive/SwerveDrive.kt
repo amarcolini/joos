@@ -13,8 +13,7 @@ import com.amarcolini.joos.hardware.Servo
 import com.amarcolini.joos.kinematics.SwerveKinematics
 import com.amarcolini.joos.localization.Localizer
 import com.amarcolini.joos.localization.SwerveLocalizer
-import com.amarcolini.joos.trajectory.config.SwerveConstraints
-import com.amarcolini.joos.trajectory.config.TrajectoryConstraints
+import com.amarcolini.joos.trajectory.constraints.SwerveConstraints
 import com.amarcolini.joos.util.deg
 import com.amarcolini.joos.util.rad
 import kotlin.math.abs

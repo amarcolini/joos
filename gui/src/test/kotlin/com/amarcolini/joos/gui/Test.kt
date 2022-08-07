@@ -3,7 +3,7 @@ package com.amarcolini.joos.gui
 import com.amarcolini.joos.gui.rendering.Backgrounds
 import com.amarcolini.joos.gui.style.Themes
 import com.amarcolini.joos.gui.trajectory.WaypointBuilder
-import com.amarcolini.joos.trajectory.config.GenericConstraints
+import com.amarcolini.joos.trajectory.constraints.GenericConstraints
 
 fun main() {
     GUI()

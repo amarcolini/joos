@@ -3,6 +3,7 @@ package com.amarcolini.joos.trajectory.config
 import com.amarcolini.joos.geometry.Angle
 import com.amarcolini.joos.geometry.Pose2d
 import com.amarcolini.joos.trajectory.TrajectoryBuilder
+import com.amarcolini.joos.trajectory.constraints.TrajectoryConstraints
 import com.fasterxml.jackson.annotation.JsonSubTypes
 import com.fasterxml.jackson.annotation.JsonTypeInfo
 
@@ -16,8 +17,6 @@ data class TrajectoryConfig(
     val constraints: TrajectoryConstraints,
     val resolution: Double = 0.25
 ) {
-    // the file format changes relatively frequently
-    // fortunately the contents are human-readable and can be manually translated when the format changes
     // TODO: major changes will trigger a version increment in 1.0.0+
     val version = 1
 
@@ -62,7 +61,6 @@ data class TrajectoryConfig(
         val interpolationType: HeadingInterpolationType = HeadingInterpolationType.Tangent
     )
 
-    @Suppress("ComplexMethod")
     fun toTrajectoryBuilder(): TrajectoryBuilder {
         val builder = TrajectoryBuilder(
             startPose,

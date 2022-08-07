@@ -4,8 +4,8 @@ import com.amarcolini.joos.geometry.Angle
 import com.amarcolini.joos.geometry.Pose2d
 import com.amarcolini.joos.geometry.Vector2d
 import com.amarcolini.joos.trajectory.Trajectory
-import com.amarcolini.joos.trajectory.config.GenericConstraints
-import com.amarcolini.joos.trajectory.config.TrajectoryConstraints
+import com.amarcolini.joos.trajectory.constraints.GenericConstraints
+import com.amarcolini.joos.trajectory.constraints.TrajectoryConstraints
 import javafx.beans.property.SimpleObjectProperty
 
 sealed class Waypoint {

@@ -5,7 +5,7 @@ import com.amarcolini.joos.gui.rendering.Backgrounds
 import com.amarcolini.joos.gui.style.Theme
 import com.amarcolini.joos.gui.style.Themes
 import com.amarcolini.joos.gui.trajectory.WaypointTrajectory
-import com.amarcolini.joos.trajectory.config.TrajectoryConstraints
+import com.amarcolini.joos.trajectory.constraints.TrajectoryConstraints
 import javafx.scene.image.Image
 import tornadofx.launch
 

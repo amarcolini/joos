@@ -5,8 +5,8 @@ import com.amarcolini.joos.gui.rendering.Backgrounds
 import com.amarcolini.joos.gui.style.Dark
 import com.amarcolini.joos.gui.style.Theme
 import com.amarcolini.joos.gui.trajectory.WaypointTrajectory
-import com.amarcolini.joos.trajectory.config.GenericConstraints
-import com.amarcolini.joos.trajectory.config.TrajectoryConstraints
+import com.amarcolini.joos.trajectory.constraints.GenericConstraints
+import com.amarcolini.joos.trajectory.constraints.TrajectoryConstraints
 import io.github.classgraph.ClassGraph
 import javafx.beans.property.SimpleObjectProperty
 import javafx.scene.image.Image

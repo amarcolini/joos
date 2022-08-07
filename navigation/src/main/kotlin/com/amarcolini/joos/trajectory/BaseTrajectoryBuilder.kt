@@ -26,7 +26,7 @@ abstract class BaseTrajectoryBuilder<T : BaseTrajectoryBuilder<T>> protected con
     private val displacementMarkers = mutableListOf<DisplacementMarker>()
     private val spatialMarkers = mutableListOf<SpatialMarker>()
 
-    private var segments = mutableListOf<TrajectorySegment>()
+    internal var segments = mutableListOf<TrajectorySegment>()
 
     protected fun addPathSegment(add: () -> Unit) {
         try {

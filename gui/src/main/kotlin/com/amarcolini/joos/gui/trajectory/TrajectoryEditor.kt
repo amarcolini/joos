@@ -7,6 +7,7 @@ import com.amarcolini.joos.gui.Global
 import com.amarcolini.joos.gui.rendering.Renderer
 import com.amarcolini.joos.gui.style.Theme
 import com.amarcolini.joos.trajectory.config.*
+import com.amarcolini.joos.trajectory.constraints.*
 import com.amarcolini.joos.util.DoubleProgression
 import javafx.application.Platform
 import javafx.beans.property.SimpleDoubleProperty
@@ -27,8 +28,6 @@ import kotlin.math.max
 import kotlin.reflect.KMutableProperty
 import kotlin.reflect.KVisibility
 import kotlin.reflect.full.declaredMemberProperties
-import kotlin.reflect.full.memberProperties
-import kotlin.reflect.full.primaryConstructor
 
 
 internal class TrajectoryEditor() : View() {

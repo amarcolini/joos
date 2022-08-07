@@ -7,7 +7,7 @@ import com.amarcolini.joos.profile.MotionProfileGenerator
 import com.amarcolini.joos.profile.MotionState
 import com.amarcolini.joos.trajectory.TrajectoryBuilder
 import com.amarcolini.joos.trajectory.TrajectoryGenerator
-import com.amarcolini.joos.trajectory.config.GenericConstraints
+import com.amarcolini.joos.trajectory.constraints.GenericConstraints
 import com.amarcolini.joos.util.DoubleProgression
 import com.amarcolini.joos.util.deg
 import org.junit.jupiter.api.Test

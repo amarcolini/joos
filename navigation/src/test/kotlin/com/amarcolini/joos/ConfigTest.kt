@@ -1,7 +1,7 @@
 package com.amarcolini.joos
 
 import com.amarcolini.joos.geometry.Pose2d
-import com.amarcolini.joos.trajectory.config.GenericConstraints
+import com.amarcolini.joos.trajectory.constraints.GenericConstraints
 import com.amarcolini.joos.trajectory.config.TrajectoryConfig
 import com.amarcolini.joos.trajectory.config.TrajectoryConfigManager
 import com.amarcolini.joos.util.deg
