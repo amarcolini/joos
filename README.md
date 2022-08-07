@@ -17,7 +17,7 @@ A comprehensive kotlin library designed for FTC. Based on [Road Runner](https://
 
 <br>
 
-You can find the full documentation :sparkles: [here](https://amarcolini.github.io/joos_docs/) :sparkles:
+You can find the full documentation :sparkles:[here](https://amarcolini.github.io/joos_docs/):sparkles:
 
 ## Installation
 
