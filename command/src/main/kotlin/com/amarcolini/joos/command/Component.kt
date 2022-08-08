@@ -7,7 +7,7 @@ import java.util.function.Supplier
  * methods to be used by [Command]s. The [CommandScheduler] uses components to ensure that multiple commands are not using
  * the same hardware at the same time. Commands that use a component should include that component in their [Command.requirements] set.
  */
-interface Component : CommandInterface {
+interface Component {
     companion object {
         /**
          * Creates a component using the provided [runnable].
@@ -72,10 +72,10 @@ interface Component : CommandInterface {
     /**
      * Unregisters this component.
      */
-    fun unregister() = unregister(this)
+    fun unregister() = CommandScheduler.unregister(this)
 
     /**
      * Registers this component.
      */
-    fun register() = register(this)
+    fun register() = CommandScheduler.register(this)
 }

@@ -46,15 +46,15 @@ abstract class Robot : CommandInterface {
         ?: throw IllegalStateException("A Robot cannot be instantiated without an active OpMode.")
 
     @JvmField
-    val dashboard: FtcDashboard = FtcDashboard.getInstance()
+    val dashboard: FtcDashboard? = FtcDashboard.getInstance()
 
     /**
-     * This method is run when the current OpMode initializes. Automatically called by [RobotOpMode].
+     * This method is run when the current OpMode initializes. Automatically called by [CommandOpMode] if [CommandOpMode.registerRobot] is called.
      */
     open fun init() {}
 
     /**
-     * This method is run as soon as the current OpMode starts. Automatically called by [RobotOpMode].
+     * This method is run as soon as the current OpMode starts. Automatically called by [CommandOpMode] if [CommandOpMode.registerRobot] is called.
      */
     open fun start() {}
 }

@@ -53,6 +53,7 @@ object CommandScheduler : OpModeManagerNotifier.Notifications {
     /**
      * Stops the currently active OpMode.
      */
+    @JvmStatic
     fun stopOpMode() {
         opMode?.requestOpModeStop()
     }
@@ -107,11 +108,13 @@ object CommandScheduler : OpModeManagerNotifier.Notifications {
      * Command scheduling policy. If true, all commands which cannot currently be scheduled will be scheduled as soon as
      * they can be schedule. If false (default behavior), all commands which cannot currently be scheduled will not be scheduled.
      */
+    @JvmStatic
     var schedulePolicy: Boolean = false
 
     /**
      * Returns whether a command can currently be scheduled.
      */
+    @JvmStatic
     fun isAvailable(command: Command): Boolean =
         requirements.filter { (key, value) -> command.requirements.contains(key) && !value.isInterruptable }
             .isEmpty()
@@ -131,6 +134,7 @@ object CommandScheduler : OpModeManagerNotifier.Notifications {
      *
      * @see schedulePolicy
      */
+    @JvmStatic
     fun schedule(vararg commands: Command): Boolean {
         var success = true
         if (isBusy) {
@@ -160,6 +164,7 @@ object CommandScheduler : OpModeManagerNotifier.Notifications {
      *
      * @see schedulePolicy
      */
+    @JvmStatic
     fun schedule(vararg runnables: Runnable): Boolean = schedule(*runnables.map { BasicCommand(it) }.toTypedArray())
 
     /**
@@ -172,9 +177,12 @@ object CommandScheduler : OpModeManagerNotifier.Notifications {
      * @param repeat whether the provided [runnable] should run repeatedly or not
      * @see schedulePolicy
      */
+    @JvmStatic
     fun schedule(runnable: Runnable, repeat: Boolean): Boolean = schedule(BasicCommand(runnable).runUntil { !repeat })
 
     private var isBusy = false
+
+    @JvmStatic
     fun update() {
         //Updates all registered components
         components.forEach { it.update() }
@@ -217,6 +225,7 @@ object CommandScheduler : OpModeManagerNotifier.Notifications {
     /**
      * Registers the given components to this CommandScheduler so that their update functions are called and their default commands are scheduled.
      */
+    @JvmStatic
     fun register(vararg components: Component) {
         this.components += components
     }
@@ -224,6 +233,7 @@ object CommandScheduler : OpModeManagerNotifier.Notifications {
     /**
      * Unregisters the given components from this CommandScheduler so that their update functions are no longer called and their default commands are no longer scheduled.
      */
+    @JvmStatic
     fun unregister(vararg components: Component) {
         this.components -= components.toSet()
     }
@@ -231,12 +241,14 @@ object CommandScheduler : OpModeManagerNotifier.Notifications {
     /**
      * Returns whether the given components are registered with this CommandScheduler.
      */
+    @JvmStatic
     fun isRegistered(vararg components: Component): Boolean =
         this.components.containsAll(components.toList())
 
     /**
      * Cancels commands. Ignores whether a command is interruptable.
      */
+    @JvmStatic
     fun cancel(vararg commands: Command) {
         if (isBusy) {
             actionCache += {
@@ -258,6 +270,7 @@ object CommandScheduler : OpModeManagerNotifier.Notifications {
      * Maps a condition to commands. If the condition returns true, the commands are scheduled.
      * A command can be mapped to multiple conditions.
      */
+    @JvmStatic
     fun map(condition: BooleanSupplier, vararg commands: Command) {
         conditions[condition] = commands.toMutableSet()
     }
@@ -266,6 +279,7 @@ object CommandScheduler : OpModeManagerNotifier.Notifications {
      * Maps a condition to commands. If the condition returns true, the commands are scheduled.
      * A command can be mapped to multiple conditions.
      */
+    @JvmStatic
     fun map(condition: BooleanSupplier, vararg runnables: Runnable) {
         map(condition, *runnables.map { Command.of(it) }.toTypedArray())
     }
@@ -273,6 +287,7 @@ object CommandScheduler : OpModeManagerNotifier.Notifications {
     /**
      * Removes commands from the list of mappings.
      */
+    @JvmStatic
     fun unmap(vararg commands: Command) {
         conditions.values.forEach { it.removeAll(commands.toSet()) }
     }
@@ -280,6 +295,7 @@ object CommandScheduler : OpModeManagerNotifier.Notifications {
     /**
      * Removes a condition from the list of mappings.
      */
+    @JvmStatic
     fun unmap(condition: BooleanSupplier) {
         conditions.remove(condition)
     }
@@ -287,6 +303,7 @@ object CommandScheduler : OpModeManagerNotifier.Notifications {
     /**
      * Cancels all currently scheduled commands. Ignores whether a command is interruptable.
      */
+    @JvmStatic
     fun cancelAll() = cancel(*scheduledCommands.toTypedArray())
 
     /**
@@ -310,11 +327,13 @@ object CommandScheduler : OpModeManagerNotifier.Notifications {
     /**
      * Returns whether all the given commands are scheduled.
      */
+    @JvmStatic
     fun isScheduled(vararg commands: Command): Boolean = scheduledCommands.containsAll(commands.asList())
 
     /**
      * Returns the command currently requiring a given component.
      */
+    @JvmStatic
     fun requiring(component: Component): Command? = requirements[component]
 
     override fun onOpModePreInit(opMode: OpMode) {

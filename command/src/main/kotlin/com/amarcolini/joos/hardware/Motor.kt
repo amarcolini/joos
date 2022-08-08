@@ -227,7 +227,7 @@ class Motor @JvmOverloads constructor(
     }
 
     /**
-     * A class representing many different motors so you don't have to find their specs.
+     * A class with the specs of many motors so you don't have to find them.
      */
     enum class Kind(val maxRPM: Double, val TPR: Double) {
         GOBILDA_30(30.0, 5_281.1),

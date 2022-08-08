@@ -6,9 +6,10 @@ import com.amarcolini.joos.gamepad.MultipleGamepad
 import com.qualcomm.robotcore.eventloop.opmode.Autonomous
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp
+import java.util.function.BooleanSupplier
+import kotlin.reflect.full.declaredFunctions
 import kotlin.reflect.full.hasAnnotation
-import kotlin.reflect.full.instanceParameter
-import kotlin.reflect.full.starProjectedType
+import kotlin.reflect.full.memberFunctions
 
 /**
  * An OpMode that uses a [CommandScheduler], and optionally, a [Robot].
@@ -36,19 +37,20 @@ abstract class CommandOpMode : LinearOpMode(), CommandInterface {
      * The FtcDashboard instance.
      */
     @JvmField
-    protected val dashboard: FtcDashboard = FtcDashboard.getInstance()
+    protected val dashboard: FtcDashboard? = FtcDashboard.getInstance()
 
     /**
      * A handy [MultipleGamepad].
      */
-    @JvmField
-    protected val gamepad: MultipleGamepad = MultipleGamepad(gamepad1, gamepad2)
+    protected lateinit var gamepad: MultipleGamepad
+        private set
+        @JvmName("gamepad") get
 
     abstract fun preInit()
     open fun preStart() {}
 
     private var robot: Robot? = null
-    private val isStartOverridden get() = this::preStart.instanceParameter?.type != this::class.starProjectedType
+    private val isStartOverridden get() = this::class.memberFunctions.first { it.name == "preStart" } in this::class.declaredFunctions
 
     /**
      * Whether the [CommandScheduler] should update in the init loop. Note that if [preStart] is not overridden,
@@ -64,13 +66,16 @@ abstract class CommandOpMode : LinearOpMode(), CommandInterface {
 
     private var hasInitialized = false
     final override fun runOpMode() {
+        gamepad = MultipleGamepad(gamepad1, gamepad2)
         preInit()
         hasInitialized = true
 
         if (isStartOverridden && initLoop) while (!isStarted) CommandScheduler.update()
         else telemetry.update()
 
-        if (isStartOverridden && cancelBeforeStart) cancelAll()
+        waitForStart()
+
+        if (isStartOverridden && cancelBeforeStart) CommandScheduler.cancelAll()
         robot?.start()
         preStart()
         while (opModeIsActive()) CommandScheduler.update()

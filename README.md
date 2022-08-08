@@ -31,7 +31,7 @@ repositories {
 }
 
 dependencies {
-  implementation "com.github.amarcolini.joos:$module:0.4.8-alpha"
+  implementation "com.github.amarcolini.joos:$module:0.4.8"
 }
 ```
 

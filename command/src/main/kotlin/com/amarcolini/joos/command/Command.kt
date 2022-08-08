@@ -10,7 +10,7 @@ import java.util.function.Supplier
  * Commands are usually run from the [CommandScheduler], but can be run independently if desired. Commands can be chained
  * together to form complex multi-step actions.
  */
-abstract class Command : CommandInterface {
+abstract class Command {
     @JvmField
     protected val telemetry: SuperTelemetry = CommandScheduler.telemetry
 
@@ -73,17 +73,17 @@ abstract class Command : CommandInterface {
     /**
      * Cancels this command.
      */
-    fun cancel(): Unit = cancel(this)
+    fun cancel(): Unit = CommandScheduler.cancel(this)
 
     /**
      * Schedules this command.
      */
-    fun schedule(): Boolean = schedule(this)
+    fun schedule(): Boolean = CommandScheduler.schedule(this)
 
     /**
      * Returns whether this command is currently registered with the [CommandScheduler].
      */
-    fun isScheduled(): Boolean = isScheduled(this)
+    fun isScheduled(): Boolean = CommandScheduler.isScheduled(this)
 
     /**
      * Runs this command independently of the [CommandScheduler]. Initializes, executes and ends this command synchronously
