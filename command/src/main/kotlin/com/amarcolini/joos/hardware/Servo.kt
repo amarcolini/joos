@@ -140,7 +140,7 @@ class Servo @JvmOverloads constructor(
      * positioning calls will operate within that subset range. This is useful if your servo has only a limited
      * useful range of movement due to the physical hardware that it is manipulating (as is often the case) but
      * you don't want to have to manually adjust the input to [position] each time.
-     * For example, if the range of the servo is 180°, and `scaleRange(30°, 90°)` is set; then servo 
+     * For example, if the range of the servo is 180°, and `scaleRange(30°, 90°)` is set; then servo
      * positions will be clamped to fit in that range:
      *
      * `setPosition(10°)` is clamped to `30°`

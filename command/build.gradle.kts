@@ -11,6 +11,7 @@ extra {
 repositories {
     google()
     maven { url = uri("https://maven.brott.dev/") }
+    mavenCentral()
 }
 
 tasks.withType<Test> {
@@ -30,14 +31,14 @@ dependencies {
     implementation("org.jetbrains.kotlin:kotlin-reflect:${Versions.kotlin}")
 
     implementation("org.apache.commons:commons-math3:3.6.1")
-    compileOnly("org.firstinspires.ftc:RobotCore:7.0.0")
-    compileOnly("org.firstinspires.ftc:Hardware:7.0.0")
-    api("com.acmerobotics.dashboard:dashboard:0.4.4")
+    compileOnly("org.firstinspires.ftc:RobotCore:8.0.0")
+    compileOnly("org.firstinspires.ftc:Hardware:8.0.0")
+    api("com.acmerobotics.dashboard:dashboard:0.4.6")
     api(project(":navigation"))
     implementation(project(":command:annotation"))
 
-    testImplementation("org.junit.jupiter:junit-jupiter-api:5.7.2")
-    testRuntimeOnly("org.junit.jupiter:junit-jupiter-engine:5.7.2")
+    testImplementation("org.junit.jupiter:junit-jupiter-api:5.9.0")
+    testRuntimeOnly("org.junit.jupiter:junit-jupiter-engine:5.9.0")
 
     testImplementation("org.knowm.xchart:xchart:3.8.1")
 }

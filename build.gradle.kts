@@ -85,6 +85,8 @@ subprojects.forEach {
 allprojects {
     repositories {
         mavenCentral()
+        maven("https://maven.universablockchain.com/")
+        maven("https://repo.kotlin.link")
     }
 
     group = "com.amarcolini.joos"

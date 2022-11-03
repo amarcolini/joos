@@ -110,9 +110,9 @@ class Imu constructor(val imu: BNO055IMU) {
         get() {
             val velocity = imu.angularVelocity.toAngleUnit(AngleUnit.RADIANS)
             return (when (axis) {
-                Axis.X -> -velocity.zRotationRate
+                Axis.X -> velocity.xRotationRate
                 Axis.Y -> velocity.yRotationRate
-                Axis.Z -> -velocity.xRotationRate
+                Axis.Z -> velocity.zRotationRate
             } * if (reversed) -1.0 else 1.0).rad
         }
 

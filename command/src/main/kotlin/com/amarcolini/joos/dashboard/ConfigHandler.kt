@@ -75,7 +75,7 @@ object ConfigHandler {
                 }
                 VariableType.CUSTOM -> {
                     val providedConfig: ConfigVariable<*>? = try {
-                        val provider = propertyClass.java.getAnnotation(WithConfig::class.java)?.provider
+                        val provider = propertyClass.findAnnotation<WithConfig>()?.provider
                         (provider?.createInstance() as? ConfigProvider<Any>)?.parse(property.get(parent))
                     } catch (_: Exception) {
                         null
@@ -111,7 +111,7 @@ object ConfigHandler {
             is Double, is Int, is Boolean, is String, is Enum<*> -> null
             else -> {
                 val providedConfig: ConfigVariable<*>? = try {
-                    val provider = value::class.java.getAnnotation(WithConfig::class.java)?.provider
+                    val provider = value::class.findAnnotation<WithConfig>()?.provider
                     (provider?.createInstance() as? ConfigProvider<Any>)?.parse(value)
                 } catch (_: Exception) {
                     null

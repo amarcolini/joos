@@ -192,4 +192,3 @@ class GamepadEx(gamepad: Gamepad) : Component {
         internal.touchpad_finger_2_y.toDouble()
     )
 }
-
