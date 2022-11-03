@@ -86,7 +86,7 @@ allprojects {
     repositories {
         mavenCentral()
         maven("https://maven.universablockchain.com/")
-        maven("https://repo.kotlin.link")
+        maven("https://maven.pkg.jetbrains.space/spc/p/sci/maven")
     }
 
     group = "com.amarcolini.joos"
