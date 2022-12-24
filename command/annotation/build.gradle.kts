@@ -22,10 +22,10 @@ dependencies {
     implementation("org.jetbrains.kotlin:kotlin-stdlib:${Versions.kotlin}")
     implementation("org.jetbrains.kotlin:kotlin-reflect:${Versions.kotlin}")
 
-    implementation("com.google.devtools.ksp:symbol-processing-api:1.6.21-1.0.5")
+    implementation("com.google.devtools.ksp:symbol-processing-api:1.7.20-1.0.7")
 
     implementation("com.squareup:javapoet:1.13.0")
-    implementation("com.squareup:kotlinpoet:1.11.0")
+    implementation("com.squareup:kotlinpoet:1.12.0")
 }
 
 publishing {

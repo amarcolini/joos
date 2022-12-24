@@ -7,6 +7,8 @@ import com.amarcolini.joos.util.rad
 import io.nacular.doodle.core.View
 import io.nacular.doodle.drawing.AffineTransform
 import io.nacular.doodle.drawing.Canvas
+import io.nacular.doodle.drawing.Color
+import io.nacular.doodle.drawing.Stroke
 import io.nacular.doodle.geometry.Point
 import io.nacular.doodle.geometry.Rectangle
 import io.nacular.doodle.image.Image
@@ -14,10 +16,16 @@ import io.nacular.doodle.utils.ObservableList
 import io.nacular.doodle.utils.ObservableSet
 import io.nacular.measured.units.Angle
 import io.nacular.measured.units.Measure
+import particle.SensingPlayground
 import kotlin.math.min
 
 fun Pose2d.toPoint() = Point(x, y)
 fun Vector2d.toPoint() = Point(x, y)
+operator fun Point.plus(other: Vector2d) = Point(x + other.x, y + other.y)
+operator fun Point.minus(other: Vector2d) = Point(x - other.x, y - other.y)
+fun Point.coerceIn(min: Point, max: Point) = Point(x.coerceIn(min.x, max.x), y.coerceIn(min.y, max.y))
+operator fun Vector2d.plus(other: Point) = Vector2d(x + other.x, y + other.y)
+operator fun Vector2d.minus(other: Point) = Vector2d(x - other.x, y - other.y)
 fun Point.toVector2d() = Vector2d(x, y)
 
 /**
@@ -25,16 +33,20 @@ fun Point.toVector2d() = Vector2d(x, y)
  */
 object Field : View() {
     val backgrounds: MutableMap<String, Image?> = ObservableMap(mutableMapOf(), ::rerender)
+    const val fieldSize = 144.0
 
     init {
-        children += listOf(
-            PathEntity(
-                PathBuilder(Pose2d(4.0, 4.0))
-                    .splineTo(Vector2d(30.0, 30.0), 0.rad)
-                    .build()
-            ),
-            Robot()
-        )
+//        listOf(
+//            PathEntity(
+//                PathBuilder(Pose2d(4.0, 4.0))
+//                    .splineTo(Vector2d(30.0, 30.0), 0.rad)
+//                    .build(),
+//                Stroke(Color.Black)
+//            ),
+//            Robot()
+//        )
+//        children += DraggablePathV2.getEntities()
+        children += SensingPlayground
     }
 
     override fun render(canvas: Canvas) {
@@ -49,7 +61,7 @@ object Field : View() {
                 AffineTransform()
                     .translate(bounds.center - it.center)
                     .rotate(it.center, Measure(-90.0, Angle.degrees))
-                    .scale(it.center, size / 144.0, size / 144.0)
+                    .scale(it.center, size / fieldSize, size / fieldSize)
                     .rotate(it.center + it.position, -it.heading)
         }
     }
@@ -58,6 +70,10 @@ object Field : View() {
 abstract class FieldEntity : View() {
     var heading: Measure<Angle> = Measure(0.0, Angle.radians)
     open val center: Point = Point.Origin
+}
+
+abstract class EntityGroup {
+    abstract val entities: List<FieldEntity>
 }
 
 class ObservableMap<K, V>(

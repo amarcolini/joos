@@ -1,7 +1,7 @@
 package com.amarcolini.joos.geometry
 
+import com.amarcolini.joos.serialization.format
 import com.amarcolini.joos.util.*
-import net.sergeych.sprintf.format
 import kotlin.jvm.JvmField
 import kotlin.jvm.JvmOverloads
 
@@ -24,9 +24,7 @@ data class Pose2d @JvmOverloads constructor(
     /**
      * Constructs a pose where [heading] is in [Angle.defaultUnits].
      */
-    constructor(pos: Vector2d, heading: Double) : this(pos,
-        Angle(heading)
-    )
+    constructor(pos: Vector2d, heading: Double) : this(pos, Angle(heading))
 
     /**
      * Returns this pose as a vector (i.e., without heading).
@@ -80,5 +78,5 @@ data class Pose2d @JvmOverloads constructor(
     infix fun epsilonEqualsHeading(other: Pose2d): Boolean =
         x epsilonEquals other.x && y epsilonEquals other.y && heading epsilonEquals other.heading
 
-    override fun toString(): String = "(%.3f, %.3f, $heading)".format(x, y)
+    override fun toString(): String = "(${x.format(3)}, ${y.format(3)}, $heading)"
 }

@@ -1,7 +1,7 @@
 package com.amarcolini.joos.geometry
 
+import com.amarcolini.joos.serialization.format
 import com.amarcolini.joos.util.*
-import net.sergeych.sprintf.format
 import kotlin.jvm.JvmField
 import kotlin.jvm.JvmOverloads
 import kotlin.jvm.JvmStatic
@@ -94,8 +94,10 @@ data class Vector2d @JvmOverloads constructor(
      * Rotates this vector by [angle].
      */
     fun rotated(angle: Angle): Vector2d {
-        val newX = x * angle.cos() - y * angle.sin()
-        val newY = x * angle.sin() + y * angle.cos()
+        val sin = angle.sin()
+        val cos = angle.cos()
+        val newX = x * cos - y * sin
+        val newY = x * sin + y * cos
         return Vector2d(newX, newY)
     }
 
@@ -110,5 +112,5 @@ data class Vector2d @JvmOverloads constructor(
     infix fun epsilonEquals(other: Vector2d): Boolean =
         x epsilonEquals other.x && y epsilonEquals other.y
 
-    override fun toString(): String = "(%.3f, %.3f)".format(x, y)
+    override fun toString(): String = "(${x.format(3)}, ${y.format(3)})"
 }

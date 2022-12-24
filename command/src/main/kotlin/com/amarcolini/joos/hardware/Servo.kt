@@ -2,6 +2,7 @@ package com.amarcolini.joos.hardware
 
 import com.amarcolini.joos.command.Command
 import com.amarcolini.joos.command.Component
+import com.amarcolini.joos.command.TimeCommand
 import com.amarcolini.joos.geometry.Angle
 import com.amarcolini.joos.profile.MotionProfile
 import com.amarcolini.joos.profile.MotionProfileGenerator
@@ -9,8 +10,10 @@ import com.amarcolini.joos.profile.MotionState
 import com.amarcolini.joos.util.*
 import com.qualcomm.robotcore.hardware.HardwareMap
 import com.qualcomm.robotcore.hardware.Servo
+import kotlin.math.abs
 import kotlin.math.max
 import kotlin.math.min
+import kotlin.math.sign
 
 /**
  * A wrapper for the [Servo] object in the FTC SDK.
@@ -174,26 +177,18 @@ class Servo @JvmOverloads constructor(
 
     /**
      * Returns a command that uses [range] and [speed] (specified in units per second) to go to the specified position
-     * at the desired speed. Note that since there is no feedback from the servo, it may or may not
+     * at the desired speed by slowly incrementing the position. Note that since there is no feedback from the servo, it may or may not
      * actually achieve the desired speed.
      */
     fun goToPosition(position: Double, speed: Angle): Command {
         val actualSpeed = speed / range
-        lateinit var profile: MotionProfile
-        var start = Double.NaN
-        return Command.of {
-            val t = clock.seconds() - start
-            this.position = profile[t].x
+        val distance = abs(position - this.position)
+        val duration = actualSpeed / distance
+        return TimeCommand { t, dt ->
+            this.position = t * actualSpeed * sign(position - this.position) + this.position
+            t >= duration || this.position == position
         }
-            .onInit {
-                profile = MotionProfileGenerator.generateSimpleMotionProfile(
-                    MotionState(this.position, actualSpeed),
-                    MotionState(position, actualSpeed),
-                    actualSpeed, 0.0
-                )
-                start = clock.seconds()
-            }
-            .runUntil { this.position == position }
+            .onEnd { this.position = position }
             .requires(this)
     }
 

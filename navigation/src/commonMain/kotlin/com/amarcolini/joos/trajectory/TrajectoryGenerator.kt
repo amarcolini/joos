@@ -9,6 +9,7 @@ import com.amarcolini.joos.profile.MotionProfileGenerator
 import com.amarcolini.joos.profile.MotionState
 import com.amarcolini.joos.trajectory.constraints.TrajectoryAccelerationConstraint
 import com.amarcolini.joos.trajectory.constraints.TrajectoryVelocityConstraint
+import com.amarcolini.joos.trajectory.constraints.UnsatisfiableConstraint
 import com.amarcolini.joos.util.epsilonEquals
 import kotlin.jvm.JvmOverloads
 
@@ -28,17 +29,23 @@ object TrajectoryGenerator {
         return MotionProfileGenerator.generateMotionProfile(
             start,
             goal,
-            { s ->
+            { s, ds ->
                 val t = path.reparam(s)
+                val lastT = path.reparam(s - ds)
                 velocityConstraint[
-                        s,
                         path[s, t],
                         path.deriv(s, t),
+                        path.deriv(s - ds, lastT),
+                        ds,
                         Pose2d()
                 ]
             },
-            { lastS, s, lastVel, dx ->
-                accelerationConstraint[lastS, s, lastVel, dx, path]
+            { s, ds, lastVel ->
+                val t = path.reparam(s)
+                val lastT = path.reparam(s - ds)
+                val result =
+                    accelerationConstraint[path.deriv(s, t), path.deriv(s - ds, lastT), ds, lastVel].maxOf { it.second }
+                if (result < 0) throw UnsatisfiableConstraint() else result
             },
             resolution
         )

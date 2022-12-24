@@ -4,6 +4,7 @@ import com.amarcolini.joos.command.Component
 import com.amarcolini.joos.control.PIDCoefficients
 import com.amarcolini.joos.drive.DriveSignal
 import com.amarcolini.joos.followers.HolonomicPIDVAFollower
+import com.amarcolini.joos.followers.TrajectoryFollower
 import com.amarcolini.joos.geometry.Pose2d
 import com.amarcolini.joos.hardware.Imu
 import com.amarcolini.joos.hardware.Motor
@@ -66,7 +67,7 @@ open class MecanumDrive @JvmOverloads constructor(
         if (constraints.maxWheelVel <= 0) constraints.copy(maxWheelVel = motors.maxDistanceVelocity)
         else constraints
 
-    override val trajectoryFollower = HolonomicPIDVAFollower(
+    override var trajectoryFollower: TrajectoryFollower = HolonomicPIDVAFollower(
         translationalPID, translationalPID,
         headingPID,
         Pose2d(0.5, 0.5, 5.deg),

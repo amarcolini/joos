@@ -75,7 +75,6 @@ dependencies {
     commonMainApi("org.jetbrains.kotlin:kotlin-stdlib:${Versions.kotlin}")
     commonMainImplementation("org.jetbrains.kotlin:kotlin-reflect:${Versions.kotlin}")
     commonMainImplementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.4.1")
-    commonMainImplementation("net.sergeych:mp_stools:1.2.2")
     commonTestImplementation(kotlin("test"))
 //    implementation("com.fasterxml.jackson.core:jackson-databind:2.13.3")
 //    implementation("com.fasterxml.jackson.dataformat:jackson-dataformat-yaml:2.13.3")

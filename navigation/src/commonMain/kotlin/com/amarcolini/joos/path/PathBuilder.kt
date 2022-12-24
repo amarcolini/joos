@@ -63,7 +63,12 @@ class PathBuilder(
         return LineSegment(start.vec(), end)
     }
 
-    private fun makeSpline(endPosition: Vector2d, endTangent: Angle): QuinticSpline {
+    private fun makeSpline(
+        endPosition: Vector2d,
+        endTangent: Angle,
+        startTangentMag: Double = -1.0,
+        endTangentMag: Double = -1.0
+    ): QuinticSpline {
         if (currentPose.vec() epsilonEquals endPosition) {
             throw EmptyPathSegmentException()
         }
@@ -72,10 +77,13 @@ class PathBuilder(
         val startWaypoint =
             QuinticSpline.Knot(
                 currentPose.vec(),
-                currentDeriv.vec() * derivMag,
+                currentDeriv.vec() * if (startTangentMag >= 0.0) startTangentMag else derivMag,
                 currentSecondDeriv.vec()
             )
-        val endWaypoint = QuinticSpline.Knot(endPosition, Vector2d.polar(derivMag, endTangent))
+        val endWaypoint = QuinticSpline.Knot(
+            endPosition,
+            Vector2d.polar(if (endTangentMag >= 0.0) endTangentMag else derivMag, endTangent)
+        )
 
         return QuinticSpline(startWaypoint, endWaypoint)
     }
@@ -213,6 +221,44 @@ class PathBuilder(
      * @param distance distance to strafe right
      */
     fun strafeRight(distance: Double): PathBuilder = strafeLeft(-distance)
+
+    /**
+     * Adds a spline segment with tangent heading interpolation.
+     *
+     * @param endPosition end position
+     * @param endTangent end tangent
+     * @param startTangentMag the magnitude of the start tangent
+     * @param endTangentMag the magnitude of the end tangent
+     */
+    fun splineTo(
+        endPosition: Vector2d,
+        endTangent: Angle,
+        startTangentMag: Double,
+        endTangentMag: Double
+    ): PathBuilder {
+        val spline = makeSpline(endPosition, endTangent, startTangentMag, endTangentMag)
+        val interpolator = makeTangentInterpolator(spline)
+
+        return addSegment(PathSegment(spline, interpolator))
+    }
+
+    /**
+     * Adds a spline segment with tangent heading interpolation.
+     *
+     * @param endPosition end position
+     * @param endTangent end tangent
+     * @param endTangentMag the magnitude of the end tangent
+     */
+    fun splineTo(
+        endPosition: Vector2d,
+        endTangent: Angle,
+        endTangentMag: Double
+    ): PathBuilder {
+        val spline = makeSpline(endPosition, endTangent, -1.0, endTangentMag)
+        val interpolator = makeTangentInterpolator(spline)
+
+        return addSegment(PathSegment(spline, interpolator))
+    }
 
     /**
      * Adds a spline segment with tangent heading interpolation.

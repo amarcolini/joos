@@ -10,6 +10,6 @@ class MinVelocityConstraint(
 ) : TrajectoryVelocityConstraint {
     constructor(vararg constraints: TrajectoryVelocityConstraint) : this(constraints.toList())
 
-    override fun get(s: Double, pose: Pose2d, deriv: Pose2d, baseRobotVel: Pose2d) =
-        constraints.minOf { it[s, pose, deriv, baseRobotVel] }
+    override fun get(pose: Pose2d, deriv: Pose2d, lastDeriv: Pose2d, ds: Double, baseRobotVel: Pose2d): Double =
+        constraints.minOf { it[pose, deriv, lastDeriv, ds, baseRobotVel] }
 }

@@ -16,11 +16,7 @@ import kotlin.math.ceil
 /**
  * A powerful telemetry for both the Driver Station and [FTC Dashboard](https://github.com/acmerobotics/ftc-dashboard).
  */
-class SuperTelemetry() {
-    constructor(telemetry: Telemetry) : this() {
-        register(telemetry)
-    }
-
+object SuperTelemetry {
     private var packet: TelemetryPacket = TelemetryPacket()
     val lines: MutableList<Linable> = ArrayList()
     private val telemetries: MutableList<Telemetry> = ArrayList()
@@ -31,7 +27,7 @@ class SuperTelemetry() {
     var msTransmissionInterval: Int = 250
         set(value) {
             telemetries.forEach { it.msTransmissionInterval = value }
-            FtcDashboard.getInstance().telemetryTransmissionInterval = value
+            FtcDashboard.getInstance()?.telemetryTransmissionInterval = value
             field = value
         }
 
@@ -43,7 +39,7 @@ class SuperTelemetry() {
     /**
      * The basic telemetry line.
      */
-    abstract inner class Linable {
+    abstract class Linable {
         abstract fun composed(): String
 
         var isRetained: Boolean = false
@@ -57,17 +53,17 @@ class SuperTelemetry() {
     /**
      * A [Linable] that can share a line with other [Inlinable]s.
      */
-    abstract inner class Inlinable : Linable() {
+    abstract class Inlinable : Linable() {
         var parent: Line? = null
             internal set
 
-        open fun addData(caption: String, format: String, arg1: Any, vararg args: Any): Item =
+        open fun addData(caption: String, format: String, arg1: Any?, vararg args: Any?): Item =
             Item(caption, String.format(format, arg1, *args)).also { add(it) }
 
-        open fun addData(caption: String, value: Any): Item =
+        open fun addData(caption: String, value: Any?): Item =
             Item(caption, value.toString()).also { add(it) }
 
-        open fun addDataProvider(caption: String, provider: Supplier<Any>): ItemProvider =
+        open fun addDataProvider(caption: String, provider: Supplier<Any?>): ItemProvider =
             ItemProvider(caption, provider).also { add(it) }
 
         open fun add(item: Inlinable): Inlinable {
@@ -92,7 +88,7 @@ class SuperTelemetry() {
     /**
      * A container for [Inlinable]s with a caption.
      */
-    inner class Line(var caption: String, vararg items: Inlinable) : Linable() {
+    class Line(var caption: String, vararg items: Inlinable) : Linable() {
         internal constructor(vararg items: Inlinable) : this("", *items)
 
         val items: MutableList<Inlinable> = items.toMutableList()
@@ -113,13 +109,13 @@ class SuperTelemetry() {
             return this
         }
 
-        fun addData(caption: String, format: String, arg1: Any, vararg args: Any): Line =
+        fun addData(caption: String, format: String, arg1: Any?, vararg args: Any?): Line =
             add(Item(caption, String.format(format, arg1, *args)))
 
-        fun addData(caption: String, value: Any): Line =
+        fun addData(caption: String, value: Any?): Line =
             add(Item(caption, value.toString()))
 
-        fun addDataProvider(caption: String, provider: Supplier<Any>): Line =
+        fun addDataProvider(caption: String, provider: Supplier<Any?>): Line =
             add(ItemProvider(caption, provider))
 
         fun add(item: Inlinable): Line {
@@ -132,19 +128,19 @@ class SuperTelemetry() {
     /**
      * A telemetry item containing a caption and a value. Can share a line with other items.
      */
-    inner class Item(var caption: String, var value: String) : Inlinable() {
+    class Item(var caption: String, var value: String) : Inlinable() {
 
         fun setCaption(caption: String): Item {
             this.caption = caption
             return this
         }
 
-        fun setValue(format: String, vararg args: Any): Item {
+        fun setValue(format: String, vararg args: Any?): Item {
             value = String.format(format, *args)
             return this
         }
 
-        fun setValue(value: Any): Item {
+        fun setValue(value: Any?): Item {
             this.value = value.toString()
             return this
         }
@@ -160,13 +156,13 @@ class SuperTelemetry() {
     /**
      * A telemetry item that holds a data provider. Useful for changing data.
      */
-    inner class ItemProvider(var caption: String, var provider: Supplier<Any>) : Inlinable() {
+    class ItemProvider(var caption: String, var provider: Supplier<Any?>) : Inlinable() {
         fun setCaption(caption: String): ItemProvider {
             this.caption = caption
             return this
         }
 
-        fun setProvider(provider: Supplier<Any>): ItemProvider {
+        fun setProvider(provider: Supplier<Any?>): ItemProvider {
             this.provider = provider
             return this
         }
@@ -194,16 +190,16 @@ class SuperTelemetry() {
 
     fun unregister(vararg telemetries: Telemetry): Boolean = this.telemetries.removeAll(telemetries.toSet())
 
-    fun addData(caption: String, format: String, arg1: Any, vararg args: Any): Item =
+    fun addData(caption: String, format: String, arg1: Any?, vararg args: Any?): Item =
         addData(caption, String.format(format, arg1, *args))
 
-    fun addData(caption: String, value: Any): Item {
+    fun addData(caption: String, value: Any?): Item {
         val item = Item(caption, value.toString())
         lines += item
         return item
     }
 
-    fun addDataProvider(caption: String, provider: Supplier<Any>): ItemProvider {
+    fun addDataProvider(caption: String, provider: Supplier<Any?>): ItemProvider {
         val item = ItemProvider(caption, provider)
         lines += item
         return item

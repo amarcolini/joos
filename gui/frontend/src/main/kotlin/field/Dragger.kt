@@ -7,12 +7,39 @@ import io.nacular.doodle.geometry.Vector2D
 import io.nacular.doodle.system.SystemPointerEvent
 
 class Dragger(private val view: View) : PointerListener, PointerMotionListener {
+    /**
+     * Accepts the mouse position and whether the mouse is pressed.
+     */
     var mouseMoved: (Point, Boolean) -> Unit = { _, _ -> }
+
+    /**
+     * Accepts the mouse position.
+     */
     var mouseDown: (Point) -> Unit = {}
+
+    /**
+     * Accepts the mouse position and whether the mouse is pressed.
+     */
     var mouseEntered: (Point, Boolean) -> Unit = { _, _ -> }
+
+    /**
+     * Accepts the mouse position and whether the mouse is pressed.
+     */
     var mouseExited: (Point, Boolean) -> Unit = { _, _ -> }
+
+    /**
+     * Accepts the mouse position and whether the mouse is pressed.
+     */
     var mouseUp: (Point, Boolean) -> Unit = { _, _ -> }
-    var mouseDragged: (Vector2D) -> Unit = {}
+
+    /**
+     * Accepts the mouse position and position delta.
+     */
+    var mouseDragged: (Point, Vector2D) -> Unit = { _, _ -> }
+
+    /**
+     * Accepts the current state of the mouse.
+     */
     var stateChanged: (SystemPointerEvent.Type) -> Unit = {}
 
     init {
@@ -40,6 +67,7 @@ class Dragger(private val view: View) : PointerListener, PointerMotionListener {
     override fun pressed(event: PointerEvent) {
         if (activePointer == null || event.targetInteractions.find { it.pointer == activePointer } == null) {
             captureInitialState(event)
+            GUIApp.focusManager.requestFocus(view)
             mouseDown(event.location)
             stateChanged(SystemPointerEvent.Type.Down)
         }
@@ -68,8 +96,9 @@ class Dragger(private val view: View) : PointerListener, PointerMotionListener {
 
     override fun dragged(event: PointerEvent) {
         event.changedInteractions.find { it.pointer == activePointer }?.let { activeInteraction ->
-            val delta = view.toLocal(activeInteraction.location, event.target) - initialPosition
-            mouseDragged(delta)
+            val currentPos = view.toLocal(activeInteraction.location, event.target)
+            val delta = currentPos - initialPosition
+            mouseDragged(currentPos, delta)
             stateChanged(activeInteraction.state)
             event.consume()
             consumedDrag = true

@@ -85,7 +85,6 @@ subprojects.forEach {
 allprojects {
     repositories {
         mavenCentral()
-        maven("https://maven.universablockchain.com/")
         maven("https://maven.pkg.jetbrains.space/spc/p/sci/maven")
     }
 

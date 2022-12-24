@@ -6,7 +6,7 @@ package com.amarcolini.joos.profile
 fun interface VelocityConstraint {
 
     /**
-     * Returns the maximum profile velocity at displacement [s].
+     * Returns the maximum profile velocity at displacement [s] and change in displacement [ds].
      */
-    operator fun get(s: Double): Double
+    operator fun get(s: Double, ds: Double): Double
 }

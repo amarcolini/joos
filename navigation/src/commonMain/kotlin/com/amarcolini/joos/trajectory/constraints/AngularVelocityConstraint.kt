@@ -17,7 +17,7 @@ class AngularVelocityConstraint(
      */
     constructor(maxAngVel: Double) : this(Angle(maxAngVel))
 
-    override fun get(s: Double, pose: Pose2d, deriv: Pose2d, baseRobotVel: Pose2d): Double {
+    override fun get(pose: Pose2d, deriv: Pose2d, lastDeriv: Pose2d, ds: Double, baseRobotVel: Pose2d): Double {
         val omega0 = baseRobotVel.heading
         if (abs(omega0) >= maxAngVel) {
             throw UnsatisfiableConstraint()

@@ -1,6 +1,6 @@
 package com.amarcolini.joos.profile
 
-import net.sergeych.sprintf.format
+import com.amarcolini.joos.serialization.format
 import kotlin.jvm.JvmField
 import kotlin.jvm.JvmOverloads
 import kotlin.math.pow
@@ -36,5 +36,5 @@ class MotionState @JvmOverloads constructor(
      */
     fun stationary() = MotionState(x, 0.0, 0.0, 0.0)
 
-    override fun toString() = "(x=%.3f, v=%.3f, a=%.3f, j=%.3f)".format(x, v, a, j)
+    override fun toString() = "(x=${x.format(3)}, v=${v.format(3)}, a=${a.format(3)}, j=${j.format(3)})"
 }

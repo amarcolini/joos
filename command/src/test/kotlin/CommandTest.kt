@@ -5,7 +5,6 @@ import com.amarcolini.joos.util.epsilonEquals
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import kotlin.math.abs
-import kotlin.math.log
 
 private const val logOutput: Boolean = true
 
@@ -38,7 +37,7 @@ class CommandTest {
     fun testPerformance() {
         if (logOutput) println("* Performance test cannot be done with log output turned on.")
         else {
-            val commands = List(10000) { i -> Command.of { if (logOutput) println("command #$i") } }.toTypedArray()
+            val commands = List(10000) { Command.of {} }.toTypedArray()
             scheduler.schedule(*commands)
 
             val clock = NanoClock.system()
@@ -68,6 +67,44 @@ class CommandTest {
             scheduler.update()
         }
         assert(result)
+    }
+
+    @Test
+    fun testWhyMyCodeDoesntWork() {
+        val lift = Component.of {
+            if (logOutput) println("updating lift")
+        }
+        var atPosition = false
+        scheduler.register(lift)
+        val command = Command.select(lift) {
+            WaitCommand(1.0).setInterruptable(true).requires(lift)
+                .onEnd { println("get cancelled punk") }
+                .onInit { println("working a little") }
+                .onExecute { println("but wait!") }
+        }
+        val command2 = Command.select(lift) {
+            FunctionalCommand(
+                init = {
+                }, execute = {
+                }, end = {
+                }, isFinished = {
+                    atPosition
+                }, isInterruptable = true, requirements = setOf(lift)
+            ).onInit { println("actually working") }.onExecute { println("actually executing") }
+        }
+
+        println("#1 available: ${scheduler.isAvailable(command)}")
+        scheduler.schedule(command)
+        var toggle = false
+        scheduler.map({ toggle }, command2)
+        repeat(5) { scheduler.update() }
+        println("are we ready? ${command.isFinished()}")
+        println("#2 available: ${scheduler.isAvailable(command2)}")
+        toggle = true
+        scheduler.update()
+        toggle = false
+        println("toggled!")
+        repeat(5) { scheduler.update() }
     }
 
     @Test
@@ -172,7 +209,7 @@ class CommandTest {
         val cmd = WaitCommand(1.0)
         val clock = NanoClock.system()
         val start = clock.seconds()
-        cmd.run()
+        cmd.runBlocking()
         //Accurate to a thousandth of a second
         assert(abs(clock.seconds() - start - 1.0) < 0.001)
     }
@@ -216,7 +253,7 @@ class CommandTest {
             .then { if (logOutput) println("third") }
             .wait(1.0)
             .then { if (logOutput) println("So cool!!") }
-        cmd.run()
+        cmd.runBlocking()
     }
 
     @Test
@@ -274,7 +311,7 @@ class CommandTest {
                 if (logOutput) println("setting number to $newNumber.")
             }
         }
-        cmd.run()
+        cmd.runBlocking()
         assert(number == 1)
     }
 

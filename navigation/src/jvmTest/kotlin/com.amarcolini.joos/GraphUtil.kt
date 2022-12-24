@@ -52,9 +52,15 @@ object GraphUtil {
         )
         val points = temporalData.map { profile[it] }
         val xData = points.map { it.x }.toDoubleArray()
-        val yData = points.map { it.v }.toDoubleArray()
-
-        val graph = QuickChart.getChart(name, "x", "v", name, xData, yData)
+        val vData = points.map { it.v }.toDoubleArray()
+        val graph = QuickChart.getChart(
+            name,
+            "t",
+            "",
+            arrayOf("v", "x"),
+            temporalData.toList().toDoubleArray(),
+            arrayOf(vData, xData)
+        )
         graph.styler.isLegendVisible = false
         graph.styler.theme = MatlabTheme()
 

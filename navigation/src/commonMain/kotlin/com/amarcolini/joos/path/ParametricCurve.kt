@@ -138,6 +138,8 @@ abstract class ParametricCurve {
     fun curvature(s: Double, t: Double = reparam(s)): Double = secondDeriv(s, t).norm()
 
     private var length: Double = 0.0
+    private var tLo: Double = 0.0
+    private var tHi: Double = 1.0
     private val tSamples = mutableListOf(0.0)
     private val sSamples = mutableListOf(0.0)
 
@@ -145,7 +147,11 @@ abstract class ParametricCurve {
      * Computes internal parameter vs curve length samples and estimates curve length.
      * @param tLo the lower bound of the internal parameter
      * @param tHi the upper bound of the internal parameter
+     * @param maxSegmentLength the maximum distance between two samples
+     * @param maxDepth the maximum number of times the curve can be divided into samples
+     * @param maxDeltaK the maximum change in curvature between two samples
      */
+    @JvmOverloads
     protected fun internalParam(
         tLo: Double,
         tHi: Double,
@@ -153,6 +159,8 @@ abstract class ParametricCurve {
         maxDepth: Int = 15,
         maxDeltaK: Double = 0.01
     ) {
+        this.tLo = tLo
+        this.tHi = tHi
         fun parameterize(tLo: Double, tHi: Double, depth: Int) {
             val tMid = (tLo + tHi) * 0.5
             val vLo = internalGet(tLo)
@@ -180,8 +188,8 @@ abstract class ParametricCurve {
      * @return
      */
     protected fun internalReparam(s: Double): Double {
-        if (s <= 0.0) return 0.0
-        if (s >= length) return 1.0
+        if (s <= 0.0) return tLo
+        if (s >= length) return tHi
         var lo = 0
         var hi = sSamples.size
         while (lo <= hi) {

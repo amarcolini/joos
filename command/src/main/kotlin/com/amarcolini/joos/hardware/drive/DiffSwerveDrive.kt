@@ -71,7 +71,7 @@ open class DiffSwerveDrive(
         if (constraints.maxGearVel <= 0) constraints.copy(motors.maxDistanceVelocity)
         else constraints
 
-    override val trajectoryFollower: TrajectoryFollower = HolonomicPIDVAFollower(
+    override var trajectoryFollower: TrajectoryFollower = HolonomicPIDVAFollower(
         translationalPID, translationalPID, headingPID, Pose2d(0.5, 0.5, 5.deg), 0.5
     )
 

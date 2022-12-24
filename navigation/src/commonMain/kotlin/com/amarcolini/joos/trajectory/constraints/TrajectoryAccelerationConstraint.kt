@@ -1,6 +1,6 @@
 package com.amarcolini.joos.trajectory.constraints
 
-import com.amarcolini.joos.path.Path
+import com.amarcolini.joos.geometry.Pose2d
 
 /**
  * Motion profile acceleration constraint.
@@ -9,18 +9,17 @@ import com.amarcolini.joos.path.Path
 fun interface TrajectoryAccelerationConstraint {
 
     /**
-     * Returns the maximum profile velocity allowed by this acceleration constraint.
+     * Returns the range of profile velocities allowed by this acceleration constraint.
      *
-     * @param lastS previous path displacement
-     * @param s path displacement
+     * @param deriv pose derivative
+     * @param lastDeriv previous pose derivative
+     * @param ds the change in displacement between the current and previous pose derivatives
      * @param lastVel previous profile velocity
-     * @param dx distance between current and previous velocities
      */
     operator fun get(
-        lastS: Double,
-        s: Double,
-        lastVel: Double,
-        dx: Double,
-        path: Path
-    ): Double
+        deriv: Pose2d,
+        lastDeriv: Pose2d,
+        ds: Double,
+        lastVel: Double
+    ): List<Pair<Double, Double>>
 }

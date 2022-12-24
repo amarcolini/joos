@@ -352,20 +352,21 @@ object MotionProfileGenerator {
             return generateMotionProfile(
                 start.flipped(),
                 goal.flipped(),
-                { velocityConstraint[-it] },
-                { lastS, s, lastVel, dx -> accelerationConstraint[-lastS, -s, -lastVel, -dx] },
+                { s, ds -> velocityConstraint[-s, -ds] },
+                { s, ds, lastVel -> accelerationConstraint[-s, -ds, -lastVel] },
                 resolution
             ).flipped()
         }
 
         val length = goal.x - start.x
-        // dx is an adjusted resolution that fits nicely within length
+        // ds is an adjusted resolution that fits nicely within length
         val samples = max(2, ceil(length / resolution).toInt())
 
         val s = DoubleProgression.fromClosedInterval(0.0, length, samples)
+        // compute initial velocity constraints
         val velocityConstraints =
             (s + start.x).map {
-                velocityConstraint[it]
+                velocityConstraint[it, s.step]
             }
 
         // compute the forward states
@@ -382,16 +383,16 @@ object MotionProfileGenerator {
             goal.x - s,
             velocityConstraints.reversed(),
             accelerationConstraint,
-        ).map { (motionState, dx) ->
-            Pair(afterDisplacement(motionState, dx), dx)
-        }.map { (motionState, dx) ->
+        ).map { (motionState, ds) ->
+            Pair(afterDisplacement(motionState, ds), ds)
+        }.map { (motionState, ds) ->
             Pair(
                 MotionState(
                     abs(motionState.x),
                     motionState.v,
                     motionState.a
                 ),
-                -dx
+                -ds
             )
         }.reversed().toMutableList()
 
@@ -509,10 +510,10 @@ object MotionProfileGenerator {
         velocityConstraints: List<Double>,
         accelerationConstraint: AccelerationConstraint,
     ): List<Pair<MotionState, Double>> {
-        // List of forward states as pairs of a motion state and dx.
+        // List of forward states as pairs of a motion state and ds.
         val forwardStates = mutableListOf<Pair<MotionState, Double>>()
 
-        val dx = displacements.step
+        val ds = displacements.step
 
         var lastState = start
         displacements
@@ -522,19 +523,19 @@ object MotionProfileGenerator {
                 lastState = if (lastState.v >= maxVel) {
                     // the last velocity exceeds max vel so we just coast
                     val state = MotionState(displacement, maxVel, 0.0)
-                    forwardStates.add(Pair(state, dx))
-                    afterDisplacement(state, dx)
+                    forwardStates.add(Pair(state, ds))
+                    afterDisplacement(state, ds)
                 } else {
                     // compute the final velocity assuming max accel
                     val finalVel =
-                        accelerationConstraint[displacement - dx, displacement, lastState.v, abs(dx)]
+                        accelerationConstraint[displacement, abs(ds), lastState.v]
                     val accel = (finalVel * finalVel - lastState.v * lastState.v) /
-                            (2 * dx)
+                            (2 * ds)
                     if (finalVel <= maxVel) {
                         // we're still under max vel so we're good
                         val state = MotionState(displacement, lastState.v, accel)
-                        forwardStates.add(Pair(state, dx))
-                        afterDisplacement(state, dx)
+                        forwardStates.add(Pair(state, ds))
+                        afterDisplacement(state, ds)
                     } else {
                         // we went over max vel so now we split the segment
                         val accelDx =
@@ -542,8 +543,8 @@ object MotionProfileGenerator {
                         val accelState = MotionState(displacement, lastState.v, accel)
                         val coastState = MotionState(displacement + accelDx, maxVel, 0.0)
                         forwardStates.add(Pair(accelState, accelDx))
-                        forwardStates.add(Pair(coastState, dx - accelDx))
-                        afterDisplacement(coastState, dx - accelDx)
+                        forwardStates.add(Pair(coastState, ds - accelDx))
+                        afterDisplacement(coastState, ds - accelDx)
                     }
                 }
             }
@@ -551,12 +552,12 @@ object MotionProfileGenerator {
         return forwardStates
     }
 
-    private fun afterDisplacement(state: MotionState, dx: Double): MotionState {
-        val discriminant = state.v * state.v + 2 * state.a * dx
+    private fun afterDisplacement(state: MotionState, ds: Double): MotionState {
+        val discriminant = state.v * state.v + 2 * state.a * ds
         return if (discriminant epsilonEquals 0.0) {
-            MotionState(state.x + dx, 0.0, state.a)
+            MotionState(state.x + ds, 0.0, state.a)
         } else {
-            MotionState(state.x + dx, sqrt(discriminant), state.a)
+            MotionState(state.x + ds, sqrt(discriminant), state.a)
         }
     }
 

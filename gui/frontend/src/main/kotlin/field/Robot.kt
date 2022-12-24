@@ -60,8 +60,8 @@ class Robot(
         heading = Measure(0.0, Angle.degrees)
         clipCanvasToBounds = false
         Dragger(this).apply {
-            mouseDragged = {
-                position += it
+            mouseDragged = { position, delta ->
+                this@Robot.position += delta
             }
             mouseEntered = { _, pressed ->
                 if (!pressed) cursor = Cursor.Grab

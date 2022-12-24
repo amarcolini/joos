@@ -11,8 +11,11 @@ import java.util.function.Supplier
  * together to form complex multi-step actions.
  */
 abstract class Command {
+    /**
+     * The global [SuperTelemetry] instance.
+     */
     @JvmField
-    protected val telemetry: SuperTelemetry = CommandScheduler.telemetry
+    protected val telem: SuperTelemetry = CommandScheduler.telemetry
 
     companion object {
         /**
@@ -22,10 +25,12 @@ abstract class Command {
         fun of(runnable: Runnable): BasicCommand = BasicCommand(runnable)
 
         /**
-         * Creates a [SelectCommand] out of the provided [command].
+         * Creates a [SelectCommand] out of the provided [command]. Note that requirements must be explicitly
+         * specified, as the [SelectCommand] is uncertain of what requirements it will have before being scheduled.
          */
         @JvmStatic
-        fun select(command: Supplier<Command>): SelectCommand = SelectCommand(command)
+        fun select(vararg requirements: Component, command: Supplier<Command>): SelectCommand =
+            SelectCommand(command, *requirements)
 
         /**
          * Creates a command that does nothing.
@@ -91,7 +96,7 @@ abstract class Command {
      *
      * *Note*: If this command does not end by itself, this method will run continuously.
      */
-    fun run() {
+    fun runBlocking() {
         requirements.forEach { it.update() }
         init()
         CommandScheduler.telemetry.update()

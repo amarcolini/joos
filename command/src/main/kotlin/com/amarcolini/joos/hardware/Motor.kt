@@ -6,7 +6,6 @@ import com.amarcolini.joos.control.FeedforwardCoefficients
 import com.amarcolini.joos.control.PIDCoefficients
 import com.amarcolini.joos.control.PIDFController
 import com.amarcolini.joos.geometry.Angle
-import com.amarcolini.joos.kinematics.Kinematics
 import com.amarcolini.joos.util.NanoClock
 import com.amarcolini.joos.util.rad
 import com.qualcomm.robotcore.hardware.DcMotor
@@ -505,6 +504,7 @@ class Motor @JvmOverloads constructor(
             motor.direction =
                 if (value) DcMotorSimple.Direction.REVERSE
                 else DcMotorSimple.Direction.FORWARD
+            encoder.reversed = value
             field = value
         }
         @JvmName("isReversed")

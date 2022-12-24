@@ -12,15 +12,16 @@ import io.nacular.doodle.geometry.Rectangle
 import io.nacular.doodle.geometry.path
 import kotlin.math.roundToInt
 
-class PathEntity(path: Path) : FieldEntity() {
+class PathEntity(path: Path, stroke: Stroke) : FieldEntity() {
     var path by renderProperty(path)
+    var stroke by renderProperty(stroke)
 
-    override var center: Point = Point()
-        private set
+    override val center: Point = Point()
 
     init {
         bounds = Rectangle(10, 10)
         clipCanvasToBounds = false
+        position = Point()
     }
 
     override fun render(canvas: Canvas) {
@@ -29,8 +30,6 @@ class PathEntity(path: Path) : FieldEntity() {
         val samples =
             DoubleProgression.fromClosedInterval(0.0, path.length(), (path.length() / resolution).roundToInt()).drop(1)
         val start = path.start().toPoint()
-        center = start
-        position = start
         val sampledPath = path(start)
         var lastDeriv = path.startDeriv().toPoint() * derivLength
         var lastPoint = start
@@ -43,7 +42,7 @@ class PathEntity(path: Path) : FieldEntity() {
         }
         canvas.path(
             sampledPath.finish(),
-            Stroke(Color((0..255).random().toUByte(), (0..255).random().toUByte(), (0..255).random().toUByte()))
+            stroke
         )
     }
 }

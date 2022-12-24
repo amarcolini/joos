@@ -44,7 +44,7 @@ interface CommandInterface {
      * @param repeat whether the provided [runnable] should run repeatedly or not
      * @see CommandScheduler.schedulePolicy
      */
-    fun schedule(runnable: Runnable, repeat: Boolean): Boolean = CommandScheduler.schedule(runnable, repeat)
+    fun schedule(repeat: Boolean, runnable: Runnable): Boolean = CommandScheduler.schedule(repeat, runnable)
 
     /**
      * Registers the given components to this CommandScheduler so that their update functions are called and their default commands are scheduled.

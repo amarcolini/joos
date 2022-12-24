@@ -7,10 +7,7 @@ import com.amarcolini.joos.localization.Localizer
 import com.amarcolini.joos.util.rad
 import com.qualcomm.hardware.bosch.BNO055IMU
 import com.qualcomm.robotcore.hardware.HardwareMap
-import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit
-import org.firstinspires.ftc.robotcore.external.navigation.DistanceUnit
-import org.firstinspires.ftc.robotcore.external.navigation.Position
-import org.firstinspires.ftc.robotcore.external.navigation.Velocity
+import org.firstinspires.ftc.robotcore.external.navigation.*
 import kotlin.math.abs
 import kotlin.math.sign
 
@@ -48,6 +45,11 @@ class Imu constructor(val imu: BNO055IMU) {
     enum class Axis {
         X, Y, Z
     }
+
+    /**
+     * The axis to be used as heading.
+     */
+    var axis: Axis = Axis.Z
 
     init {
         val parameters = BNO055IMU.Parameters()
@@ -88,11 +90,6 @@ class Imu constructor(val imu: BNO055IMU) {
     }
 
     /**
-     * The axis to be used as heading.
-     */
-    var axis: Axis = Axis.Z
-
-    /**
      * Whether the direction of the IMU should be reversed.
      */
     @JvmField
@@ -101,7 +98,15 @@ class Imu constructor(val imu: BNO055IMU) {
     /**
      * Returns the heading of the IMU using the gyroscope.
      */
-    val heading: Angle get() = imu.angularOrientation.firstAngle.toDouble().rad * if (reversed) -1.0 else 1.0
+    val heading: Angle
+        get() {
+            val heading = imu.angularOrientation.toAngleUnit(AngleUnit.RADIANS).toAxesOrder(AxesOrder.XYZ)
+            return (when (axis) {
+                Axis.X -> heading.firstAngle
+                Axis.Y -> heading.secondAngle
+                Axis.Z -> heading.thirdAngle
+            } * if (reversed) -1.0 else 1.0).rad
+        }
 
     /**
      * Returns the heading velocity of IMU using the gyroscope.
@@ -125,7 +130,9 @@ class Imu constructor(val imu: BNO055IMU) {
         val gravity = imu.gravity
         val result = listOf(gravity.xAccel, gravity.yAccel, gravity.zAccel).zip(Axis.values())
             .maxByOrNull { abs(it.first) } ?: return null
+        if (abs(result.first) < 9) return null
         if (result.first.sign < 0) reversed = true
+        axis = result.second
         return result.second
     }
 }

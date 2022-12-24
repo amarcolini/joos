@@ -31,7 +31,7 @@ abstract class CommandOpMode : LinearOpMode(), CommandInterface {
      * The global [SuperTelemetry] instance.
      */
     @JvmField
-    protected val telemetry: SuperTelemetry = CommandScheduler.telemetry
+    protected val telem: SuperTelemetry = CommandScheduler.telemetry
 
     /**
      * The FtcDashboard instance.

@@ -33,14 +33,14 @@ dependencies {
     implementation("org.apache.commons:commons-math3:3.6.1")
     compileOnly("org.firstinspires.ftc:RobotCore:8.0.0")
     compileOnly("org.firstinspires.ftc:Hardware:8.0.0")
-    api("com.acmerobotics.dashboard:dashboard:0.4.6")
+    api("com.acmerobotics.dashboard:dashboard:0.4.7")
     api(project(":navigation"))
     implementation(project(":command:annotation"))
 
     testImplementation("org.junit.jupiter:junit-jupiter-api:5.9.0")
     testRuntimeOnly("org.junit.jupiter:junit-jupiter-engine:5.9.0")
 
-    testImplementation("org.knowm.xchart:xchart:3.8.1")
+    testImplementation("org.knowm.xchart:xchart:3.8.2")
 }
 
 tasks.clean.configure {

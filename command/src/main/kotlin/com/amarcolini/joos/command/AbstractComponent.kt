@@ -1,5 +1,7 @@
 package com.amarcolini.joos.command
 
+import com.amarcolini.joos.dashboard.SuperTelemetry
+
 /**
  * An abstract version of [Component] with more quality of life features.
  */
@@ -10,6 +12,12 @@ abstract class AbstractComponent : Component {
      */
     @JvmField
     protected val subcomponents: MutableSet<Component> = HashSet()
+
+    /**
+     * The global [SuperTelemetry] instance.
+     */
+    @JvmField
+    protected val telem: SuperTelemetry = CommandScheduler.telemetry
 
     override fun update() {
         subcomponents.forEach { it.update() }

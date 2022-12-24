@@ -7,10 +7,13 @@ import com.amarcolini.joos.profile.MotionProfileGenerator
 import com.amarcolini.joos.profile.MotionState
 import com.amarcolini.joos.trajectory.TrajectoryBuilder
 import com.amarcolini.joos.trajectory.TrajectoryGenerator
-import com.amarcolini.joos.trajectory.constraints.GenericConstraints
+import com.amarcolini.joos.trajectory.constraints.*
 import com.amarcolini.joos.util.DoubleProgression
+import com.amarcolini.joos.util.abs
 import com.amarcolini.joos.util.deg
 import org.junit.jupiter.api.Test
+import kotlin.math.PI
+import kotlin.math.abs
 
 class ProfileTest {
     @Test
@@ -27,22 +30,32 @@ class ProfileTest {
 
     @Test
     fun testCompleteProfile() {
-        val constraints = GenericConstraints()
         val path = PathBuilder(Pose2d())
-            .splineTo(Vector2d(30.0, 0.0), Math.toRadians(160.0))
+            .splineTo(Vector2d(24.0, 24.0), 0.0)
             .build()
+        val velConstraint = MinVelocityConstraint(
+            MecanumVelocityConstraint(312.0 * 60 * (4 * PI * 0.94), 12.05, 12.05, 1.11),
+            TranslationalVelocityConstraint(45.0),
+            AngularVelocityConstraint(260.deg),
+            AngularAccelVelocityConstraint(360.deg, 30.0)
+        )
+        val accelConstraint = MinAccelerationConstraint(
+            TranslationalAccelerationConstraint(30.0),
+            AngularAccelerationConstraint(360.deg)
+        )
         val profile = TrajectoryGenerator.generatePathTrajectorySegment(
             path,
-            constraints.velConstraint, constraints.accelConstraint
+            velConstraint, accelConstraint
         ).profile
         GraphUtil.saveProfile("Complete Profile", profile)
     }
 
     @Test
     fun testAngularAcceleration() {
+        val maxAngAccel = 1.deg
         val trajectory = TrajectoryBuilder(
             startPose = Pose2d(),
-            constraints = GenericConstraints(maxAngAccel = 180.deg),
+            constraints = GenericConstraints(maxAngAccel = maxAngAccel),
             resolution = 0.25
         )
             .splineTo(Vector2d(30.0, -30.0), 0.0)
@@ -51,10 +64,8 @@ class ProfileTest {
             0.0, trajectory.duration(),
             (trajectory.duration() / 0.01).toInt()
         )
-        val max = progression.map { trajectory.acceleration(it).heading }.maxByOrNull { it.radians }
-        println("max: $max vs ${Math.toRadians(180.0)}")
-        if (max != null) {
-            assert(max < 180.deg)
-        }
+        val max = progression.map { trajectory.acceleration(it).heading }.maxOf { abs(it) }
+        println("max: $max vs $maxAngAccel")
+        assert(max <= maxAngAccel)
     }
 }

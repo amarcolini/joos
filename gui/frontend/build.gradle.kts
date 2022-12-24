@@ -18,6 +18,7 @@ kotlin {
     dependencies {
         implementation("io.nacular.doodle:core:$doodleVersion")
         implementation("io.nacular.doodle:browser:$doodleVersion")
+        implementation("io.nacular.doodle:animation:$doodleVersion")
         implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core-js:$coroutinesVersion")
         implementation(project(":navigation"))
 

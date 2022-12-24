@@ -78,6 +78,7 @@ data class MecanumConstraints @JvmOverloads constructor(
             MecanumVelocityConstraint(maxWheelVel, trackWidth, wheelBase, lateralMultiplier),
             AngularVelocityConstraint(maxAngVel),
             TranslationalVelocityConstraint(maxVel),
+            AngularAccelVelocityConstraint(maxAngAccel, maxAccel)
         )
     )
     override val accelConstraint = MinAccelerationConstraint(
@@ -99,7 +100,8 @@ data class GenericConstraints @JvmOverloads constructor(
     override val velConstraint = MinVelocityConstraint(
         listOf(
             TranslationalVelocityConstraint(maxVel),
-            AngularVelocityConstraint(maxAngVel)
+            AngularVelocityConstraint(maxAngVel),
+            AngularAccelVelocityConstraint(maxAngAccel, maxAccel)
         )
     )
     override val accelConstraint = MinAccelerationConstraint(
@@ -143,6 +145,7 @@ data class TankConstraints @JvmOverloads constructor(
             TankVelocityConstraint(maxWheelVel, trackWidth),
             AngularVelocityConstraint(maxAngVel),
             TranslationalVelocityConstraint(maxVel),
+            AngularAccelVelocityConstraint(maxAngAccel, maxAccel)
         )
     )
     override val accelConstraint = MinAccelerationConstraint(
@@ -189,6 +192,7 @@ data class SwerveConstraints @JvmOverloads constructor(
             SwerveVelocityConstraint(maxWheelVel, trackWidth, wheelBase),
             AngularVelocityConstraint(maxAngVel),
             TranslationalVelocityConstraint(maxVel),
+            AngularAccelVelocityConstraint(maxAngAccel, maxAccel)
         )
     )
     override val accelConstraint = MinAccelerationConstraint(
@@ -234,6 +238,7 @@ data class DiffSwerveConstraints @JvmOverloads constructor(
             DiffSwerveVelocityConstraint(maxGearVel, trackWidth),
             AngularVelocityConstraint(maxAngVel),
             TranslationalVelocityConstraint(maxVel),
+            AngularAccelVelocityConstraint(maxAngAccel, maxAccel)
         )
     )
 

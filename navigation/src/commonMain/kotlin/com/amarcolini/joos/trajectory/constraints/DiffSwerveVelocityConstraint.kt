@@ -13,7 +13,7 @@ import kotlin.math.max
  * @param trackWidth track width
  */
 class DiffSwerveVelocityConstraint(val maxWheelVel: Double, val trackWidth: Double) : TrajectoryVelocityConstraint {
-    override fun get(s: Double, pose: Pose2d, deriv: Pose2d, baseRobotVel: Pose2d): Double {
+    override fun get(pose: Pose2d, deriv: Pose2d, lastDeriv: Pose2d, ds: Double, baseRobotVel: Pose2d): Double {
         val wheel0 = DiffSwerveKinematics.robotToWheelVelocities(baseRobotVel, trackWidth)
         if (wheel0.maxOf(::abs) >= maxWheelVel) {
             throw UnsatisfiableConstraint()

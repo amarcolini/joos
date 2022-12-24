@@ -18,7 +18,7 @@ object CommandScheduler : OpModeManagerNotifier.Notifications {
      * The global telemetry object used for both FTC Dashboard and the Driver Station.
      */
     @JvmField
-    val telemetry: SuperTelemetry = SuperTelemetry()
+    val telemetry: SuperTelemetry = SuperTelemetry
 
     /**
      * Resets [telemetry].
@@ -116,8 +116,7 @@ object CommandScheduler : OpModeManagerNotifier.Notifications {
      */
     @JvmStatic
     fun isAvailable(command: Command): Boolean =
-        requirements.filter { (key, value) -> command.requirements.contains(key) && !value.isInterruptable }
-            .isEmpty()
+        requirements.none { (key, value) -> command.requirements.contains(key) && !value.isInterruptable }
 
     private fun initCommand(command: Command) {
         command.init()
@@ -178,7 +177,7 @@ object CommandScheduler : OpModeManagerNotifier.Notifications {
      * @see schedulePolicy
      */
     @JvmStatic
-    fun schedule(runnable: Runnable, repeat: Boolean): Boolean = schedule(BasicCommand(runnable).runUntil { !repeat })
+    fun schedule(repeat: Boolean, runnable: Runnable): Boolean = schedule(BasicCommand(runnable).runUntil { !repeat })
 
     private var isBusy = false
 

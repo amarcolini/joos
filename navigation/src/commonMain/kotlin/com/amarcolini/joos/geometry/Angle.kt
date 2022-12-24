@@ -1,7 +1,7 @@
 package com.amarcolini.joos.geometry
 
+import com.amarcolini.joos.serialization.format
 import com.amarcolini.joos.util.*
-import net.sergeych.sprintf.format
 import kotlin.jvm.JvmField
 import kotlin.jvm.JvmName
 import kotlin.jvm.JvmOverloads
@@ -62,7 +62,7 @@ class Angle @JvmOverloads constructor(
     val degrees: Double
         @JvmName("degrees") get() = when (units) {
             AngleUnit.Degrees -> value
-            AngleUnit.Radians -> value * deg2Rad
+            AngleUnit.Radians -> value * rad2Deg
         }
 
     /**
@@ -70,7 +70,7 @@ class Angle @JvmOverloads constructor(
      */
     val radians: Double
         @JvmName("radians") get() = when (units) {
-            AngleUnit.Degrees -> value * rad2Deg
+            AngleUnit.Degrees -> value * deg2Rad
             AngleUnit.Radians -> value
         }
 
@@ -156,9 +156,7 @@ class Angle @JvmOverloads constructor(
     /**
      * Adds two angles, where [other] is in [defaultUnits].
      */
-    operator fun plus(other: Double): Angle = this + Angle(
-        other
-    )
+    operator fun plus(other: Double): Angle = this + Angle(other)
 
     /**
      * Subtracts two angles.
@@ -223,8 +221,8 @@ class Angle @JvmOverloads constructor(
     infix fun epsilonEquals(other: Double): Boolean = this epsilonEquals Angle(other)
 
     override fun toString(): String = when (defaultUnits) {
-        AngleUnit.Degrees -> "%.3f°".format(degrees)
-        AngleUnit.Radians -> "%.3f".format(radians)
+        AngleUnit.Degrees -> "${degrees.format(3)}°"
+        AngleUnit.Radians -> radians.format(3)
     }
 
     /**

@@ -48,7 +48,7 @@ open class TankDrive @JvmOverloads constructor(
         if (constraints.maxWheelVel <= 0) constraints.copy(motors.maxDistanceVelocity)
         else constraints
 
-    override val trajectoryFollower: TrajectoryFollower = TankPIDVAFollower(
+    override var trajectoryFollower: TrajectoryFollower = TankPIDVAFollower(
         axialPID, headingPID, Pose2d(0.5, 0.5, 5.deg), 0.5
     )
     override var localizer: Localizer = TankLocalizer(
