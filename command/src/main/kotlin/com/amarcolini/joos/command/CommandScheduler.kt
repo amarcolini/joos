@@ -31,6 +31,7 @@ object CommandScheduler : OpModeManagerNotifier.Notifications {
      */
     @JvmStatic
     var gamepad: MultipleGamepad? = null
+        @JvmName("gamepad") get
         private set
 
     /**

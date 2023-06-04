@@ -73,9 +73,11 @@ class QuinticSpline(
         fun secondDeriv() = Vector2d(d2x, d2y)
     }
 
-    override fun length(): Double = internalLength()
+    private val reparameterization by lazy { ArcLengthParameterization(0.0, 1.0) }
 
-    override fun reparam(s: Double): Double = internalReparam(s)
+    override fun length(): Double = reparameterization.length
+
+    override fun reparam(s: Double): Double = reparameterization.reparam(s)
 
     override fun internalGet(t: Double): Vector2d = Vector2d(x[t], y[t])
 
@@ -85,7 +87,7 @@ class QuinticSpline(
 
     override fun internalThirdDeriv(t: Double): Vector2d = Vector2d(x.thirdDeriv(t), y.thirdDeriv(t))
 
-    init {
-        internalParam(0.0, 1.0)
+    override fun reparameterize() {
+        reparameterization
     }
 }

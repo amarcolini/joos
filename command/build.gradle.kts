@@ -31,9 +31,12 @@ dependencies {
     implementation("org.jetbrains.kotlin:kotlin-reflect:${Versions.kotlin}")
 
     implementation("org.apache.commons:commons-math3:3.6.1")
-    compileOnly("org.firstinspires.ftc:RobotCore:8.0.0")
-    compileOnly("org.firstinspires.ftc:Hardware:8.0.0")
-    api("com.acmerobotics.dashboard:dashboard:0.4.7")
+    compileOnly("org.firstinspires.ftc:RobotCore:8.1.1")
+    compileOnly("org.firstinspires.ftc:Hardware:8.1.1")
+    compileOnly("org.firstinspires.ftc:FtcCommon:8.1.1")
+    api("com.acmerobotics.dashboard:dashboard:0.4.9") {
+        exclude(group = "org.firstinspires.ftc")
+    }
     api(project(":navigation"))
     implementation(project(":command:annotation"))
 

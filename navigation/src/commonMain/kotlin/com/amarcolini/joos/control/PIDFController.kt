@@ -140,8 +140,6 @@ class PIDFController @JvmOverloads constructor(
             if (isIntegrating) {
                 val newError = 0.5 * (error + lastError) * dt
                 errorSum += newError
-            } else {
-                errorSum = 0.0
             }
             val errorDeriv =
                 measuredVelocity?.let { targetVelocity - it } ?: ((error - lastError) / dt)
@@ -158,7 +156,7 @@ class PIDFController @JvmOverloads constructor(
 
             if (outputBounded) {
                 val clamped = output.coerceIn(minOutput, maxOutput)
-                isIntegrating = !(output != clamped && sign(error) == sign(output))
+                isIntegrating = output == clamped
                 clamped
             } else {
                 isIntegrating = true

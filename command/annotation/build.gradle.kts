@@ -1,5 +1,5 @@
 plugins {
-    kotlin("jvm")
+    kotlin("multiplatform")
     `maven-publish`
     id("org.jetbrains.dokka")
 }
@@ -9,23 +9,41 @@ java {
     targetCompatibility = JavaVersion.VERSION_1_8
 }
 
-tasks.compileKotlin.configure {
-    kotlinOptions {
-        jvmTarget = "1.8"
-        apiVersion = "1.5"
+kotlin {
+    jvm {
+        compilations.all {
+            kotlinOptions {
+                jvmTarget = "1.8"
+                apiVersion = "1.5"
+            }
+        }
+        withJava()
+        testRuns["test"].executionTask.configure {
+            useJUnitPlatform()
+        }
+    }
+    js(IR).browser()
+
+    sourceSets {
+        val commonMain by getting
+        val jvmMain by getting {
+            dependencies {
+                implementation("com.google.devtools.ksp:symbol-processing-api:1.8.10-1.0.9")
+                implementation("com.squareup:javapoet:1.13.0")
+                implementation("com.squareup:kotlinpoet:1.12.0")
+            }
+        }
     }
 }
 
 group = "$group.command"
 
 dependencies {
-    implementation("org.jetbrains.kotlin:kotlin-stdlib:${Versions.kotlin}")
-    implementation("org.jetbrains.kotlin:kotlin-reflect:${Versions.kotlin}")
-
-    implementation("com.google.devtools.ksp:symbol-processing-api:1.7.20-1.0.7")
-
-    implementation("com.squareup:javapoet:1.13.0")
-    implementation("com.squareup:kotlinpoet:1.12.0")
+    commonMainImplementation("org.jetbrains.kotlin:kotlin-stdlib:${Versions.kotlin}")
+    commonMainImplementation("org.jetbrains.kotlin:kotlin-reflect:${Versions.kotlin}")
+}
+repositories {
+    mavenCentral()
 }
 
 publishing {

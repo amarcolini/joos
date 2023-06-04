@@ -2,6 +2,8 @@ package field
 
 import com.amarcolini.joos.geometry.Vector2d
 import com.amarcolini.joos.util.deg
+import io.nacular.doodle.core.Behavior
+import io.nacular.doodle.core.behavior
 import io.nacular.doodle.core.renderProperty
 import io.nacular.doodle.drawing.Canvas
 import io.nacular.doodle.drawing.Color
@@ -10,12 +12,15 @@ import io.nacular.doodle.drawing.circle
 import io.nacular.doodle.geometry.Circle
 import io.nacular.doodle.geometry.Point
 import io.nacular.doodle.geometry.Rectangle
+import io.nacular.doodle.system.SystemPointerEvent
 
 class SplineKnot : FieldEntity() {
-    private val stretchFactor = 0.2
+    private val stretchFactor = 0.3
     private val point: Circle = Circle(2.0)
     private var startKnot: Circle = Circle(1.0)
     private var endKnot: Circle = Circle(1.0)
+
+    var behavior: Behavior<SplineKnot>? by behavior()
 
     enum class Mode {
         MATCH_LENGTH, FIXED_LENGTH, FREE_LENGTH
@@ -28,7 +33,7 @@ class SplineKnot : FieldEntity() {
     var tangent by renderProperty(0.deg)
     var startTangentMag by renderProperty(-1.0)
     var endTangentMag by renderProperty(-1.0)
-    var defaultTangentMag by renderProperty(70.0)
+    var defaultTangentMag by renderProperty(40.0)
 
     val onChange = ArrayList<(SplineKnot) -> Unit>()
 
@@ -42,36 +47,40 @@ class SplineKnot : FieldEntity() {
 
         Dragger(this).apply {
             var knotSelected = 0
-            mouseDown = {
+            var isMove = false
+            mousePressed = { pos, buttons ->
+                isMove = buttons.contains(SystemPointerEvent.Button.Button1)
                 knotSelected = when {
                     !hasFocus -> 0
-                    startVisible && it in startKnot -> 1
-                    endVisible && it in endKnot -> 2
+                    startVisible && pos in startKnot -> 1
+                    endVisible && pos in endKnot -> 2
                     else -> 0
                 }
             }
             mouseDragged = { pos, delta ->
-                if (knotSelected == 0) {
-                    val extreme = Point(Field.fieldSize, Field.fieldSize) * 0.5
-                    position = (position + delta).coerceIn(-extreme, extreme)
-                    onChange.forEach { it(this@SplineKnot) }
-                } else {
-                    val vec = (pos).toVector2d() * if (knotSelected == 1) -1.0 else 1.0
-                    val newAngle = vec.angle()
-                    val newMag = vec.norm() / stretchFactor
-                    tangent = newAngle
-                    when (this@SplineKnot.mode) {
-                        Mode.FIXED_LENGTH -> {
-                            startTangentMag = -1.0
-                            endTangentMag = -1.0
-                        }
-                        Mode.MATCH_LENGTH -> {
-                            startTangentMag = newMag
-                            endTangentMag = newMag
-                        }
-                        Mode.FREE_LENGTH -> {
-                            if (knotSelected == 1) startTangentMag = newMag
-                            else endTangentMag = newMag
+                if (isMove) {
+                    if (knotSelected == 0) {
+                        val extreme = Point(Field.fieldSize, Field.fieldSize) * 0.5
+                        position = (position + delta).coerceIn(-extreme, extreme)
+                        onChange.forEach { it(this@SplineKnot) }
+                    } else {
+                        val vec = (pos).toVector2d() * if (knotSelected == 1) -1.0 else 1.0
+                        val newAngle = vec.angle()
+                        val newMag = vec.norm() / stretchFactor
+                        tangent = newAngle
+                        when (this@SplineKnot.mode) {
+                            Mode.FIXED_LENGTH -> {
+                                startTangentMag = -1.0
+                                endTangentMag = -1.0
+                            }
+                            Mode.MATCH_LENGTH -> {
+                                startTangentMag = newMag
+                                endTangentMag = newMag
+                            }
+                            Mode.FREE_LENGTH -> {
+                                if (knotSelected == 1) startTangentMag = newMag
+                                else endTangentMag = newMag
+                            }
                         }
                     }
                 }

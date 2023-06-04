@@ -10,8 +10,13 @@ import com.amarcolini.joos.geometry.Vector2d
  */
 class LineSegment(private val start: Vector2d, end: Vector2d) : ParametricCurve() {
     private val diff = end - start
+    private val length by lazy { diff.norm() }
 
-    override fun length() = diff.norm()
+    override fun length() = length
+
+    override fun reparameterize() {
+        length
+    }
 
     override fun internalGet(t: Double) = start + diff * t
 
@@ -21,7 +26,7 @@ class LineSegment(private val start: Vector2d, end: Vector2d) : ParametricCurve(
 
     override fun internalThirdDeriv(t: Double) = Vector2d(0.0, 0.0)
 
-    override fun reparam(s: Double) = s / length()
+    override fun reparam(s: Double) = s / length
 
     override fun toString() = "(${start.x}+${diff.x}*t,${start.y}+${diff.y}*t)"
 }

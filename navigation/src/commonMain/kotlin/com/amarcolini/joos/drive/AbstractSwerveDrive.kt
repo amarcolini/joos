@@ -16,9 +16,9 @@ import kotlin.jvm.JvmOverloads
  * @param wheelBase distance between pairs of wheels on the same side of the robot
  */
 abstract class AbstractSwerveDrive @JvmOverloads constructor(
-    private val feedforward: FeedforwardCoefficients,
-    private val trackWidth: Double,
-    private val wheelBase: Double = trackWidth
+    protected val feedforward: FeedforwardCoefficients,
+    protected val trackWidth: Double,
+    protected val wheelBase: Double = trackWidth
 ) : Drive() {
 
     override var localizer: Localizer = SwerveLocalizer(

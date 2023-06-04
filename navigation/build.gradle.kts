@@ -5,18 +5,20 @@ plugins {
     id("org.jetbrains.dokka")
 }
 
-extra {
-    extra["dokkaName"] = "Navigation"
-}
+extra["dokkaName"] = "Navigation"
 
-//tasks.test {
-//    useJUnitPlatform()
-//}
+java {
+    sourceCompatibility = JavaVersion.VERSION_1_8
+    targetCompatibility = JavaVersion.VERSION_1_8
+}
 
 kotlin {
     jvm {
         compilations.all {
-            kotlinOptions.jvmTarget = "1.8"
+            kotlinOptions {
+                jvmTarget = "1.8"
+                apiVersion = "1.5"
+            }
         }
         withJava()
         testRuns["test"].executionTask.configure {
@@ -64,17 +66,11 @@ kotlin {
     }
 }
 
-//tasks.compileKotlin {
-//    kotlinOptions {
-//        jvmTarget = "8"
-//        apiVersion = "1.6"
-//    }
-//}
-
 dependencies {
+    commonMainImplementation(project(mapOf("path" to ":command:annotation")))
     commonMainApi("org.jetbrains.kotlin:kotlin-stdlib:${Versions.kotlin}")
     commonMainImplementation("org.jetbrains.kotlin:kotlin-reflect:${Versions.kotlin}")
-    commonMainImplementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.4.1")
+    commonMainImplementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.5.0")
     commonTestImplementation(kotlin("test"))
 //    implementation("com.fasterxml.jackson.core:jackson-databind:2.13.3")
 //    implementation("com.fasterxml.jackson.dataformat:jackson-dataformat-yaml:2.13.3")
@@ -82,6 +78,9 @@ dependencies {
 //
 //    testImplementation("org.junit.jupiter:junit-jupiter-api:5.8.2")
 //    testRuntimeOnly("org.junit.jupiter:junit-jupiter-engine:5.8.2")
+}
+repositories {
+    mavenCentral()
 }
 
 //val sourcesJar = tasks.register<Jar>("sourcesJar") {

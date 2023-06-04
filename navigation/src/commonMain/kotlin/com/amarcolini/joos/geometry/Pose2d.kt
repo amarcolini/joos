@@ -1,5 +1,6 @@
 package com.amarcolini.joos.geometry
 
+import com.amarcolini.joos.dashboard.Immutable
 import com.amarcolini.joos.serialization.format
 import com.amarcolini.joos.util.*
 import kotlin.jvm.JvmField
@@ -8,10 +9,12 @@ import kotlin.jvm.JvmOverloads
 /**
  * Class for representing 2D robot poses (x, y, and heading) and their derivatives.
  */
+@kotlinx.serialization.Serializable
+@Immutable
 data class Pose2d @JvmOverloads constructor(
-    @JvmField var x: Double = 0.0,
-    @JvmField var y: Double = 0.0,
-    @JvmField var heading: Angle = Angle()
+    @JvmField val x: Double = 0.0,
+    @JvmField val y: Double = 0.0,
+    @JvmField val heading: Angle = Angle()
 ) {
     /**
      * Constructs a pose where [heading] is in [Angle.defaultUnits].

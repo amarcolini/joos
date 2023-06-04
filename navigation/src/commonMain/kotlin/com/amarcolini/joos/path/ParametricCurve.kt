@@ -3,13 +3,15 @@ package com.amarcolini.joos.path
 import com.amarcolini.joos.geometry.Angle
 import com.amarcolini.joos.geometry.Vector2d
 import com.amarcolini.joos.util.rad
+import kotlin.jvm.JvmName
 import kotlin.jvm.JvmOverloads
 import kotlin.math.abs
 import kotlin.math.pow
 
 /**
  * Parametric curve with two components (x and y). These curves are reparameterized from an internal parameter (t) to
- * the arc length parameter (s).
+ * the arc length parameter (s). Note that the arc length reparameterization is lazy, meaning that it is computed only
+ * when needed. To precompute, use [reparameterize].
  */
 abstract class ParametricCurve {
     /**
@@ -124,6 +126,16 @@ abstract class ParametricCurve {
      */
     abstract fun length(): Double
 
+    /**
+     * If this curve can not trivially be reparameterized to an arc length parameter, it should be done here.
+     *
+     * @see ParametricCurve
+     */
+    abstract fun reparameterize()
+
+    /**
+     * From an arc length parameter ([s]), finds the corresponding internal parameter `t`.
+     */
     internal abstract fun reparam(s: Double): Double
 
     internal abstract fun internalGet(t: Double): Vector2d
@@ -137,80 +149,84 @@ abstract class ParametricCurve {
     @JvmOverloads
     fun curvature(s: Double, t: Double = reparam(s)): Double = secondDeriv(s, t).norm()
 
-    private var length: Double = 0.0
-    private var tLo: Double = 0.0
-    private var tHi: Double = 1.0
-    private val tSamples = mutableListOf(0.0)
-    private val sSamples = mutableListOf(0.0)
-
     /**
-     * Computes internal parameter vs curve length samples and estimates curve length.
-     * @param tLo the lower bound of the internal parameter
-     * @param tHi the upper bound of the internal parameter
-     * @param maxSegmentLength the maximum distance between two samples
-     * @param maxDepth the maximum number of times the curve can be divided into samples
-     * @param maxDeltaK the maximum change in curvature between two samples
+     * Automatically reparameterizes this curve by computing many small samples. This is computationally
+     * expensive and should be avoided unless no faster way is available.
      */
-    @JvmOverloads
-    protected fun internalParam(
-        tLo: Double,
-        tHi: Double,
+    inner class ArcLengthParameterization(
+        private val tLo: Double,
+        private val tHi: Double,
         maxSegmentLength: Double = 0.25,
         maxDepth: Int = 15,
         maxDeltaK: Double = 0.01
     ) {
-        this.tLo = tLo
-        this.tHi = tHi
-        fun parameterize(tLo: Double, tHi: Double, depth: Int) {
-            val tMid = (tLo + tHi) * 0.5
-            val vLo = internalGet(tLo)
-            val vMid = internalGet(tMid)
-            val vHi = internalGet(tHi)
-            val deltaK = abs(curvature(tLo) - curvature(tHi))
-            //TODO: more accurate length estimation?
-            val segmentLength = (vLo distTo vMid) + (vMid distTo vHi)
+        private val tSamples = mutableListOf(0.0)
+        private val sSamples = mutableListOf(0.0)
 
-            if (depth < maxDepth && (deltaK > maxDeltaK || segmentLength > maxSegmentLength)) {
-                parameterize(tLo, tMid, depth + 1)
-                parameterize(tMid, tHi, depth + 1)
-            } else {
-                length += segmentLength
-                sSamples.add(length)
-                tSamples.add(tHi)
-            }
-        }
-        parameterize(tLo, tHi, 0)
-    }
+        /**
+         * Returns the computed curve length.
+         */
+        val length: Double
+            @JvmName("length") get
 
-    /**
-     * Uses the samples computed by [internalParam] to find the value of the internal parameter `t` that corresponds to the given length along the curve [s].
-     * @param s distance travelled along the curve
-     * @return
-     */
-    protected fun internalReparam(s: Double): Double {
-        if (s <= 0.0) return tLo
-        if (s >= length) return tHi
-        var lo = 0
-        var hi = sSamples.size
-        while (lo <= hi) {
-            val mid = (hi + lo) / 2
-            when {
-                s < sSamples[mid] -> {
-                    hi = mid - 1
-                }
-                s > sSamples[mid] -> {
-                    lo = mid + 1
-                }
-                else -> {
-                    return tSamples[mid]
+        init {
+            var length = 0.0
+            fun parameterize(tLo: Double, tHi: Double, depth: Int) {
+                val tMid = (tLo + tHi) * 0.5
+                val vLo = internalGet(tLo)
+                val vMid = internalGet(tMid)
+                val vHi = internalGet(tHi)
+                val deltaK = abs(curvature(tLo) - curvature(tHi))
+                //TODO: more accurate length estimation?
+                val segmentLength = (vLo distTo vMid) + (vMid distTo vHi)
+
+                if (depth < maxDepth && (deltaK > maxDeltaK || segmentLength > maxSegmentLength)) {
+                    parameterize(tLo, tMid, depth + 1)
+                    parameterize(tMid, tHi, depth + 1)
+                } else {
+                    length += segmentLength
+                    sSamples.add(length)
+                    tSamples.add(tHi)
                 }
             }
+            parameterize(tLo, tHi, 0)
+            this.length = length
         }
-        return tSamples[lo] + (s - sSamples[lo]) * (tSamples[hi] - tSamples[lo]) / (sSamples[hi] - sSamples[lo])
-    }
 
-    /**
-     * Returns the curve length computed by [internalParam]
-     */
-    protected fun internalLength() = length
+        /**
+         * Computes internal parameter vs curve length samples and estimates curve length.
+         * @param tLo the lower bound of the internal parameter
+         * @param tHi the upper bound of the internal parameter
+         * @param maxSegmentLength the maximum distance between two samples
+         * @param maxDepth the maximum number of times the curve can be divided into samples
+         * @param maxDeltaK the maximum change in curvature between two samples
+         */
+        /**
+         * Uses the samples computed by to find the value of the internal parameter `t` that
+         * corresponds to the given length along the curve [s].
+         * @param s distance travelled along the curve
+         * @return
+         */
+        fun reparam(s: Double): Double {
+            if (s <= 0.0) return tLo
+            if (s >= length) return tHi
+            var lo = 0
+            var hi = sSamples.size
+            while (lo <= hi) {
+                val mid = (hi + lo) / 2
+                when {
+                    s < sSamples[mid] -> {
+                        hi = mid - 1
+                    }
+                    s > sSamples[mid] -> {
+                        lo = mid + 1
+                    }
+                    else -> {
+                        return tSamples[mid]
+                    }
+                }
+            }
+            return tSamples[lo] + (s - sSamples[lo]) * (tSamples[hi] - tSamples[lo]) / (sSamples[hi] - sSamples[lo])
+        }
+    }
 }

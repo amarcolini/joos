@@ -8,6 +8,7 @@ import com.qualcomm.robotcore.hardware.Gamepad
  * A class that simplifies the use of [Gamepad]s.
  */
 class GamepadEx(gamepad: Gamepad) : Component {
+    @JvmField
     val internal = gamepad
 
     @JvmField

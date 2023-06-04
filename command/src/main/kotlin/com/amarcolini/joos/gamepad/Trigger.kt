@@ -8,8 +8,8 @@ class Trigger @JvmOverloads constructor(
     var threshold: Float = 0.5f
 ) : Toggleable() {
     var value: Float = value
-        set(value) {
-            lastValue = value
+        private set(value) {
+            lastValue = field
             field = value
         }
     var lastValue: Float = value

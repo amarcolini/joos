@@ -99,6 +99,11 @@ allprojects {
         }
     }
 
+    tasks.withType<JavaCompile>().configureEach {
+        targetCompatibility = JavaVersion.VERSION_1_8.toString()
+        sourceCompatibility = JavaVersion.VERSION_1_8.toString()
+    }
+
 //    tasks.findByPath(":gui:mergeClasses")?.configure<Copy> {
 //        duplicatesStrategy = DuplicatesStrategy.EXCLUDE
 //    }

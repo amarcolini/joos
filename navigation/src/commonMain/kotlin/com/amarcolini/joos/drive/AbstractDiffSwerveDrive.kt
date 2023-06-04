@@ -20,9 +20,9 @@ import kotlin.math.abs
  * @param trackWidth lateral distance between pairs of wheels on different sides of the robot
  */
 abstract class AbstractDiffSwerveDrive(
-    val feedforward: FeedforwardCoefficients,
-    val orientationPID: PIDCoefficients,
-    private val trackWidth: Double,
+    protected val feedforward: FeedforwardCoefficients,
+    protected val orientationPID: PIDCoefficients,
+    protected val trackWidth: Double,
 ) : Drive() {
 
     override var localizer: Localizer = DiffSwerveLocalizer(

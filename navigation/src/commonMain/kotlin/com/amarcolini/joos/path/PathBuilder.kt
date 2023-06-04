@@ -349,6 +349,14 @@ class PathBuilder(
      * Constructs the [Path] instance.
      */
     fun build(): Path {
+        segments.forEach { it.curve.reparameterize() }
+        return Path(segments)
+    }
+
+    /**
+     * Constructs the [Path] instance without reparameterizing the curves.
+     */
+    fun preBuild(): Path {
         return Path(segments)
     }
 }

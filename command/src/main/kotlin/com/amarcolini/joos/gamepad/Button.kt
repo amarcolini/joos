@@ -7,7 +7,7 @@ class Button(
     state: Boolean = false,
 ) : Toggleable() {
     override var state: Boolean = state
-        set(value) {
+        private set(value) {
             lastState = field
             field = value
         }

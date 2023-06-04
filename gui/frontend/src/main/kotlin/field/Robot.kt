@@ -50,8 +50,8 @@ class Robot(
 
     override lateinit var center: Point
         private set
-    private lateinit var box: Path
-    private lateinit var headingLine: Path
+    private var box: Path = path(Point.Origin).finish()
+    private var headingLine: Path = path(Point.Origin).finish()
     private var clickBounds: Rectangle = Rectangle()
 
     init {
@@ -66,10 +66,10 @@ class Robot(
             mouseEntered = { _, pressed ->
                 if (!pressed) cursor = Cursor.Grab
             }
-            mouseDown = {
+            mousePressed = { _, _ ->
                 cursor = Cursor.Grabbing
             }
-            mouseUp = { _, _ ->
+            mouseReleased = { _, _ ->
                 cursor = Cursor.Grab
             }
             mouseExited = { _, pressed ->

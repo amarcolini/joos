@@ -1,6 +1,7 @@
 package com.amarcolini.joos.drive
 
 import com.amarcolini.joos.control.FeedforwardCoefficients
+import com.amarcolini.joos.geometry.Pose2d
 import com.amarcolini.joos.kinematics.MecanumKinematics
 import com.amarcolini.joos.localization.Localizer
 import com.amarcolini.joos.localization.MecanumLocalizer
@@ -15,10 +16,10 @@ import kotlin.jvm.JvmOverloads
  * @param lateralMultiplier lateral multiplier
  */
 abstract class AbstractMecanumDrive @JvmOverloads constructor(
-    private val feedforward: FeedforwardCoefficients,
-    private val trackWidth: Double,
-    private val wheelBase: Double = trackWidth,
-    private val lateralMultiplier: Double = 1.0
+    protected val feedforward: FeedforwardCoefficients,
+    protected val trackWidth: Double,
+    protected val wheelBase: Double = trackWidth,
+    protected val lateralMultiplier: Double = 1.0
 ) : Drive() {
 
     override var localizer: Localizer = MecanumLocalizer(
@@ -45,7 +46,7 @@ abstract class AbstractMecanumDrive @JvmOverloads constructor(
         setMotorPowers(powers[0], powers[1], powers[2], powers[3])
     }
 
-    override fun setDrivePower(drivePower: com.amarcolini.joos.geometry.Pose2d) {
+    override fun setDrivePower(drivePower: Pose2d) {
         val powers = MecanumKinematics.robotToWheelVelocities(
             drivePower,
             1.0,

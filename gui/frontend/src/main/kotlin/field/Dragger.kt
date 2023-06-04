@@ -1,5 +1,6 @@
 package field
 
+import GUIApp
 import io.nacular.doodle.core.View
 import io.nacular.doodle.event.*
 import io.nacular.doodle.geometry.Point
@@ -7,6 +8,8 @@ import io.nacular.doodle.geometry.Vector2D
 import io.nacular.doodle.system.SystemPointerEvent
 
 class Dragger(private val view: View) : PointerListener, PointerMotionListener {
+    var allowOSConsume = true
+
     /**
      * Accepts the mouse position and whether the mouse is pressed.
      */
@@ -15,7 +18,7 @@ class Dragger(private val view: View) : PointerListener, PointerMotionListener {
     /**
      * Accepts the mouse position.
      */
-    var mouseDown: (Point) -> Unit = {}
+    var mousePressed: (Point, Set<SystemPointerEvent.Button>) -> Unit = { _, _ -> }
 
     /**
      * Accepts the mouse position and whether the mouse is pressed.
@@ -28,9 +31,9 @@ class Dragger(private val view: View) : PointerListener, PointerMotionListener {
     var mouseExited: (Point, Boolean) -> Unit = { _, _ -> }
 
     /**
-     * Accepts the mouse position and whether the mouse is pressed.
+     * Accepts the mouse position and whether the mouse is within the view.
      */
-    var mouseUp: (Point, Boolean) -> Unit = { _, _ -> }
+    var mouseReleased: (Point, Boolean) -> Unit = { _, _ -> }
 
     /**
      * Accepts the mouse position and position delta.
@@ -51,12 +54,26 @@ class Dragger(private val view: View) : PointerListener, PointerMotionListener {
     private var activePointer = null as Pointer?
     private var consumedDrag = false
 
+    private var currentEvent: PointerEvent? = null
+    private fun allowConsume(event: PointerEvent, actions: () -> Unit) {
+        currentEvent = event
+        actions()
+        currentEvent = null
+    }
+
+    fun consumeEvent() {
+        currentEvent?.consume()
+    }
+
     override fun released(event: PointerEvent) {
+        if (!allowOSConsume) event.preventOsHandling()
         val activeInteraction = activeInteraction(event)
         if (activePointerChanged(event) && activeInteraction?.state == SystemPointerEvent.Type.Up) {
             captureInitialState(event)
-            mouseUp(activeInteraction.location, view.contains(activeInteraction.location))
-            stateChanged(activeInteraction.state)
+            allowConsume(event) {
+                mouseReleased(activeInteraction.location, view.contains(activeInteraction.location))
+                stateChanged(activeInteraction.state)
+            }
             if (consumedDrag) {
                 event.consume()
                 consumedDrag = false
@@ -65,36 +82,49 @@ class Dragger(private val view: View) : PointerListener, PointerMotionListener {
     }
 
     override fun pressed(event: PointerEvent) {
+        if (!allowOSConsume) event.preventOsHandling()
         if (activePointer == null || event.targetInteractions.find { it.pointer == activePointer } == null) {
             captureInitialState(event)
             GUIApp.focusManager.requestFocus(view)
-            mouseDown(event.location)
-            stateChanged(SystemPointerEvent.Type.Down)
+            allowConsume(event) {
+                mousePressed(event.location, event.buttons)
+                stateChanged(SystemPointerEvent.Type.Down)
+            }
         }
     }
 
     override fun entered(event: PointerEvent) {
+        if (!allowOSConsume) event.preventOsHandling()
         (activeInteraction(event) ?: event.changedInteractions.firstOrNull())?.let {
-            mouseEntered(it.location, it.state == SystemPointerEvent.Type.Down)
-            stateChanged(it.state)
+            allowConsume(event) {
+                mouseEntered(it.location, it.state == SystemPointerEvent.Type.Down)
+                stateChanged(it.state)
+            }
         }
     }
 
     override fun exited(event: PointerEvent) {
+        if (!allowOSConsume) event.preventOsHandling()
         (activeInteraction(event) ?: event.changedInteractions.firstOrNull())?.let {
-            mouseExited(it.location, it.state == SystemPointerEvent.Type.Down)
-            stateChanged(it.state)
+            allowConsume(event) {
+                mouseExited(it.location, it.state == SystemPointerEvent.Type.Down)
+                stateChanged(it.state)
+            }
         }
     }
 
     override fun moved(event: PointerEvent) {
+        if (!allowOSConsume) event.preventOsHandling()
         (activeInteraction(event) ?: event.changedInteractions.firstOrNull())?.let {
-            mouseMoved(it.location, it.state == SystemPointerEvent.Type.Down)
-            stateChanged(it.state)
+            allowConsume(event) {
+                mouseMoved(it.location, it.state == SystemPointerEvent.Type.Down)
+                stateChanged(it.state)
+            }
         }
     }
 
     override fun dragged(event: PointerEvent) {
+        if (!allowOSConsume) event.preventOsHandling()
         event.changedInteractions.find { it.pointer == activePointer }?.let { activeInteraction ->
             val currentPos = view.toLocal(activeInteraction.location, event.target)
             val delta = currentPos - initialPosition

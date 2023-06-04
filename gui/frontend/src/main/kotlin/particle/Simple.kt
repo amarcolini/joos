@@ -19,9 +19,9 @@ class Simple : SensingPlayground.SensorAlgorithm() {
     private var rectangle: Rectangle = Rectangle.Empty
     private var estimate: Pose2d = Pose2d()
 
-    override fun update(distances: List<Double>, heading: Angle) {
+    override fun update(distances: List<Double>, headingEstimate: Angle) {
         val sensorVectors = SensingPlayground.sensorAngles.zip(distances).map {
-            (Vector2d.polar(it.second, it.first.heading) + it.first.vec()).rotated(heading)
+            (Vector2d.polar(it.second, it.first.heading) + it.first.vec()).rotated(headingEstimate)
         }
 
         val x1 = sensorVectors.maxOf { -SensingPlayground.half - it.x }
@@ -30,6 +30,6 @@ class Simple : SensingPlayground.SensorAlgorithm() {
         val y2 = sensorVectors.minOf { SensingPlayground.half - it.y }
 
         rectangle = Rectangle(min(x1, x2) + center.x, min(y1, y2) + center.y, abs(x1 - x2), abs(y1 - y2))
-        estimate = Pose2d(Vector2d(x1 + x2, y1 + y2) * 0.5, heading)
+        estimate = Pose2d(Vector2d(x1 + x2, y1 + y2) * 0.5, headingEstimate)
     }
 }

@@ -36,7 +36,7 @@ class PathEntity(path: Path, stroke: Stroke) : FieldEntity() {
         samples.forEach {
             val currentPoint = path[it].toPoint()
             val currentDeriv = path.deriv(it).toPoint() * derivLength
-            sampledPath.cubicTo(currentPoint, lastPoint + lastDeriv, currentPoint - currentDeriv).finish()
+            sampledPath.cubicTo(currentPoint, lastPoint + lastDeriv, currentPoint - currentDeriv)
             lastDeriv = currentDeriv
             lastPoint = currentPoint
         }

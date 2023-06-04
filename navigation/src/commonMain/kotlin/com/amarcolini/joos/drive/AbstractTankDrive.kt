@@ -14,8 +14,8 @@ import com.amarcolini.joos.localization.TankLocalizer
  * @param trackWidth lateral distance between pairs of wheels on different sides of the robot
  */
 abstract class AbstractTankDrive constructor(
-    private val feedforward: FeedforwardCoefficients,
-    private val trackWidth: Double
+    protected val feedforward: FeedforwardCoefficients,
+    protected val trackWidth: Double
 ) : Drive() {
 
     override var localizer: Localizer = TankLocalizer(

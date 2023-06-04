@@ -28,6 +28,15 @@ class Path(val segments: List<PathSegment>) {
     fun length() = segments.sumOf { it.length() }
 
     /**
+     * Calls [ParametricCurve.reparameterize] on all the curves in this path.
+     *
+     * @see ParametricCurve
+     */
+    fun reparameterize() {
+        segments.forEach { it.curve.reparameterize() }
+    }
+
+    /**
      * Returns a pair containing the [PathSegment] at [s] inches along the path and the length along that segment.
      */
     fun segment(s: Double): Pair<PathSegment, Double> {

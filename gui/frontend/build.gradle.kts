@@ -12,7 +12,7 @@ kotlin {
         browser()
     }
 
-    val doodleVersion = "0.8.1"
+    val doodleVersion = "0.9.2"
     val coroutinesVersion = "1.6.4"
 
     dependencies {

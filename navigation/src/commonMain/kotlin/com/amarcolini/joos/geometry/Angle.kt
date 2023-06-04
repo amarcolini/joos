@@ -1,5 +1,7 @@
 package com.amarcolini.joos.geometry
 
+import com.amarcolini.joos.dashboard.Immutable
+import com.amarcolini.joos.serialization.AngleSerializer
 import com.amarcolini.joos.serialization.format
 import com.amarcolini.joos.util.*
 import kotlin.jvm.JvmField
@@ -26,11 +28,11 @@ enum class AngleUnit {
 /**
  * Class for representing angles.
  */
-//@JsonSerialize(using = AngleSerializer::class)
-//@JsonDeserialize(using = AngleDeserializer::class)
-class Angle @JvmOverloads constructor(
-    @JvmField var value: Double = 0.0,
-    @JvmField var units: AngleUnit = defaultUnits
+@kotlinx.serialization.Serializable(with = AngleSerializer::class)
+@Immutable
+data class Angle @JvmOverloads constructor(
+    @JvmField val value: Double = 0.0,
+    @JvmField val units: AngleUnit = defaultUnits
 ) : Comparable<Angle> {
 
     companion object Static {
@@ -59,20 +61,24 @@ class Angle @JvmOverloads constructor(
     /**
      * The measure of this angle in degrees.
      */
-    val degrees: Double
-        @JvmName("degrees") get() = when (units) {
+    val degrees: Double by lazy {
+        when (units) {
             AngleUnit.Degrees -> value
             AngleUnit.Radians -> value * rad2Deg
         }
+    }
+        @JvmName("degrees") get
 
     /**
      * The measure of this angle in radians.
      */
-    val radians: Double
-        @JvmName("radians") get() = when (units) {
+    val radians: Double by lazy {
+        when (units) {
             AngleUnit.Degrees -> value * deg2Rad
             AngleUnit.Radians -> value
         }
+    }
+        @JvmName("radians") get
 
     private fun getValue(units: AngleUnit) = when (units) {
         AngleUnit.Degrees -> degrees
@@ -222,7 +228,7 @@ class Angle @JvmOverloads constructor(
 
     override fun toString(): String = when (defaultUnits) {
         AngleUnit.Degrees -> "${degrees.format(3)}°"
-        AngleUnit.Radians -> radians.format(3)
+        AngleUnit.Radians -> "${radians.format(3)}rad"
     }
 
     /**

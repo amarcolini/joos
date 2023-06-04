@@ -41,9 +41,9 @@ abstract class Robot : CommandInterface {
     @JvmField
     val hMap: HardwareMap = opMode.hardwareMap
 
-    @JvmField
     val gamepad: MultipleGamepad = CommandScheduler.gamepad
         ?: throw IllegalStateException("A Robot cannot be instantiated without an active OpMode.")
+        @JvmName("gamepad") get
 
     @JvmField
     val dashboard: FtcDashboard? = FtcDashboard.getInstance()
@@ -57,4 +57,9 @@ abstract class Robot : CommandInterface {
      * This method is run as soon as the current OpMode starts. Automatically called by [CommandOpMode] if [CommandOpMode.registerRobot] is called.
      */
     open fun start() {}
+
+    /**
+     * This method is run after the current OpMode ends. Automatically called by [CommandOpMode] if [CommandOpMode.registerRobot] is called.
+     */
+    open fun stop() {}
 }
