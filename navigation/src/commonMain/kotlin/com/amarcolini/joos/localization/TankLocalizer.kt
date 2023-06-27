@@ -5,6 +5,8 @@ import com.amarcolini.joos.geometry.Angle
 import com.amarcolini.joos.geometry.Pose2d
 import com.amarcolini.joos.kinematics.Kinematics
 import com.amarcolini.joos.kinematics.TankKinematics
+import kotlin.js.ExperimentalJsExport
+import kotlin.js.JsExport
 import kotlin.jvm.JvmOverloads
 
 /**
@@ -16,6 +18,7 @@ import kotlin.jvm.JvmOverloads
  * @param drive the drive this localizer is using
  * @param useExternalHeading whether to use [drive]'s external heading sensor
  */
+@JsExport
 class TankLocalizer @JvmOverloads constructor(
     private val wheelPositions: () -> List<Double>,
     private val wheelVelocities: () -> List<Double>? = { null },

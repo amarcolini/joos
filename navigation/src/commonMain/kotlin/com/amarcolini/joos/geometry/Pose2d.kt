@@ -3,12 +3,16 @@ package com.amarcolini.joos.geometry
 import com.amarcolini.joos.dashboard.Immutable
 import com.amarcolini.joos.serialization.format
 import com.amarcolini.joos.util.*
+import kotlin.js.ExperimentalJsExport
+import kotlin.js.JsExport
+import kotlin.js.JsName
 import kotlin.jvm.JvmField
 import kotlin.jvm.JvmOverloads
 
 /**
  * Class for representing 2D robot poses (x, y, and heading) and their derivatives.
  */
+@JsExport
 @kotlinx.serialization.Serializable
 @Immutable
 data class Pose2d @JvmOverloads constructor(
@@ -19,14 +23,17 @@ data class Pose2d @JvmOverloads constructor(
     /**
      * Constructs a pose where [heading] is in [Angle.defaultUnits].
      */
+    @JsName("fromDefault")
     constructor(x: Double, y: Double, heading: Double) : this(x, y, Angle(heading))
 
     @JvmOverloads
+    @JsName("fromVector")
     constructor(pos: Vector2d, heading: Angle = Angle()) : this(pos.x, pos.y, heading)
 
     /**
      * Constructs a pose where [heading] is in [Angle.defaultUnits].
      */
+    @JsName("fromVectorDefault")
     constructor(pos: Vector2d, heading: Double) : this(pos, Angle(heading))
 
     /**

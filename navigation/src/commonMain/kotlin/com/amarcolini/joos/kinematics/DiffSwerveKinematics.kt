@@ -6,6 +6,8 @@ import com.amarcolini.joos.geometry.Vector2d
 import com.amarcolini.joos.util.cos
 import com.amarcolini.joos.util.rad
 import com.amarcolini.joos.util.sin
+import kotlin.js.ExperimentalJsExport
+import kotlin.js.JsExport
 import kotlin.jvm.JvmStatic
 
 /**
@@ -15,6 +17,7 @@ import kotlin.jvm.JvmStatic
  * is half the difference between the top and bottom gear velocities, and the angular velocity is the half the sum
  * (assuming all gears are the same size).
  */
+@JsExport
 object DiffSwerveKinematics {
 
     /**

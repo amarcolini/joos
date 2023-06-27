@@ -85,7 +85,9 @@ class Dragger(private val view: View) : PointerListener, PointerMotionListener {
         if (!allowOSConsume) event.preventOsHandling()
         if (activePointer == null || event.targetInteractions.find { it.pointer == activePointer } == null) {
             captureInitialState(event)
-            GUIApp.focusManager.requestFocus(view)
+            if (view == event.target) {
+                GUIApp.focusManager.requestFocus(view)
+            }
             allowConsume(event) {
                 mousePressed(event.location, event.buttons)
                 stateChanged(SystemPointerEvent.Type.Down)

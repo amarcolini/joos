@@ -5,6 +5,8 @@ import com.amarcolini.joos.geometry.Pose2d
 import com.amarcolini.joos.path.Path
 import com.amarcolini.joos.util.NanoClock
 import com.amarcolini.joos.util.abs
+import kotlin.js.ExperimentalJsExport
+import kotlin.js.JsExport
 import kotlin.jvm.JvmOverloads
 import kotlin.math.abs
 
@@ -13,6 +15,7 @@ import kotlin.math.abs
  *
  * @param clock clock
  */
+@JsExport
 abstract class PathFollower @JvmOverloads constructor(
     private val admissibleError: Pose2d,
     protected val clock: NanoClock = NanoClock.system()

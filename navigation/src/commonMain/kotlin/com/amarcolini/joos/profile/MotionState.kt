@@ -1,6 +1,8 @@
 package com.amarcolini.joos.profile
 
 import com.amarcolini.joos.serialization.format
+import kotlin.js.ExperimentalJsExport
+import kotlin.js.JsExport
 import kotlin.jvm.JvmField
 import kotlin.jvm.JvmOverloads
 import kotlin.math.pow
@@ -8,6 +10,7 @@ import kotlin.math.pow
 /**
  * Kinematic state of a motion profile at any given time.
  */
+@JsExport
 class MotionState @JvmOverloads constructor(
     @JvmField val x: Double,
     @JvmField val v: Double,

@@ -2,11 +2,14 @@ package com.amarcolini.joos.path.heading
 
 import com.amarcolini.joos.geometry.Angle
 import com.amarcolini.joos.path.ParametricCurve
+import kotlinx.serialization.SerialName
+import kotlin.js.JsExport
 import kotlin.jvm.JvmOverloads
 
 /**
  * Interpolator for specifying the heading for holonomic paths.
  */
+@JsExport
 abstract class HeadingInterpolator {
     /**
      * Base parametric curve
@@ -74,3 +77,29 @@ abstract class HeadingInterpolator {
     internal abstract fun internalDeriv(s: Double, t: Double): Angle
     internal abstract fun internalSecondDeriv(s: Double, t: Double): Angle
 }
+
+@JsExport
+@kotlinx.serialization.Serializable
+sealed interface HeadingInterpolation
+
+sealed interface ValueHeading {
+    var heading: Angle
+}
+
+@kotlinx.serialization.Serializable
+@SerialName("tangent")
+object TangentHeading : HeadingInterpolation {
+    override fun toString(): String = "TangentHeading"
+}
+
+@kotlinx.serialization.Serializable
+@SerialName("constant")
+object ConstantHeading : HeadingInterpolation
+
+@kotlinx.serialization.Serializable
+@SerialName("linear")
+data class LinearHeading(override var heading: Angle) : HeadingInterpolation, ValueHeading
+
+@kotlinx.serialization.Serializable
+@SerialName("spline")
+data class SplineHeading(override var heading: Angle) : HeadingInterpolation, ValueHeading

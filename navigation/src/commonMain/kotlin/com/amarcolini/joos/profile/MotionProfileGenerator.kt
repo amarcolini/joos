@@ -4,6 +4,8 @@ import com.amarcolini.joos.util.DoubleProgression
 import com.amarcolini.joos.util.solveQuadratic
 import com.amarcolini.joos.util.epsilonEquals
 import com.amarcolini.joos.util.minus
+import kotlin.js.ExperimentalJsExport
+import kotlin.js.JsExport
 import kotlin.jvm.JvmOverloads
 import kotlin.jvm.JvmStatic
 import kotlin.math.abs
@@ -14,6 +16,7 @@ import kotlin.math.sqrt
 /**
  * Motion profile generator with arbitrary start and end motion states and either dynamic constraints or jerk limiting.
  */
+@JsExport
 @Suppress("LargeClass", "ComplexMethod", "NestedBlockDepth")
 object MotionProfileGenerator {
 

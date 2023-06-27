@@ -9,24 +9,30 @@ import io.nacular.doodle.drawing.Canvas
 import io.nacular.doodle.drawing.Color
 import io.nacular.doodle.drawing.Stroke
 import io.nacular.doodle.drawing.circle
-import io.nacular.doodle.geometry.Circle
-import io.nacular.doodle.geometry.Point
-import io.nacular.doodle.geometry.Rectangle
+import io.nacular.doodle.geometry.*
 import io.nacular.doodle.system.SystemPointerEvent
 
-class SplineKnot : FieldEntity() {
-    private val stretchFactor = 0.3
-    private val point: Circle = Circle(2.0)
-    private var startKnot: Circle = Circle(1.0)
-    private var endKnot: Circle = Circle(1.0)
+abstract class SplineKnot : FieldEntity() {
+    init {
+        bounds = Rectangle(4.0, 4.0)
+        center = origin
+    }
 
-    var behavior: Behavior<SplineKnot>? by behavior()
+    protected var stretchFactor = 0.3
+    protected abstract val point: Shape
+    protected abstract val startKnot: Shape
+    protected abstract val endKnot: Shape
 
-    enum class Mode {
+    enum class LengthMode {
         MATCH_LENGTH, FIXED_LENGTH, FREE_LENGTH
     }
 
-    var mode by renderProperty(Mode.FIXED_LENGTH)
+    enum class TangentMode {
+        FIXED, FREE
+    }
+
+    var lengthMode by renderProperty(LengthMode.FIXED_LENGTH)
+    var tangentMode = TangentMode.FREE
     var startVisible by renderProperty(true)
     var endVisible by renderProperty(true)
 
@@ -38,9 +44,7 @@ class SplineKnot : FieldEntity() {
     val onChange = ArrayList<(SplineKnot) -> Unit>()
 
     init {
-        bounds = Rectangle(1.0, 1.0)
         clipCanvasToBounds = false
-        focusable = true
         focusChanged += { _, _, _ ->
             rerender()
         }
@@ -48,6 +52,9 @@ class SplineKnot : FieldEntity() {
         Dragger(this).apply {
             var knotSelected = 0
             var isMove = false
+            mouseReleased = { _, _ ->
+                isMove = false
+            }
             mousePressed = { pos, buttons ->
                 isMove = buttons.contains(SystemPointerEvent.Button.Button1)
                 knotSelected = when {
@@ -65,19 +72,24 @@ class SplineKnot : FieldEntity() {
                         onChange.forEach { it(this@SplineKnot) }
                     } else {
                         val vec = (pos).toVector2d() * if (knotSelected == 1) -1.0 else 1.0
-                        val newAngle = vec.angle()
                         val newMag = vec.norm() / stretchFactor
-                        tangent = newAngle
-                        when (this@SplineKnot.mode) {
-                            Mode.FIXED_LENGTH -> {
+                        when (this@SplineKnot.tangentMode) {
+                            TangentMode.FREE -> {
+                                val newAngle = vec.angle()
+                                tangent = newAngle
+                            }
+                            TangentMode.FIXED -> {}
+                        }
+                        when (this@SplineKnot.lengthMode) {
+                            LengthMode.FIXED_LENGTH -> {
                                 startTangentMag = -1.0
                                 endTangentMag = -1.0
                             }
-                            Mode.MATCH_LENGTH -> {
+                            LengthMode.MATCH_LENGTH -> {
                                 startTangentMag = newMag
                                 endTangentMag = newMag
                             }
-                            Mode.FREE_LENGTH -> {
+                            LengthMode.FREE_LENGTH -> {
                                 if (knotSelected == 1) startTangentMag = newMag
                                 else endTangentMag = newMag
                             }
@@ -100,17 +112,29 @@ class SplineKnot : FieldEntity() {
 
     override fun render(canvas: Canvas) {
         onChange.forEach { it(this@SplineKnot) }
+    }
+}
+
+class PathKnot : SplineKnot() {
+    override val point: Circle = Circle(origin, 1.75)
+    override var startKnot: Circle = Circle(1.0)
+    override var endKnot: Circle = Circle(1.0)
+
+    var behavior: Behavior<PathKnot>? by behavior()
+
+    override fun render(canvas: Canvas) {
+        super.render(canvas)
         startKnot = Circle(
             Vector2d.polar(
                 (if (startTangentMag >= 0) startTangentMag else defaultTangentMag) * -stretchFactor,
                 tangent
-            ).toPoint(), 1.0
+            ).toPoint() + origin, 1.0
         )
         endKnot = Circle(
             Vector2d.polar(
                 (if (endTangentMag >= 0) endTangentMag else defaultTangentMag) * stretchFactor,
                 tangent
-            ).toPoint(), 1.0
+            ).toPoint() + origin, 1.0
         )
 
         if (!hasFocus) {
@@ -121,9 +145,54 @@ class SplineKnot : FieldEntity() {
         if (startVisible) canvas.line(point.center, startKnot.center, Stroke(Color.Black, 0.2))
         if (endVisible) canvas.line(point.center, endKnot.center, Stroke(Color.Black, 0.2))
 
+        canvas.circle(point.withRadius(point.radius + 1.0), Color(66u, 135u, 245u, 0.8f))
         canvas.circle(point, Color.Blue)
 
         if (startVisible) canvas.circle(startKnot, Stroke(Color.Black, 0.2), Color.Blue)
         if (endVisible) canvas.circle(endKnot, Stroke(Color.Black, 0.2), Color.Blue)
+    }
+}
+
+class HeadingKnot : SplineKnot() {
+    override val point: Circle = Circle(origin, 1.75)
+    override var startKnot: Circle = Circle(1.0)
+    override var endKnot: Circle = Circle(1.0)
+
+    var behavior: Behavior<HeadingKnot>? by behavior()
+
+    init {
+        lengthMode = LengthMode.FIXED_LENGTH
+        tangentMode = TangentMode.FREE
+        startVisible = false
+    }
+
+    override fun render(canvas: Canvas) {
+        super.render(canvas)
+        startKnot = Circle(
+            Vector2d.polar(
+                (if (startTangentMag >= 0) startTangentMag else defaultTangentMag) * -stretchFactor,
+                tangent
+            ).toPoint() + origin, 1.0
+        )
+        endKnot = Circle(
+            Vector2d.polar(
+                (if (endTangentMag >= 0) endTangentMag else defaultTangentMag) * stretchFactor,
+                tangent
+            ).toPoint() + origin, 1.0
+        )
+
+        if (!hasFocus) {
+            canvas.circle(point, Color.Red)
+            return
+        }
+
+        if (startVisible) canvas.line(point.center, startKnot.center, Stroke(Color.Black, 0.2))
+        if (endVisible) canvas.line(point.center, endKnot.center, Stroke(Color.Black, 0.2))
+
+        canvas.circle(point.withRadius(point.radius + 1.0), Color(235u, 64u, 52u, 0.8f))
+        canvas.circle(point, Color.Red)
+
+        if (startVisible) canvas.circle(startKnot, Stroke(Color.Black, 0.2), Color.Red)
+        if (endVisible) canvas.circle(endKnot, Stroke(Color.Black, 0.2), Color.Red)
     }
 }

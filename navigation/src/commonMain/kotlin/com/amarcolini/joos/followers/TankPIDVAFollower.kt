@@ -7,6 +7,8 @@ import com.amarcolini.joos.geometry.Pose2d
 import com.amarcolini.joos.kinematics.Kinematics
 import com.amarcolini.joos.trajectory.Trajectory
 import com.amarcolini.joos.util.NanoClock
+import kotlin.js.ExperimentalJsExport
+import kotlin.js.JsExport
 import kotlin.jvm.JvmOverloads
 import kotlin.math.sign
 
@@ -22,6 +24,7 @@ import kotlin.math.sign
  * @param timeout max time to wait for the error to be admissible
  * @param clock clock
  */
+@JsExport
 class TankPIDVAFollower @JvmOverloads constructor(
     axialCoeffs: PIDCoefficients,
     crossTrackCoeffs: PIDCoefficients,

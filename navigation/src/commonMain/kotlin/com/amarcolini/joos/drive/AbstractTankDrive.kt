@@ -6,6 +6,8 @@ import com.amarcolini.joos.kinematics.Kinematics
 import com.amarcolini.joos.kinematics.TankKinematics
 import com.amarcolini.joos.localization.Localizer
 import com.amarcolini.joos.localization.TankLocalizer
+import kotlin.js.ExperimentalJsExport
+import kotlin.js.JsExport
 
 /**
  * This class provides the basic functionality of a tank/differential drive using [TankKinematics].
@@ -13,6 +15,7 @@ import com.amarcolini.joos.localization.TankLocalizer
  * @param feedforward motor feedforward coefficients
  * @param trackWidth lateral distance between pairs of wheels on different sides of the robot
  */
+@JsExport
 abstract class AbstractTankDrive constructor(
     protected val feedforward: FeedforwardCoefficients,
     protected val trackWidth: Double

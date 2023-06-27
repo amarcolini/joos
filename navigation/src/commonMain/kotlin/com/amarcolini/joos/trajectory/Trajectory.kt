@@ -4,6 +4,8 @@ import com.amarcolini.joos.geometry.Pose2d
 import com.amarcolini.joos.path.Path
 import com.amarcolini.joos.path.PathSegment
 import com.amarcolini.joos.profile.MotionProfile
+import kotlin.js.JsExport
+import kotlin.js.JsName
 
 /**
  * Trajectory composed of a list of trajectory segments and trajectory markers.
@@ -13,6 +15,7 @@ import com.amarcolini.joos.profile.MotionProfile
  * @see TrajectorySegment
  * @see TrajectoryMarker
  */
+@JsExport
 class Trajectory(
     val segments: List<TrajectorySegment>,
     val markers: List<TrajectoryMarker> = emptyList()
@@ -34,11 +37,13 @@ class Trajectory(
     /**
      * @param segment single trajectory segment
      */
+    @JsName("fromSingle")
     constructor(segment: TrajectorySegment, markers: List<TrajectoryMarker> = emptyList()) : this(
         listOf(segment),
         markers
     )
 
+    @JsName("fromPath")
     constructor(
         path: Path,
         profile: MotionProfile,

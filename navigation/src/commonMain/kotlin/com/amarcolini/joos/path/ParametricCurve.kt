@@ -3,6 +3,7 @@ package com.amarcolini.joos.path
 import com.amarcolini.joos.geometry.Angle
 import com.amarcolini.joos.geometry.Vector2d
 import com.amarcolini.joos.util.rad
+import kotlin.js.JsExport
 import kotlin.jvm.JvmName
 import kotlin.jvm.JvmOverloads
 import kotlin.math.abs
@@ -13,6 +14,7 @@ import kotlin.math.pow
  * the arc length parameter (s). Note that the arc length reparameterization is lazy, meaning that it is computed only
  * when needed. To precompute, use [reparameterize].
  */
+@JsExport
 abstract class ParametricCurve {
     /**
      * Returns the vector [s] units along the curve.
@@ -176,7 +178,7 @@ abstract class ParametricCurve {
                 val vLo = internalGet(tLo)
                 val vMid = internalGet(tMid)
                 val vHi = internalGet(tHi)
-                val deltaK = abs(curvature(tLo) - curvature(tHi))
+                val deltaK = abs(curvature(0.0, tLo) - curvature(0.0, tHi))
                 //TODO: more accurate length estimation?
                 val segmentLength = (vLo distTo vMid) + (vMid distTo vHi)
 

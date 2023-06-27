@@ -2,6 +2,8 @@ package com.amarcolini.joos.control
 
 import com.amarcolini.joos.util.NanoClock
 import com.amarcolini.joos.util.wrap
+import kotlin.js.ExperimentalJsExport
+import kotlin.js.JsExport
 import kotlin.jvm.JvmOverloads
 import kotlin.math.abs
 import kotlin.math.sign
@@ -13,6 +15,7 @@ import kotlin.math.sign
  * @param kF custom feedforward that depends on position and/or velocity (e.g., a gravity term for arms)
  * @param clock clock
  */
+@JsExport
 class PIDFController @JvmOverloads constructor(
     pid: PIDCoefficients,
     var kF: (Double, Double?) -> Double = { _, _ -> 0.0 },

@@ -1,9 +1,11 @@
 package com.amarcolini.joos
 
-import com.amarcolini.joos.util.NanoClock
+import com.amarcolini.joos.geometry.Vector2d
+import com.amarcolini.joos.path.QuinticPolynomial
 import com.amarcolini.joos.util.wrap
 import org.apache.commons.math3.util.FastMath
 import org.junit.jupiter.api.Test
+import utils.benchmark.logBenchmark
 import kotlin.math.sin
 
 class MathTest {
@@ -18,7 +20,9 @@ class MathTest {
 
     @Test
     fun testAngleConversionSpeeds() {
-        val tests = mapOf(
+        logBenchmark(
+            times = 10000000,
+            logger = ::println,
             "kotlin" to { sin(Math.random() * 360) },
             "kotlin with convert" to { sin(Math.toRadians(Math.random() * 360)) },
             "kotlin with fast convert" to { sin(FastMath.toRadians(Math.random() * 360)) },
@@ -27,14 +31,5 @@ class MathTest {
             "java" to { Math.sin(Math.random() * 360) },
             "java with convert" to { Math.sin(Math.toRadians(Math.random() * 360)) },
         )
-
-        val clock = NanoClock.system()
-        tests.map { (name, test) ->
-            val start = clock.seconds()
-            repeat(10000000) { test() }
-            name to clock.seconds() - start
-        }.sortedBy { it.second }.forEach { (name, result) ->
-            println("$name: $result")
-        }
     }
 }

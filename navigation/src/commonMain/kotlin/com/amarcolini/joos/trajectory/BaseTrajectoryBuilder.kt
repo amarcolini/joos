@@ -6,6 +6,11 @@ import com.amarcolini.joos.geometry.Vector2d
 import com.amarcolini.joos.path.Path
 import com.amarcolini.joos.path.PathBuilder
 import com.amarcolini.joos.path.PathContinuityViolationException
+import com.amarcolini.joos.path.heading.HeadingInterpolation
+import com.amarcolini.joos.path.heading.TangentHeading
+import kotlin.js.JsExport
+import kotlin.js.JsName
+import kotlin.jvm.JvmOverloads
 
 /**
  * Easy-to-use builder for creating [Trajectory] instances.
@@ -14,6 +19,7 @@ import com.amarcolini.joos.path.PathContinuityViolationException
  * @param startDeriv start derivative
  * @param startSecondDeriv start second derivative
  */
+@JsExport
 @Suppress("UNCHECKED_CAST")
 abstract class BaseTrajectoryBuilder<T : BaseTrajectoryBuilder<T>> protected constructor(
     private val startPose: Pose2d,
@@ -77,6 +83,7 @@ abstract class BaseTrajectoryBuilder<T : BaseTrajectoryBuilder<T>> protected con
      *
      * @param angle angle to turn in [Angle.defaultUnits]
      */
+    @JsName("turnD")
     fun turn(angle: Double): T = turn(Angle(angle))
 
     /**
@@ -87,6 +94,19 @@ abstract class BaseTrajectoryBuilder<T : BaseTrajectoryBuilder<T>> protected con
         val start = if (segments.isEmpty()) startPose else segments.last().end()
         addSegment(WaitSegment(start, seconds))
         pathBuilder = PathBuilder(segments.last().end())
+
+        return this as T
+    }
+
+    /**
+     * Adds a line segment with the specified heading interpolation.
+     *
+     * @param endPosition end position
+     * @param headingInterpolation desired heading interpolation
+     * @see HeadingInterpolation
+     */
+    fun addLine(endPosition: Vector2d, headingInterpolation: HeadingInterpolation = TangentHeading): T {
+        addPathSegment { pathBuilder.addLine(endPosition, headingInterpolation) }
 
         return this as T
     }
@@ -191,6 +211,36 @@ abstract class BaseTrajectoryBuilder<T : BaseTrajectoryBuilder<T>> protected con
     }
 
     /**
+     * Adds a spline segment with the specified heading interpolation.
+     *
+     * @param endPosition end position
+     * @param endTangent end tangent (negative = default magnitude)
+     * @param endTangentMag the magnitude of the end tangent (negative = default magnitude)
+     * @param headingInterpolation the desired heading interpolation
+     * @see HeadingInterpolation
+     */
+    @JvmOverloads
+    fun addSpline(
+        endPosition: Vector2d,
+        endTangent: Angle,
+        startTangentMag: Double = -1.0,
+        endTangentMag: Double = -1.0,
+        headingInterpolation: HeadingInterpolation = TangentHeading
+    ): T {
+        addPathSegment {
+            pathBuilder.addSpline(
+                endPosition,
+                endTangent,
+                startTangentMag,
+                endTangentMag,
+                headingInterpolation
+            )
+        }
+
+        return this as T
+    }
+
+    /**
      * Adds a spline segment with tangent heading interpolation.
      *
      * @param endPosition end position
@@ -208,6 +258,7 @@ abstract class BaseTrajectoryBuilder<T : BaseTrajectoryBuilder<T>> protected con
      * @param endPosition end position
      * @param endTangent end tangent in [Angle.defaultUnits]
      */
+    @JsName("splineToD")
     fun splineTo(endPosition: Vector2d, endTangent: Double): T =
         splineTo(endPosition, Angle(endTangent))
 
@@ -234,6 +285,7 @@ abstract class BaseTrajectoryBuilder<T : BaseTrajectoryBuilder<T>> protected con
      * @param endPosition end position
      * @param endTangent end tangent in [Angle.defaultUnits]
      */
+    @JsName("splineToConstantHeadingD")
     fun splineToConstantHeading(endPosition: Vector2d, endTangent: Double): T =
         splineToConstantHeading(endPosition, Angle(endTangent))
 
@@ -255,6 +307,7 @@ abstract class BaseTrajectoryBuilder<T : BaseTrajectoryBuilder<T>> protected con
      * @param endPose end pose
      * @param endTangent end tangent in [Angle.defaultUnits]
      */
+    @JsName("splineToLinearHeadingD")
     fun splineToLinearHeading(endPose: Pose2d, endTangent: Double): T =
         splineToLinearHeading(endPose, Angle(endTangent))
 
@@ -276,6 +329,7 @@ abstract class BaseTrajectoryBuilder<T : BaseTrajectoryBuilder<T>> protected con
      * @param endPose end pose
      * @param endTangent end tangent in [Angle.defaultUnits]
      */
+    @JsName("splineToSplineHeadingD")
     fun splineToSplineHeading(endPose: Pose2d, endTangent: Double): T =
         splineToSplineHeading(endPose, Angle(endTangent))
 
@@ -288,12 +342,14 @@ abstract class BaseTrajectoryBuilder<T : BaseTrajectoryBuilder<T>> protected con
     /**
      * Adds a marker to the trajectory at [scale] * trajectory duration + [offset].
      */
+    @JsName("addTemporalMarkerOffset")
     fun addTemporalMarker(scale: Double, offset: Double, callback: MarkerCallback): T =
         addTemporalMarker({ scale * it + offset }, callback)
 
     /**
      * Adds a marker to the trajectory at [time] evaluated with the trajectory duration.
      */
+    @JsName("addTemporalMarkerCustom")
     fun addTemporalMarker(time: (Double) -> Double, callback: MarkerCallback): T {
         temporalMarkers.add(TemporalMarker(time, callback))
 
@@ -318,18 +374,21 @@ abstract class BaseTrajectoryBuilder<T : BaseTrajectoryBuilder<T>> protected con
     /**
      * Adds a marker to the trajectory at [displacement].
      */
+    @JsName("addDisplacementMarkerD")
     fun addDisplacementMarker(displacement: Double, callback: MarkerCallback): T =
         addDisplacementMarker(0.0, displacement, callback)
 
     /**
      * Adds a marker to the trajectory at [scale] * path length + [offset].
      */
+    @JsName("addDisplacementMarkerOffset")
     fun addDisplacementMarker(scale: Double, offset: Double, callback: MarkerCallback): T =
         addDisplacementMarker({ scale * it + offset }, callback)
 
     /**
      * Adds a marker to the trajectory at [displacement] evaluated with path length.
      */
+    @JsName("addDisplacementMarkerCustom")
     fun addDisplacementMarker(displacement: (Double) -> Double, callback: MarkerCallback): T {
         displacementMarkers.add(DisplacementMarker(displacement, callback))
 

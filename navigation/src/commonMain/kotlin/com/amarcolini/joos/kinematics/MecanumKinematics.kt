@@ -1,6 +1,8 @@
 package com.amarcolini.joos.kinematics
 
 import com.amarcolini.joos.geometry.Pose2d
+import kotlin.js.ExperimentalJsExport
+import kotlin.js.JsExport
 import kotlin.jvm.JvmOverloads
 import kotlin.jvm.JvmStatic
 
@@ -12,6 +14,7 @@ import kotlin.jvm.JvmStatic
  *
  * [This paper](http://www.chiefdelphi.com/media/papers/download/2722) provides a motivated derivation.
  */
+@JsExport
 object MecanumKinematics {
 
     /**

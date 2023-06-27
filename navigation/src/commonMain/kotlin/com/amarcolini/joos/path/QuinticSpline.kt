@@ -14,7 +14,7 @@ class QuinticSpline(
     /**
      * X polynomial (`x(t)`).
      */
-    private val x: QuinticPolynomial =
+    val x: QuinticPolynomial =
         QuinticPolynomial(
             start.x,
             start.dx,
@@ -27,7 +27,7 @@ class QuinticSpline(
     /**
      * Y polynomial (`y(t)`).
      */
-    private val y: QuinticPolynomial =
+    val y: QuinticPolynomial =
         QuinticPolynomial(
             start.y,
             start.dy,

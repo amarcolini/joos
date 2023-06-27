@@ -6,6 +6,8 @@ import com.amarcolini.joos.geometry.Vector2d
 import com.amarcolini.joos.util.cos
 import com.amarcolini.joos.util.rad
 import com.amarcolini.joos.util.sin
+import kotlin.js.ExperimentalJsExport
+import kotlin.js.JsExport
 import kotlin.jvm.JvmOverloads
 import kotlin.jvm.JvmStatic
 import kotlin.math.cos
@@ -17,6 +19,7 @@ import kotlin.math.sin
  * coordinate system with positive x pointing forward, positive y pointing left, and positive heading measured
  * counter-clockwise from the x-axis.
  */
+@JsExport
 object SwerveKinematics {
 
     /**

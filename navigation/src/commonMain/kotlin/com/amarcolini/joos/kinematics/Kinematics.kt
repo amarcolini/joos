@@ -3,6 +3,8 @@ package com.amarcolini.joos.kinematics
 import com.amarcolini.joos.geometry.Pose2d
 import com.amarcolini.joos.geometry.Vector2d
 import com.amarcolini.joos.util.*
+import kotlin.js.ExperimentalJsExport
+import kotlin.js.JsExport
 import kotlin.jvm.JvmStatic
 import kotlin.math.cos
 import kotlin.math.sin
@@ -10,6 +12,7 @@ import kotlin.math.sin
 /**
  * A collection of methods for various kinematics-related tasks.
  */
+@JsExport
 object Kinematics {
 
     /**

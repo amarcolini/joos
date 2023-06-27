@@ -1,5 +1,7 @@
 package com.amarcolini.joos.control
 
+import kotlin.js.ExperimentalJsExport
+import kotlin.js.JsExport
 import kotlin.jvm.JvmField
 import kotlin.jvm.JvmOverloads
 
@@ -11,6 +13,7 @@ import kotlin.jvm.JvmOverloads
  * @param kD derivative gain
  * @param N low-pass filter frequency cutoff for derivative, in radians per second
  */
+@JsExport
 data class PIDCoefficients @JvmOverloads constructor(
     @JvmField var kP: Double = 0.0,
     @JvmField var kI: Double = 0.0,

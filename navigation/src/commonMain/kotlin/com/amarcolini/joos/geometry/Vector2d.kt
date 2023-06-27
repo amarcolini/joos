@@ -3,6 +3,9 @@ package com.amarcolini.joos.geometry
 import com.amarcolini.joos.dashboard.Immutable
 import com.amarcolini.joos.serialization.format
 import com.amarcolini.joos.util.*
+import kotlin.js.ExperimentalJsExport
+import kotlin.js.JsExport
+import kotlin.js.JsName
 import kotlin.jvm.JvmField
 import kotlin.jvm.JvmOverloads
 import kotlin.jvm.JvmStatic
@@ -13,6 +16,7 @@ import kotlin.math.sqrt
 /**
  * Class for representing 2D vectors (x and y).
  */
+@JsExport
 @kotlinx.serialization.Serializable
 @Immutable
 data class Vector2d @JvmOverloads constructor(
@@ -107,6 +111,7 @@ data class Vector2d @JvmOverloads constructor(
     /**
      * Rotates this vector by [angle], where [angle] is in [Angle.defaultUnits].
      */
+    @JsName("rotatedDefault")
     fun rotated(angle: Double): Vector2d = rotated(Angle(angle))
 
     /**

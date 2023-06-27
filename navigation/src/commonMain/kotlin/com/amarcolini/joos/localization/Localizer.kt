@@ -1,10 +1,13 @@
 package com.amarcolini.joos.localization
 
 import com.amarcolini.joos.geometry.Pose2d
+import kotlin.js.ExperimentalJsExport
+import kotlin.js.JsExport
 
 /**
  * Generic interface for estimating robot pose over time.
  */
+@JsExport
 interface Localizer {
 
     /**

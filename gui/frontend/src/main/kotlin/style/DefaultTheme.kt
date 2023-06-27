@@ -1,5 +1,6 @@
 package style
 
+import field.PathKnot
 import field.SplineKnot
 import io.nacular.doodle.core.Behavior
 import io.nacular.doodle.core.Display
@@ -10,7 +11,7 @@ class DefaultTheme : Theme {
 
     override fun install(display: Display, all: Sequence<View>) = all.forEach {
         when (it) {
-            is SplineKnot -> it.behavior = object : Behavior<SplineKnot> {
+            is PathKnot -> it.behavior = object : Behavior<PathKnot> {
             }
         }
     }

@@ -7,6 +7,8 @@ import com.amarcolini.joos.geometry.Pose2d
 import com.amarcolini.joos.kinematics.Kinematics
 import com.amarcolini.joos.path.Path
 import com.amarcolini.joos.util.*
+import kotlin.js.ExperimentalJsExport
+import kotlin.js.JsExport
 import kotlin.jvm.JvmField
 import kotlin.jvm.JvmOverloads
 import kotlin.math.atan2
@@ -23,6 +25,7 @@ import kotlin.math.sqrt
  * @param errorMapFunc error map function (see [GuidingVectorField])
  * @param clock clock
  */
+@JsExport
 class GVFFollower @JvmOverloads constructor(
     @JvmField var maxVel: Double,
     @JvmField var maxAccel: Double,

@@ -3,12 +3,15 @@ package com.amarcolini.joos.drive
 import com.amarcolini.joos.geometry.Angle
 import com.amarcolini.joos.geometry.Pose2d
 import com.amarcolini.joos.localization.Localizer
+import kotlin.js.ExperimentalJsExport
+import kotlin.js.JsExport
 
 /**
  * Abstraction for generic robot drive motion and localization. Robot poses are specified in a coordinate system with
  * positive x pointing forward, positive y pointing left, and positive heading measured counter-clockwise from the
  * x-axis.
  */
+@JsExport
 abstract class Drive {
     /**
      * Localizer used to determine the evolution of [poseEstimate].

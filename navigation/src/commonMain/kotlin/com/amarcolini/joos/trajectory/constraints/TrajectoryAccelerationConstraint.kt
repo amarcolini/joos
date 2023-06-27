@@ -1,11 +1,12 @@
 package com.amarcolini.joos.trajectory.constraints
 
 import com.amarcolini.joos.geometry.Pose2d
+import kotlin.js.JsExport
 
 /**
  * Motion profile acceleration constraint.
  */
-//@JsonTypeInfo(use = JsonTypeInfo.Id.NAME)
+@JsExport
 fun interface TrajectoryAccelerationConstraint {
 
     /**

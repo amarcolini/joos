@@ -1,10 +1,14 @@
 package com.amarcolini.joos.profile
 
+import kotlin.js.ExperimentalJsExport
+import kotlin.js.JsExport
+
 /**
  * Trapezoidal motion profile composed of motion segments.
  *
  * @param segments profile motion segments
  */
+@JsExport
 class MotionProfile(val segments: List<MotionSegment>) {
     init {
         require(segments.isNotEmpty()) { "A MotionProfile cannot be constructed without any MotionSegments." }

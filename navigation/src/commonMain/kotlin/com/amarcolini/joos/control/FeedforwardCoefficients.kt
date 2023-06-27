@@ -1,6 +1,9 @@
 package com.amarcolini.joos.control
 
 import com.amarcolini.joos.util.epsilonEquals
+import kotlin.js.ExperimentalJsExport
+import kotlin.js.JsExport
+import kotlin.js.JsName
 import kotlin.jvm.JvmField
 import kotlin.jvm.JvmOverloads
 import kotlin.math.sign
@@ -11,6 +14,7 @@ import kotlin.math.sign
  * @param kA acceleration gain
  * @param kStatic additive constant
  */
+@JsExport
 data class FeedforwardCoefficients @JvmOverloads constructor(
     @JvmField var kV: Double = 0.0,
     @JvmField var kA: Double = 0.0,
@@ -19,6 +23,7 @@ data class FeedforwardCoefficients @JvmOverloads constructor(
     /**
      * Computes the motor feedforward (i.e., open loop powers) for the given set of coefficients.
      */
+    @JsName("calculateMultiple")
     fun calculate(
         vels: List<Double>,
         accels: List<Double>

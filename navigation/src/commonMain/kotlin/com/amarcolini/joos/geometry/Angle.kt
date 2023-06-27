@@ -4,6 +4,9 @@ import com.amarcolini.joos.dashboard.Immutable
 import com.amarcolini.joos.serialization.AngleSerializer
 import com.amarcolini.joos.serialization.format
 import com.amarcolini.joos.util.*
+import kotlin.js.ExperimentalJsExport
+import kotlin.js.JsExport
+import kotlin.js.JsName
 import kotlin.jvm.JvmField
 import kotlin.jvm.JvmName
 import kotlin.jvm.JvmOverloads
@@ -13,6 +16,7 @@ import kotlin.math.*
 /**
  * A class representing different angle units.
  */
+@JsExport
 enum class AngleUnit {
     /**
      * A unit of measure for angles equivalent to 1/360 of a full rotation.
@@ -28,6 +32,7 @@ enum class AngleUnit {
 /**
  * Class for representing angles.
  */
+@JsExport
 @kotlinx.serialization.Serializable(with = AngleSerializer::class)
 @Immutable
 data class Angle @JvmOverloads constructor(
@@ -137,6 +142,7 @@ data class Angle @JvmOverloads constructor(
     /**
      * Ensures that this angle lies in the specified range [min]..[max], where [min] and [max] are in [defaultUnits].
      */
+    @JsName("coerceInDefault")
     fun coerceIn(min: Double, max: Double): Angle = coerceIn(
         Angle(min),
         Angle(max)
@@ -162,6 +168,7 @@ data class Angle @JvmOverloads constructor(
     /**
      * Adds two angles, where [other] is in [defaultUnits].
      */
+    @JsName("plusDefault")
     operator fun plus(other: Double): Angle = this + Angle(other)
 
     /**
@@ -173,6 +180,7 @@ data class Angle @JvmOverloads constructor(
     /**
      * Subtracts two angles, where [other] is in [defaultUnits].
      */
+    @JsName("minusDefault")
     operator fun minus(other: Double): Angle = this - Angle(
         other
     )
@@ -192,6 +200,7 @@ data class Angle @JvmOverloads constructor(
     /**
      * Divides two angles.
      */
+    @JsName("divAngle")
     operator fun div(other: Angle): Double = getValue(other.units) / other.value
 
     /**
@@ -209,6 +218,7 @@ data class Angle @JvmOverloads constructor(
      * Returns whether two angles are approximately equal (within [EPSILON]). [other]
      * is in degrees or radians as specified by [defaultUnits].
      */
+    @JsName("strictEpsilonEqualsDefault")
     infix fun strictEpsilonEquals(other: Double): Boolean =
         this strictEpsilonEquals Angle(other)
 
@@ -224,6 +234,7 @@ data class Angle @JvmOverloads constructor(
      * point in the same direction are considered equal as well (e.g., 0° = 360° = 720°).
      * [other] is in degrees or radians as specified by [defaultUnits].
      */
+    @JsName("epsiloneEqualsDefault")
     infix fun epsilonEquals(other: Double): Boolean = this epsilonEquals Angle(other)
 
     override fun toString(): String = when (defaultUnits) {

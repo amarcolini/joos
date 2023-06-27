@@ -7,6 +7,8 @@ import com.amarcolini.joos.util.NanoClock
 import com.amarcolini.joos.util.cos
 import com.amarcolini.joos.util.epsilonEquals
 import com.amarcolini.joos.util.sin
+import kotlin.js.ExperimentalJsExport
+import kotlin.js.JsExport
 import kotlin.jvm.JvmOverloads
 import kotlin.math.sin
 import kotlin.math.sqrt
@@ -21,6 +23,7 @@ import kotlin.math.sqrt
  * @param timeout max time to wait for the error to be admissible
  * @param clock clock
  */
+@JsExport
 class RamseteFollower @JvmOverloads constructor(
     private val b: Double,
     private val zeta: Double,

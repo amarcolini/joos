@@ -5,6 +5,9 @@ import com.amarcolini.joos.geometry.Pose2d
 import com.amarcolini.joos.geometry.Vector2d
 import com.amarcolini.joos.util.DoubleProgression
 import com.amarcolini.joos.util.epsilonEquals
+import kotlin.js.ExperimentalJsExport
+import kotlin.js.JsExport
+import kotlin.js.JsName
 import kotlin.jvm.JvmOverloads
 import kotlin.math.max
 import kotlin.math.min
@@ -15,11 +18,13 @@ import kotlin.math.roundToInt
  *
  * @param segments list of path segments
  */
+@JsExport
 class Path(val segments: List<PathSegment>) {
 
     /**
      * @param segment single path segment
      */
+    @JsName("fromSingle")
     constructor(segment: PathSegment) : this(listOf(segment))
 
     /**
@@ -89,15 +94,22 @@ class Path(val segments: List<PathSegment>) {
         return segment.tangentAngle(remainingDisplacement, t)
     }
 
+    /**
+     * Returns the pose along the segment specified by [segmentIndex] at the internal parameter [t].
+     */
+    fun internalGet(segmentIndex: Int, t: Double): Pose2d {
+        val segment = segments[segmentIndex.coerceIn(0, segments.lastIndex)]
+        return segment[0.0, t]
+    }
 
     @JvmOverloads
-    internal fun internalDeriv(s: Double, t: Double = reparam(s)): Pose2d {
+    fun internalDeriv(s: Double, t: Double = reparam(s)): Pose2d {
         val (segment, remainingDisplacement) = segment(s)
         return segment.internalDeriv(remainingDisplacement, t)
     }
 
     @JvmOverloads
-    internal fun internalSecondDeriv(s: Double, t: Double = reparam(s)): Pose2d {
+    fun internalSecondDeriv(s: Double, t: Double = reparam(s)): Pose2d {
         val (segment, remainingDisplacement) = segment(s)
         return segment.internalSecondDeriv(remainingDisplacement, t)
     }
@@ -108,7 +120,7 @@ class Path(val segments: List<PathSegment>) {
         return segment.curvature(remainingDisplacement, t)
     }
 
-    internal fun reparam(s: Double): Double {
+    fun reparam(s: Double): Double {
         val (segment, remainingDisplacement) = segment(s)
         return segment.reparam(remainingDisplacement)
     }

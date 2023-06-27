@@ -3,7 +3,7 @@ package com.amarcolini.joos.util
 import kotlin.jvm.JvmStatic
 
 /**
- * Clock interface with sub-millisecond precision and no guarantee about its origin (that is, this is only suited for
+ * Clock interface with millisecond precision and no guarantee about its origin (that is, this is only suited for
  * measuring relative/elapsed time).
  */
 // interface breaks companion object JVM static modifier

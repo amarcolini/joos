@@ -9,12 +9,16 @@ import io.nacular.doodle.system.SystemPointerEvent.Type
 import io.nacular.measured.units.Angle
 import io.nacular.measured.units.Measure
 
-class Robot(
-    dimensions: Vector2d = Vector2d(18.0, 18.0),
-    var paint: Paint = ColorPaint(Color.Black),
-    private val thickness: Double = 1.5
-) : FieldEntity() {
-    var dimensions: Vector2d = dimensions
+//class Robot(
+//    dimensions: Vector2d = Vector2d(18.0, 18.0),
+//    var paint: Paint = ColorPaint(Color.Black),
+//    private val thickness: Double = 1.5
+//) : FieldEntity() {
+object Robot : PoseFieldEntity() {
+    private val paint: Paint = ColorPaint(Color.Black)
+    private const val thickness: Double = 1.5
+
+    var dimensions: Vector2d = Vector2d(18.0, 18.0)
         set(value) {
             computeGeometry()
             rerender()
@@ -48,40 +52,16 @@ class Robot(
             .finish()
     }
 
-    override lateinit var center: Point
-        private set
     private var box: Path = path(Point.Origin).finish()
     private var headingLine: Path = path(Point.Origin).finish()
     private var clickBounds: Rectangle = Rectangle()
 
     init {
         computeGeometry()
-        position = Point(24, 24)
-        heading = Measure(0.0, Angle.degrees)
         clipCanvasToBounds = false
-        Dragger(this).apply {
-            mouseDragged = { position, delta ->
-                this@Robot.position += delta
-            }
-            mouseEntered = { _, pressed ->
-                if (!pressed) cursor = Cursor.Grab
-            }
-            mousePressed = { _, _ ->
-                cursor = Cursor.Grabbing
-            }
-            mouseReleased = { _, _ ->
-                cursor = Cursor.Grab
-            }
-            mouseExited = { _, pressed ->
-                if (!pressed) cursor = Cursor.Default
-            }
-            stateChanged = {
-                mouseState = it
-            }
-        }
     }
 
-    override fun render(canvas: Canvas) {
+    override fun rotateRender(canvas: Canvas) {
         val shadowColor = when (mouseState) {
             Type.Exit -> Color.Transparent
             Type.Click, Type.Down, Type.Drag -> Color.Green

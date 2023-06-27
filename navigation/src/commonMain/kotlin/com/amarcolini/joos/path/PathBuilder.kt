@@ -3,11 +3,10 @@ package com.amarcolini.joos.path
 import com.amarcolini.joos.geometry.Angle
 import com.amarcolini.joos.geometry.Pose2d
 import com.amarcolini.joos.geometry.Vector2d
-import com.amarcolini.joos.path.heading.ConstantInterpolator
-import com.amarcolini.joos.path.heading.LinearInterpolator
-import com.amarcolini.joos.path.heading.SplineInterpolator
-import com.amarcolini.joos.path.heading.TangentInterpolator
+import com.amarcolini.joos.path.heading.*
 import com.amarcolini.joos.util.deg
+import kotlin.js.JsExport
+import kotlin.js.JsName
 import kotlin.jvm.JvmOverloads
 
 /**
@@ -33,18 +32,22 @@ class EmptyPathSegmentException : PathBuilderException()
  * @param startDeriv start derivative
  * @param startSecondDeriv start second derivative
  */
+@JsExport
 class PathBuilder(
     startPose: Pose2d,
     startDeriv: Pose2d,
     startSecondDeriv: Pose2d
 ) {
     @JvmOverloads
+    @JsName("fromPose")
     constructor(startPose: Pose2d, startTangent: Angle = startPose.heading) :
             this(startPose, Pose2d(startTangent.vec()), Pose2d())
 
+    @JsName("fromReversed")
     constructor(startPose: Pose2d, reversed: Boolean) :
             this(startPose, (startPose.heading + Angle(if (reversed) 180.0 else 0.0)).norm())
 
+    @JsName("fromPath")
     constructor(path: Path, s: Double) : this(path[s], path.deriv(s), path.secondDeriv(s))
 
     private var currentPose: Pose2d = startPose
@@ -148,18 +151,30 @@ class PathBuilder(
     }
 
     /**
+     * Adds a line segment with the specified heading interpolation.
+     *
+     * @param endPosition end position
+     * @param headingInterpolation desired heading interpolation
+     * @see HeadingInterpolation
+     */
+    fun addLine(endPosition: Vector2d, headingInterpolation: HeadingInterpolation = TangentHeading): PathBuilder {
+        val line = makeLine(endPosition)
+        val interpolator = when (headingInterpolation) {
+            is TangentHeading -> makeTangentInterpolator(line)
+            is ConstantHeading -> makeConstantInterpolator()
+            is LinearHeading -> makeLinearInterpolator(headingInterpolation.heading)
+            is SplineHeading -> makeSplineInterpolator(headingInterpolation.heading)
+        }
+
+        return addSegment(PathSegment(line, interpolator))
+    }
+
+    /**
      * Adds a line segment with tangent heading interpolation.
      *
      * @param endPosition end position
      */
-    fun lineTo(endPosition: Vector2d): PathBuilder {
-        val line = makeLine(endPosition)
-        val interpolator = makeTangentInterpolator(line)
-
-        addSegment(PathSegment(line, interpolator))
-
-        return this
-    }
+    fun lineTo(endPosition: Vector2d): PathBuilder = addLine(endPosition, TangentHeading)
 
     /**
      * Adds a line segment with constant heading interpolation.
@@ -198,7 +213,7 @@ class PathBuilder(
      * @param distance distance to travel forward
      */
     fun forward(distance: Double): PathBuilder =
-        lineTo(currentPose.vec() + Vector2d.polar(distance, currentPose.heading))
+        lineTo(currentPose.vec() + Vector2d.polar(distance, currentDeriv.vec().angle()))
 
     /**
      * Adds a line straight backward.
@@ -223,39 +238,29 @@ class PathBuilder(
     fun strafeRight(distance: Double): PathBuilder = strafeLeft(-distance)
 
     /**
-     * Adds a spline segment with tangent heading interpolation.
+     * Adds a spline segment with the specified heading interpolation.
      *
      * @param endPosition end position
-     * @param endTangent end tangent
-     * @param startTangentMag the magnitude of the start tangent
-     * @param endTangentMag the magnitude of the end tangent
+     * @param endTangent end tangent (negative = default magnitude)
+     * @param endTangentMag the magnitude of the end tangent (negative = default magnitude)
+     * @param headingInterpolation desired heading interpolation
+     * @see HeadingInterpolation
      */
-    fun splineTo(
+    @JvmOverloads
+    fun addSpline(
         endPosition: Vector2d,
         endTangent: Angle,
-        startTangentMag: Double,
-        endTangentMag: Double
+        startTangentMag: Double = -1.0,
+        endTangentMag: Double = -1.0,
+        headingInterpolation: HeadingInterpolation = TangentHeading
     ): PathBuilder {
         val spline = makeSpline(endPosition, endTangent, startTangentMag, endTangentMag)
-        val interpolator = makeTangentInterpolator(spline)
-
-        return addSegment(PathSegment(spline, interpolator))
-    }
-
-    /**
-     * Adds a spline segment with tangent heading interpolation.
-     *
-     * @param endPosition end position
-     * @param endTangent end tangent
-     * @param endTangentMag the magnitude of the end tangent
-     */
-    fun splineTo(
-        endPosition: Vector2d,
-        endTangent: Angle,
-        endTangentMag: Double
-    ): PathBuilder {
-        val spline = makeSpline(endPosition, endTangent, -1.0, endTangentMag)
-        val interpolator = makeTangentInterpolator(spline)
+        val interpolator = when (headingInterpolation) {
+            is TangentHeading -> makeTangentInterpolator(spline)
+            is ConstantHeading -> makeConstantInterpolator()
+            is LinearHeading -> makeLinearInterpolator(headingInterpolation.heading)
+            is SplineHeading -> makeSplineInterpolator(headingInterpolation.heading)
+        }
 
         return addSegment(PathSegment(spline, interpolator))
     }
@@ -279,6 +284,7 @@ class PathBuilder(
      * @param endPosition end position
      * @param endTangent end tangent in [Angle.defaultUnits]
      */
+    @JsName("splineToDefault")
     fun splineTo(endPosition: Vector2d, endTangent: Double): PathBuilder = splineTo(endPosition, Angle(endTangent))
 
     /**
@@ -296,6 +302,7 @@ class PathBuilder(
      * @param endPosition end position
      * @param endTangent end tangent in [Angle.defaultUnits]
      */
+    @JsName("splineToConstantHeadingDefault")
     fun splineToConstantHeading(endPosition: Vector2d, endTangent: Double): PathBuilder =
         splineToConstantHeading(endPosition, Angle(endTangent))
 
@@ -319,6 +326,7 @@ class PathBuilder(
      * @param endPose end pose
      * @param endTangent end tangent in [Angle.defaultUnits]
      */
+    @JsName("splineToLinearHeadingDefault")
     fun splineToLinearHeading(endPose: Pose2d, endTangent: Double) =
         splineToLinearHeading(endPose, Angle(endTangent))
 
@@ -342,6 +350,7 @@ class PathBuilder(
      * @param endPose end pose
      * @param endTangent end tangent in [Angle.defaultUnits]
      */
+    @JsName("splineToSplineHeadingDefault")
     fun splineToSplineHeading(endPose: Pose2d, endTangent: Double) =
         splineToSplineHeading(endPose, Angle(endTangent))
 

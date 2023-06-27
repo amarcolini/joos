@@ -1,19 +1,26 @@
 package field
 
+import GUIApp
+import animation.TimeManager
+import com.amarcolini.joos.geometry.AngleUnit
 import com.amarcolini.joos.geometry.Pose2d
 import com.amarcolini.joos.geometry.Vector2d
-import com.amarcolini.joos.path.PathBuilder
 import com.amarcolini.joos.util.rad
+import io.nacular.doodle.core.Layout
 import io.nacular.doodle.core.View
+import io.nacular.doodle.core.renderProperty
 import io.nacular.doodle.drawing.*
+import io.nacular.doodle.event.PointerListener.Companion.pressed
 import io.nacular.doodle.geometry.Point
 import io.nacular.doodle.geometry.Rectangle
+import io.nacular.doodle.geometry.Size
 import io.nacular.doodle.image.Image
-import io.nacular.doodle.system.SystemPointerEvent
-import io.nacular.doodle.utils.ObservableList
-import io.nacular.doodle.utils.ObservableSet
+import io.nacular.doodle.utils.observable
 import io.nacular.measured.units.Angle
 import io.nacular.measured.units.Measure
+import util.GROW
+import util.ObservableMap
+import kotlin.math.PI
 import kotlin.math.min
 
 fun Pose2d.toPoint() = Point(x, y)
@@ -34,7 +41,7 @@ var View.cPos
 /**
  * The field container.
  */
-object Field : HTMLView() {
+object Field : View() {
     val backgrounds: MutableMap<String, Image?> = ObservableMap(mutableMapOf(), ::rerender)
     const val fieldSize = 144.0
 
@@ -47,25 +54,43 @@ object Field : HTMLView() {
     }
 
     init {
-        listOf(
-            PathEntity(
-                PathBuilder(Pose2d(4.0, 4.0)).splineTo(Vector2d(30.0, 30.0), 0.rad).build(), Stroke(Color.Black)
-            ), Robot()
-        )
-//        children += DraggablePathV2.getEntities()
-        children += WaypointPopup()
+        idealSize = GROW
+        children += DraggableTrajectory
+        children += Robot
+        Robot.visible = false
+        TimeManager.listeners += { _, new ->
+            val s = new / TimeManager.duration * DraggableTrajectory.currentPath.length()
+            val current = DraggableTrajectory.currentPath[s]
+            Robot.pose = current
+            rerenderNow()
+        }
+//        children += WaypointPopup()
         Dragger(this).apply {
-            mousePressed = { _: Point, buttons: Set<SystemPointerEvent.Button> ->
-                if (buttons.contains(SystemPointerEvent.Button.Button2)) {
-                    consumeEvent()
-                }
+            this.allowOSConsume = false
+        }
+
+        pointerChanged += pressed {
+            if (!it.target.focusable || it.target is EntityGroup) {
+                GUIApp.focusManager.requestFocus(this)
+            }
+        }
+
+        this.layout = Layout.simpleLayout { container ->
+            container.children.filterIsInstance<EntityGroup>().forEach {
+                it.size = container.size
+            }
+        }
+
+        boundsChanged += { _, _, bounds ->
+            children.filterIsInstance<FieldEntity>().forEach {
+                it.recomputeTransform()
             }
         }
     }
 
     override fun render(canvas: Canvas) {
         val size = min(width, height)
-        val fieldRect = Rectangle((width - size) * 0.5, 0.0, size, size)
+        val fieldRect = Rectangle((width - size) * 0.5, (height - size) * 0.5, size, size)
         canvas.clear()
         canvas.renderBackground(fieldRect)
         backgrounds["Generic"]?.let {
@@ -73,78 +98,57 @@ object Field : HTMLView() {
         } ?: run {
             canvas.rect(fieldRect, Stroke(thickness = 2.0))
         }
-        children.filterIsInstance<FieldEntity>().forEach {
-            it.transform =
-                AffineTransform().translate(bounds.center - it.center)
-                    .rotate(it.center, Measure(-90.0, Angle.degrees))
-                    .scale(it.center, size / fieldSize, size / fieldSize)
-                    .rotate(it.center + it.position, it.heading)
-        }
     }
 }
 
 abstract class FieldEntity : View() {
-    var heading: Measure<Angle> = Measure(0.0, Angle.radians)
-    open val center: Point get() = origin
+    protected var baseTransform: AffineTransform2D = AffineTransform.Identity
+        private set
+    var center: Point by observable(Point.Origin) { _, _ ->
+        recomputeTransform()
+    }
+        protected set
+
+    fun recomputeTransform() {
+        val parent = parent ?: return
+        val size = min(parent.width, parent.height)
+        transform = AffineTransform().translate(parent.bounds.atOrigin.center - center)
+            .rotate(center, Measure(-PI * 0.5, Angle.radians))
+            .scale(center, size / Field.fieldSize, size / Field.fieldSize)
+    }
 }
 
-abstract class EntityGroup {
-    abstract val entities: List<FieldEntity>
+abstract class PoseFieldEntity : FieldEntity() {
+    var heading: Measure<Angle> by renderProperty(Measure(0.0, Angle.radians))
+    var pose: Pose2d = Pose2d(position.toVector2d(), heading.`in`(Angle.radians).rad)
+        set(value) {
+            position = value.toPoint()
+            heading = Measure(value.heading.radians, Angle.radians)
+            field = value
+        }
+        get() = Pose2d(position.toVector2d(), heading.`in`(Angle.radians).rad)
+
+
+    final override fun render(canvas: Canvas) {
+        canvas.clear()
+        canvas.rotate(center, heading) {
+            rotateRender(this)
+        }
+    }
+
+    abstract fun rotateRender(canvas: Canvas)
 }
 
-class ObservableMap<K, V>(
-    private val base: MutableMap<K, V>, private val onUpdate: () -> Unit
-) : MutableMap<K, V> by base {
-    override val entries: MutableSet<MutableMap.MutableEntry<K, V>>
-        get() = ObservableSet(base.entries).apply {
-            changed += { _, _, _ ->
-                onUpdate()
-            }
-        }
-
-    override val keys: MutableSet<K>
-        get() = ObservableSet(base.keys).apply {
-            changed += { _, _, _ ->
-                onUpdate()
-            }
-        }
-
-    override val values: MutableCollection<V>
-        get() = ObservableList(base.values.toList()).apply {
-            changed += { _, _ ->
-                onUpdate()
-            }
-        }
-
-    override fun clear() {
-        if (size > 0) {
-            base.clear()
-            onUpdate()
+abstract class EntityGroup : View() {
+    fun recomputeTransforms() {
+        children.filterIsInstance<FieldEntity>().forEach {
+            it.recomputeTransform()
         }
     }
 
-    override fun put(key: K, value: V): V? {
-        val prev = base.put(key, value)
-        if (prev !== value) onUpdate()
-        return prev
-    }
-
-    override fun putAll(from: Map<out K, V>) {
-        for ((key, value) in from) put(key, value)
-    }
-
-    override fun remove(key: K): V? {
-        if (containsKey(key)) {
-            val prev = base.remove(key)
-            onUpdate()
-            return prev
+    init {
+        boundsChanged += { _, _, _ ->
+            recomputeTransforms()
         }
-        return null
     }
-
-    override fun equals(other: Any?): Boolean = base == other
-
-    override fun hashCode(): Int = base.hashCode()
-
-    override fun toString(): String = base.toString()
 }

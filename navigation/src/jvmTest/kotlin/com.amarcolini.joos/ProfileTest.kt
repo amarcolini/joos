@@ -13,7 +13,6 @@ import com.amarcolini.joos.util.abs
 import com.amarcolini.joos.util.deg
 import org.junit.jupiter.api.Test
 import kotlin.math.PI
-import kotlin.math.abs
 
 class ProfileTest {
     @Test

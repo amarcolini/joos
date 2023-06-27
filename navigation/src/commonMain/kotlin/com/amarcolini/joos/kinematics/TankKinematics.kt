@@ -2,6 +2,8 @@ package com.amarcolini.joos.kinematics
 
 import com.amarcolini.joos.geometry.Pose2d
 import com.amarcolini.joos.util.epsilonEquals
+import kotlin.js.ExperimentalJsExport
+import kotlin.js.JsExport
 import kotlin.jvm.JvmStatic
 
 /**
@@ -11,6 +13,7 @@ import kotlin.jvm.JvmStatic
  *
  * [This page](http://rossum.sourceforge.net/papers/DiffSteer/) gives a motivated derivation.
  */
+@JsExport
 object TankKinematics {
 
     /**
