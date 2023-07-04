@@ -1,42 +1,62 @@
 package field
 
+import GUIApp
+import GUIApp.Companion.modalManager
 import com.amarcolini.joos.geometry.Pose2d
 import com.amarcolini.joos.geometry.Vector2d
 import com.amarcolini.joos.path.Path
-import com.amarcolini.joos.path.PathBuilder
-import com.amarcolini.joos.path.heading.*
+import com.amarcolini.joos.path.heading.SplineHeading
+import com.amarcolini.joos.path.heading.ValueHeading
 import com.amarcolini.joos.serialization.*
 import com.amarcolini.joos.util.deg
+import io.nacular.doodle.controls.modal.ModalManager
 import io.nacular.doodle.drawing.Color
-import io.nacular.doodle.drawing.LinearGradientPaint
 import io.nacular.doodle.drawing.Stroke
-import io.nacular.doodle.geometry.Point
-import io.nacular.doodle.geometry.path
+import io.nacular.doodle.event.PointerListener
+import io.nacular.doodle.layout.constraints.Strength.Companion.Strong
+import io.nacular.doodle.system.SystemPointerEvent
+import io.nacular.doodle.utils.addOrAppend
+import kotlinx.coroutines.launch
+import settings.SplineKnotMenu
+import util.TrajectoryMetadata
+import util.TrajectoryMetadata.Companion.withData
+import kotlin.properties.Delegates
+import kotlin.reflect.KProperty
 
 object DraggableTrajectory : EntityGroup() {
     private val knots: MutableList<SplineKnot> = mutableListOf()
 
     enum class Mode {
-        PATH,
-        HEADIMG
+        View,
+        EditHeading,
+        EditPath
     }
 
-    private var mode: Mode = Mode.HEADIMG
+    var mode: Mode by Delegates.observable(Mode.EditPath) { _, old, new ->
+        if (old == new) return@observable
+        when (new) {
+            Mode.View -> disableEditing()
+            Mode.EditHeading -> initializeHeadingEditing()
+            Mode.EditPath -> initializePathEditing()
+        }
+    }
 
-    private var trajectory: SerializableTrajectory = SerializableTrajectory(
-        TrajectoryStart(Pose2d()),
-        mutableListOf(
-            LinePiece(Vector2d(30.0, 30.0), SplineHeading(45.deg)),
-            SplinePiece(Vector2d(40.0, 0.0), 30.deg)
+    private var trajectory: TrajectoryMetadata = TrajectoryMetadata.fromTrajectory(
+        SerializableTrajectory(
+            TrajectoryStart(Pose2d()),
+            mutableListOf(
+                LinePiece(Vector2d(30.0, 30.0), SplineHeading(45.deg)),
+                SplinePiece(Vector2d(40.0, 0.0), 30.deg)
+            )
         )
     )
 
-    private val pathEntity: PathEntity = PathEntity(trajectory.createPath().path, Stroke(Color.Green))
+    private val pathEntity: PathEntity = PathEntity(trajectory.getTrajectory().createPath().path, Stroke(Color.Green))
 
     val currentPath: Path get() = pathEntity.path
 
     private fun update() {
-        pathEntity.path = trajectory.createPath().path
+        pathEntity.path = trajectory.getTrajectory().createPath().path
     }
 
     fun disableEditing() {
@@ -44,33 +64,86 @@ object DraggableTrajectory : EntityGroup() {
         knots.clear()
     }
 
-    fun initializePathEditing() {
+    private fun addAfter(trajectoryPiece: TrajectoryMetadata.PieceWithData, new: TrajectoryMetadata.PieceWithData) {
+        val index = trajectory.pieceData.indexOf(trajectoryPiece)
+        if (index < 0) return
+        trajectory.pieceData.addOrAppend(
+            index,
+            new
+        )
+        update()
+
+    }
+
+    fun addSplineAfter(trajectoryPiece: TrajectoryMetadata.PieceWithData) {
+
+    }
+
+    fun addLineAfter(trajectoryPiece: TrajectoryMetadata.PieceWithData) {
+        val index = trajectory.pieceData.indexOf(trajectoryPiece)
+        if (index < 0) return
+        trajectory.pieceData.addOrAppend(
+            index,
+            LinePiece(trajectoryPiece.knotPosition()).withData()
+        )
+    }
+
+    private fun initializePathEditing() {
         disableEditing()
         knots += PathKnot().apply {
-            position = trajectory.start.pose.vec().toPoint()
-            tangent = trajectory.start.tangent
+            position = trajectory.startData.start.pose.vec().toPoint()
+            tangent = trajectory.startData.start.tangent
             startVisible = false
 //            endVisible = trajectory.pieces[0] is SplinePiece
             endVisible = true
             onChange += {
-                trajectory.start.pose = Pose2d(it.position.toVector2d())
-                trajectory.start.tangent = it.tangent
+                trajectory.startData.start.pose = Pose2d(it.position.toVector2d())
+                trajectory.startData.start.tangent = it.tangent
                 update()
             }
         }
-        trajectory.pieces.forEachIndexed { i, piece ->
-            when (piece) {
+        trajectory.pieceData.forEachIndexed { i, pieceData ->
+            when (val piece = pieceData.trajectoryPiece) {
                 is SplinePiece -> knots += PathKnot().apply {
                     position = piece.end.toPoint()
                     tangent = piece.tangent
-                    endTangentMag = piece.endTangentMag
+                    startTangentMag = piece.endTangentMag
                     startVisible = true
-                    val nextSpline = trajectory.pieces.getOrNull(i + 1) as? SplinePiece
+                    val nextSpline = trajectory.pieceData.getOrNull(i + 1)?.trajectoryPiece as? SplinePiece
                     endVisible = nextSpline != null
+                    nextSpline?.startTangentMag?.let { endTangentMag = it }
+                    pointerChanged += PointerListener.pressed { event ->
+                        if (SystemPointerEvent.Button.Button2 in event.buttons && SystemPointerEvent.Button.Button1 !in event.buttons) {
+                            GUIApp.appScope.launch {
+                                modalManager {
+                                    val menu = SplineKnotMenu.create(pieceData, this@apply) { completed(Unit) }
+                                    pointerOutsideModalChanged += PointerListener.pressed {
+                                        completed(Unit)
+                                    }
+                                    ModalManager.RelativeModal(menu, this@apply) { modal, knot ->
+                                        (modal.top eq knot.bottom + 10)..Strong
+                                        (modal.top greaterEq 5)..Strong
+                                        (modal.left greaterEq 5)..Strong
+                                        (modal.centerX eq knot.center.x)..Strong
+
+                                        modal.right lessEq parent.right - 5
+
+                                        when {
+                                            parent.height.readOnly - knot.bottom > modal.height.readOnly + 15 -> modal.bottom lessEq parent.bottom - 5
+                                            else -> modal.bottom lessEq knot.y - 10
+                                        }
+
+                                        modal.width.preserve
+                                        modal.height.preserve
+                                    }
+                                }
+                            }
+                        }
+                    }
                     onChange += {
                         piece.end = it.position.toVector2d()
                         piece.tangent = it.tangent
-                        piece.endTangentMag = it.endTangentMag
+                        piece.endTangentMag = it.startTangentMag
                         nextSpline?.startTangentMag = it.endTangentMag
                         update()
                     }
@@ -79,7 +152,7 @@ object DraggableTrajectory : EntityGroup() {
                     position = piece.end.toPoint()
                     tangentMode = SplineKnot.TangentMode.FIXED
                     startVisible = false
-                    val nextSpline = trajectory.pieces.getOrNull(i + 1) as? SplinePiece
+                    val nextSpline = trajectory.pieceData.getOrNull(i + 1)?.trajectoryPiece as? SplinePiece
                     endVisible = lengthMode != SplineKnot.LengthMode.FIXED_LENGTH && nextSpline != null
                     onChange += {
                         piece.end = it.position.toVector2d()
@@ -94,18 +167,19 @@ object DraggableTrajectory : EntityGroup() {
         recomputeTransforms()
     }
 
-    fun initializeHeadingEditing() {
+    private fun initializeHeadingEditing() {
         disableEditing()
         knots += HeadingKnot().apply {
-            position = trajectory.start.pose.vec().toPoint()
+            position = trajectory.startData.start.pose.vec().toPoint()
             startVisible = false
             endVisible = true
             onChange += {
-                trajectory.start.pose = Pose2d(it.position.toVector2d(), it.tangent)
+                trajectory.startData.start.pose = Pose2d(it.position.toVector2d(), it.tangent)
                 update()
             }
         }
-        trajectory.pieces.forEachIndexed { i, piece ->
+        trajectory.pieceData.forEachIndexed { _, pieceData ->
+            val piece = pieceData.trajectoryPiece
             if (piece !is MovableTrajectoryPiece) return@forEachIndexed
             val heading = piece.heading as? ValueHeading
 

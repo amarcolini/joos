@@ -6,19 +6,43 @@ import io.nacular.doodle.drawing.Canvas
 import io.nacular.doodle.focus.FocusTraversalPolicy
 import io.nacular.doodle.geometry.Point
 import io.nacular.doodle.layout.Insets
+import io.nacular.doodle.layout.constraints.Bounds
+import io.nacular.doodle.layout.constraints.ConstraintDslContext
+import io.nacular.doodle.layout.constraints.ConstraintLayout
+import io.nacular.doodle.layout.constraints.constrain
 import io.nacular.doodle.utils.ObservableList
 
 open class BetterViewBuilder protected constructor() : View() {
     companion object {
         fun viewBuilder(lambda: BetterViewBuilder.() -> Unit) = BetterViewBuilder().apply { lambda() }
+
+        fun space(view: View, vararg views: View, constraints: ConstraintDslContext.(List<Bounds>) -> Unit) =
+            viewBuilder {
+                +view
+                +views.toList()
+                layout = constrain {
+                    constraints(it)
+                }
+            }
     }
 
-    operator fun View.unaryPlus() {
+    operator fun View.unaryPlus(): View {
         children += this
+        return this
     }
 
     operator fun Collection<View>.unaryPlus() {
         children += this
+    }
+
+    fun constrain(constraints: ConstraintDslContext.(List<Bounds>) -> Unit) = when (children.size) {
+        0 -> null
+        1 -> constrain(children[0]) {
+            constraints(listOf(it))
+        }
+        else -> constrain(children[0], children[1], *children.drop(2).toTypedArray()) {
+            constraints(it)
+        }
     }
 
     public override var layout: Layout?
@@ -67,7 +91,7 @@ open class BetterViewBuilder protected constructor() : View() {
 
     override fun shouldYieldFocus(): Boolean = shouldYieldFocus.invoke()
 
-    var render: (Canvas) -> Unit = {}
+    var render: Canvas.() -> Unit = {}
 
     override fun render(canvas: Canvas) {
         render.invoke(canvas)

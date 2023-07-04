@@ -81,7 +81,7 @@ object Field : View() {
             }
         }
 
-        boundsChanged += { _, _, bounds ->
+        boundsChanged += { _, _, _ ->
             children.filterIsInstance<FieldEntity>().forEach {
                 it.recomputeTransform()
             }

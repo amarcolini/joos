@@ -28,13 +28,6 @@ object ScrubBar : View() {
         Field.boundsChanged += { _, _, new ->
             renderWidth = min(new.width, new.height)
         }
-//        Field.boundsChanged += { _, _, bounds ->
-//            val newWidth = min(bounds.width, bounds.height)
-//            println("field bounds changed ($newWidth)")
-//            this.width = newWidth
-//            println("new Width: ${this.width}")
-//            rerender()
-//        }
         window.asDynamic()["hmm"] = {
             val percent = TimeManager.time / TimeManager.duration
             "time: ${TimeManager.time}, percent: $percent, pose: ${DraggableTrajectory.currentPath[percent * DraggableTrajectory.currentPath.length()]}"

@@ -37,7 +37,7 @@ class PathEntity(path: Path, stroke: Stroke) : FieldEntity() {
                     val numSamples = 10
                     val samples =
                         DoubleProgression.fromClosedInterval(0.0, 1.0, numSamples)
-                    var lastPoint = start
+                    var lastPoint = segment[0.0, 0.0].vec()
                     var lastDeriv = segment.internalDeriv(0.0, 0.0).vec()
                     samples.drop(1).forEach {
                         val currentPoint = segment[0.0, it].vec()

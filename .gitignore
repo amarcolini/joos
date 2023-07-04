@@ -6,3 +6,4 @@ build/
 .idea
 !buildSrc/
 local.properties
+/gui/old/

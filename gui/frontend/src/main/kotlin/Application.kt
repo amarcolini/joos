@@ -6,33 +6,34 @@ import io.nacular.doodle.application.Application
 import io.nacular.doodle.application.Modules.Companion.AccessibilityModule
 import io.nacular.doodle.application.Modules.Companion.FocusModule
 import io.nacular.doodle.application.Modules.Companion.ImageModule
+import io.nacular.doodle.application.Modules.Companion.ModalModule
 import io.nacular.doodle.application.Modules.Companion.PointerModule
 import io.nacular.doodle.application.Modules.Companion.PopupModule
 import io.nacular.doodle.application.application
 import io.nacular.doodle.controls.PopupManager
-import io.nacular.doodle.controls.panels.GridPanel
-import io.nacular.doodle.controls.panels.SizingPolicy
+import io.nacular.doodle.controls.modal.ModalManager
 import io.nacular.doodle.core.Display
 import io.nacular.doodle.core.Layout.Companion.simpleLayout
 import io.nacular.doodle.core.View
-import io.nacular.doodle.core.container
 import io.nacular.doodle.drawing.TextMetrics
 import io.nacular.doodle.focus.FocusManager
+import io.nacular.doodle.geometry.PathMetrics
 import io.nacular.doodle.geometry.Point
-import io.nacular.doodle.geometry.Size
+import io.nacular.doodle.geometry.impl.PathMetricsImpl
 import io.nacular.doodle.image.ImageLoader
-import io.nacular.doodle.layout.constraints.constrain
 import io.nacular.doodle.scheduler.Scheduler
 import io.nacular.doodle.theme.Theme
 import io.nacular.doodle.theme.ThemeManager
 import io.nacular.doodle.theme.basic.BasicTheme
+import io.nacular.doodle.theme.plus
+import io.nacular.doodle.utils.fastSetOf
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.MainScope
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.launch
-import org.kodein.di.DI
-import org.kodein.di.bindProvider
-import org.kodein.di.instance
+import org.kodein.di.*
 import settings.Settings
+import style.DefaultTheme
 import util.BetterViewBuilder.Companion.viewBuilder
 import util.FlexColumn
 import util.FlexRow
@@ -45,9 +46,11 @@ class GUIApp(
     scheduler: Scheduler,
     animator: Animator,
     textMetrics: TextMetrics,
+    pathMetrics: PathMetrics,
     popupManager: PopupManager,
+    modalManager: ModalManager,
     themeManager: ThemeManager,
-    theme: Theme,
+    theme: BasicTheme,
 ) : Application {
     companion object {
         lateinit var focusManager: FocusManager
@@ -56,23 +59,38 @@ class GUIApp(
             private set
         lateinit var popupManager: PopupManager
             private set
+        lateinit var modalManager: ModalManager
+            private set
         lateinit var animate: Animator
             private set
         lateinit var textMetrics: TextMetrics
             private set
+        lateinit var pathMetrics: PathMetrics
+            private set
+        lateinit var appScope: CoroutineScope
+            private set
+        private lateinit var themeManager: ThemeManager
+        private lateinit var display: Display
+
+        fun fakeTheme(view: View) {
+            themeManager.selected?.install(display, sequenceOf(view))
+        }
     }
 
-    private val coroutineScope = MainScope()
-
     init {
+        Companion.appScope = MainScope()
         Companion.focusManager = focusManager
         Companion.scheduler = scheduler
         Companion.popupManager = popupManager
+        Companion.modalManager = modalManager
         Companion.animate = animator
         Companion.textMetrics = textMetrics
-        themeManager.selected = theme
+        Companion.pathMetrics = pathMetrics
+        Companion.themeManager = themeManager
+        Companion.display = display
+        themeManager.selected = theme + DefaultTheme(theme.config)
 
-        coroutineScope.launch {
+        appScope.launch {
             Field.backgrounds["Generic"] = imageLoader.load("/background/Generic.png")
         }
         display += viewBuilder {
@@ -94,7 +112,7 @@ class GUIApp(
     }
 
     override fun shutdown() {
-        coroutineScope.cancel()
+        appScope.cancel()
     }
 }
 
@@ -111,13 +129,32 @@ fun main() {
             AccessibilityModule,
             PopupModule,
             AnimationModule,
+            ModalModule,
             BasicTheme.BasicTheme,
             BasicTheme.basicButtonBehavior(),
             BasicTheme.basicDropdownBehavior(),
             BasicTheme.basicLabelBehavior(),
+            BasicTheme.basicMenuBehavior(),
+            DI.Module("pathmetrics") {
+                bind<PathMetrics>() with singleton {
+                    PathMetricsImpl(instance())
+                }
+            }
 //            KeyboardModule,
         )
     ) {
-        GUIApp(instance(), instance(), instance(), instance(), instance(), instance(), instance(), instance(), instance())
+        GUIApp(
+            instance(),
+            instance(),
+            instance(),
+            instance(),
+            instance(),
+            instance(),
+            instance(),
+            instance(),
+            instance(),
+            instance(),
+            instance()
+        )
     }
 }

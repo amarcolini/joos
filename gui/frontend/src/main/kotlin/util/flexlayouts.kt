@@ -88,7 +88,6 @@ class FlexColumn : Layout {
                 }
             }
         }
-//        visibleChildren.forEach(PrePositionable::updateBounds)
     }
 }
 
