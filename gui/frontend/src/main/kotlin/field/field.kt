@@ -1,8 +1,6 @@
 package field
 
 import GUIApp
-import animation.TimeManager
-import com.amarcolini.joos.geometry.AngleUnit
 import com.amarcolini.joos.geometry.Pose2d
 import com.amarcolini.joos.geometry.Vector2d
 import com.amarcolini.joos.util.rad
@@ -13,7 +11,6 @@ import io.nacular.doodle.drawing.*
 import io.nacular.doodle.event.PointerListener.Companion.pressed
 import io.nacular.doodle.geometry.Point
 import io.nacular.doodle.geometry.Rectangle
-import io.nacular.doodle.geometry.Size
 import io.nacular.doodle.image.Image
 import io.nacular.doodle.utils.observable
 import io.nacular.measured.units.Angle
@@ -56,14 +53,8 @@ object Field : View() {
     init {
         idealSize = GROW
         children += DraggableTrajectory
-        children += Robot
-        Robot.visible = false
-        TimeManager.listeners += { _, new ->
-            val s = new / TimeManager.duration * DraggableTrajectory.currentPath.length()
-            val current = DraggableTrajectory.currentPath[s]
-            Robot.pose = current
-            rerenderNow()
-        }
+        children += Robot.also { it.visible = false }
+
 //        children += WaypointPopup()
         Dragger(this).apply {
             this.allowOSConsume = false

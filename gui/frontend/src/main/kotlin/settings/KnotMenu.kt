@@ -4,8 +4,8 @@ import GUIApp.Companion.focusManager
 import GUIApp.Companion.popupManager
 import GUIApp.Companion.scheduler
 import GUIApp.Companion.textMetrics
-import com.amarcolini.joos.serialization.TrajectoryPiece
 import field.DraggableTrajectory
+import field.PathKnot
 import field.SplineKnot
 import io.nacular.doodle.controls.dropdown.Dropdown
 import io.nacular.doodle.controls.popupmenu.Menu
@@ -25,7 +25,7 @@ import util.BetterViewBuilder.Companion.viewBuilder
 import util.TrajectoryMetadata
 import kotlin.math.max
 
-object SplineKnotMenu {
+object KnotMenu {
     private infix fun Label.with(other: View) = space(this, other) { (label, control) ->
         parent.height.writable eq max(control.height.readOnly, label.height.readOnly)
 
@@ -44,9 +44,10 @@ object SplineKnotMenu {
         doLayout()
     }
 
-    fun create(
+    fun createPathKnotMenu(
         segment: TrajectoryMetadata.PieceWithData,
-        knot: SplineKnot,
+        knot: PathKnot,
+        lengthMenu: Boolean = false,
         close: (Menu) -> Unit = {},
     ): View {
         val menus = MenuFactoryImpl(popupManager, scheduler, focusManager)
@@ -60,29 +61,34 @@ object SplineKnotMenu {
                         DraggableTrajectory.addLineAfter(segment)
                     }
                 }
+                action("Delete") {
+                    DraggableTrajectory.delete(segment)
+                }
             }
 
-            val lengthModeOptions = listOf("Match", "Fixed", "Free")
-            +(Label("Length mode:") with Dropdown(lengthModeOptions).apply {
-                size = Size(
-                    lengthModeOptions.maxOf { textMetrics.width(it) } + 40.0,
-                    lengthModeOptions.maxOf { textMetrics.height(it) } + 10.0,
-                )
-                selection = when (knot.lengthMode) {
-                    SplineKnot.LengthMode.MATCH_LENGTH -> 0
-                    SplineKnot.LengthMode.FIXED_LENGTH -> 1
-                    SplineKnot.LengthMode.FREE_LENGTH -> 2
-                }
-                this.changed += { dropdown ->
-                    val lengthMode = when (dropdown.value.getOrNull()) {
-                        "Match" -> SplineKnot.LengthMode.MATCH_LENGTH
-                        "Fixed" -> SplineKnot.LengthMode.FIXED_LENGTH
-                        "Free" -> SplineKnot.LengthMode.FREE_LENGTH
-                        else -> null
+            if (lengthMenu) {
+                val lengthModeOptions = listOf("Match", "Fixed", "Free")
+                +(Label("Length mode:") with Dropdown(lengthModeOptions).apply {
+                    size = Size(
+                        lengthModeOptions.maxOf { textMetrics.width(it) } + 40.0,
+                        lengthModeOptions.maxOf { textMetrics.height(it) } + 10.0,
+                    )
+                    selection = when (knot.lengthMode) {
+                        SplineKnot.LengthMode.MATCH_LENGTH -> 0
+                        SplineKnot.LengthMode.FIXED_LENGTH -> 1
+                        SplineKnot.LengthMode.FREE_LENGTH -> 2
                     }
-                    lengthMode?.let { knot.lengthMode = it }
-                }
-            })
+                    this.changed += { dropdown ->
+                        val lengthMode = when (dropdown.value.getOrNull()) {
+                            "Match" -> SplineKnot.LengthMode.MATCH_LENGTH
+                            "Fixed" -> SplineKnot.LengthMode.FIXED_LENGTH
+                            "Free" -> SplineKnot.LengthMode.FREE_LENGTH
+                            else -> null
+                        }
+                        lengthMode?.let { knot.lengthMode = it }
+                    }
+                })
+            }
 
             minimumSize = Size(200.0, 100.0)
             size = minimumSize

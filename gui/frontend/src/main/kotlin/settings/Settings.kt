@@ -4,6 +4,7 @@ import animation.ScrubBar
 import field.DraggableTrajectory
 import field.Robot
 import animation.TimeManager
+import com.amarcolini.joos.trajectory.Trajectory
 import field.Field
 import io.nacular.doodle.controls.StyledTextVisualizer
 import io.nacular.doodle.controls.buttons.PushButton
@@ -18,6 +19,7 @@ import io.nacular.doodle.geometry.Size
 import io.nacular.doodle.layout.Insets
 import io.nacular.doodle.layout.constraints.constrain
 import io.nacular.doodle.text.StyledText
+import kotlinx.browser.window
 
 object Settings : View() {
     private val control = Dropdown(
@@ -28,6 +30,14 @@ object Settings : View() {
         ), StyledTextVisualizer()
     )
         .apply {
+            val trajectoryListener: (Double, Double) -> Unit = { _, new ->
+                val current = DraggableTrajectory.currentTrajectory
+                if (current != null) {
+                    Robot.pose = current[new]
+                    Field.rerenderNow()
+                }
+            }
+
             size = Size(160, 35)
             changed += {
                 fun setShowTrajectory(value: Boolean) {
@@ -36,23 +46,31 @@ object Settings : View() {
                     Robot.visible = value
                     Robot.pose = DraggableTrajectory.currentPath.start()
                     Robot.rerenderNow()
-                    TimeManager.setTime(0.0, false)
-                    Field.bounds = Rectangle(1.0, 1.0) //Hacky trick to get display to relayout
+                    if (!value) {
+                        TimeManager.listeners -= trajectoryListener
+                        TimeManager.setTime(0.0, false)
+                    }
                 }
                 when (it.selection) {
                     0 -> {
                         setShowTrajectory(false)
-                        DraggableTrajectory.initializePathEditing()
+                        DraggableTrajectory.mode = DraggableTrajectory.Mode.EditPath
                     }
                     1 -> {
                         setShowTrajectory(false)
-                        DraggableTrajectory.initializeHeadingEditing()
+                        DraggableTrajectory.mode = DraggableTrajectory.Mode.EditHeading
                     }
                     2 -> {
                         DraggableTrajectory.disableEditing()
-                        val start = DraggableTrajectory.currentPath.internalGet(0, 0.0)
-                        Robot.pose = start
-                        setShowTrajectory(true)
+                        val trajectory: Trajectory? = DraggableTrajectory.currentTrajectory
+                        if (trajectory == null) {
+                            window.alert("Failed to create Trajectory!")
+                        } else {
+                            TimeManager.listeners += trajectoryListener
+                            TimeManager.duration = trajectory.duration()
+                            Robot.pose = trajectory.start()
+                            setShowTrajectory(true)
+                        }
                     }
                 }
             }

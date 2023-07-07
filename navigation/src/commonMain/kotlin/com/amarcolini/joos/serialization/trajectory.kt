@@ -3,8 +3,7 @@ package com.amarcolini.joos.serialization
 import com.amarcolini.joos.geometry.Angle
 import com.amarcolini.joos.geometry.Pose2d
 import com.amarcolini.joos.geometry.Vector2d
-import com.amarcolini.joos.path.Path
-import com.amarcolini.joos.path.PathBuilder
+import com.amarcolini.joos.path.*
 import com.amarcolini.joos.path.heading.HeadingInterpolation
 import com.amarcolini.joos.path.heading.TangentHeading
 import com.amarcolini.joos.trajectory.Trajectory
@@ -97,20 +96,40 @@ data class SerializableTrajectory(
 
     fun createPath(): PathResult {
         val errors = ArrayList<Pair<Exception, TrajectoryPiece?>>()
-        val builder = PathBuilder(start.pose, start.tangent)
-        pieces.forEach {
-            try {
-                when (it) {
-                    is LinePiece -> builder.addLine(it.end, it.heading)
-                    is SplinePiece -> builder.addSpline(
-                        it.end, it.tangent, it.startTangentMag, it.endTangentMag, it.heading
-                    )
-                    else -> {}
-                }
-            } catch (e: Exception) {
-                errors += e to it
+        var builder = PathBuilder(start.pose, start.tangent)
+        var currentPath = Path(emptyList())
+
+        fun addToPath(path: Path) {
+            currentPath = Path(currentPath.segments + path.segments)
+        }
+
+        fun PathBuilder.tryAddPiece(piece: TrajectoryPiece) {
+            when (piece) {
+                is LinePiece -> this.addLine(piece.end, piece.heading)
+                is SplinePiece -> this.addSpline(
+                    piece.end, piece.tangent, piece.startTangentMag, piece.endTangentMag, piece.heading
+                )
+                else -> {}
             }
         }
-        return PathResult(builder.preBuild(), errors)
+
+        pieces.forEach {
+            try {
+                builder.tryAddPiece(it)
+            } catch (e: PathBuilderException) {
+                if (e is PathContinuityViolationException) {
+                    addToPath(builder.preBuild())
+                    val newStart = currentPath.segments.last()[0.0, 1.0]
+                    builder = PathBuilder(newStart)
+                    try {
+                        builder.tryAddPiece(it)
+                    } catch (e: PathBuilderException) {
+                        errors += e to it
+                    }
+                } else errors += e to it
+            }
+        }
+        addToPath(builder.preBuild())
+        return PathResult(currentPath, errors)
     }
 }
