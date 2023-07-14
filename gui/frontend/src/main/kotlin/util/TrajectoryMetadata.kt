@@ -3,8 +3,6 @@ package util
 import com.amarcolini.joos.geometry.Vector2d
 import com.amarcolini.joos.serialization.*
 import field.SplineKnot
-import field.toPoint
-import io.nacular.doodle.geometry.Point
 
 data class TrajectoryMetadata(
     val startData: StartPieceWithData,
@@ -55,7 +53,7 @@ data class TrajectoryMetadata(
     )
 
     data class StartPieceWithData(
-        val start: TrajectoryStart,
+        val start: StartPiece,
         var lengthMode: SplineKnot.LengthMode,
     )
 

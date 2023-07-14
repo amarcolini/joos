@@ -1,7 +1,10 @@
 package field
 
 import GUIApp
+import GUIApp.Companion.focusManager
+import GUIApp.Companion.menus
 import GUIApp.Companion.modalManager
+import GUIApp.Companion.popupManager
 import com.amarcolini.joos.geometry.Pose2d
 import com.amarcolini.joos.geometry.Vector2d
 import com.amarcolini.joos.path.Path
@@ -12,17 +15,27 @@ import com.amarcolini.joos.trajectory.Trajectory
 import com.amarcolini.joos.trajectory.constraints.GenericConstraints
 import com.amarcolini.joos.util.deg
 import io.nacular.doodle.controls.modal.ModalManager
+import io.nacular.doodle.controls.popupmenu.MenuCreationContext
+import io.nacular.doodle.controls.text.TextField
 import io.nacular.doodle.drawing.Color
 import io.nacular.doodle.drawing.Stroke
 import io.nacular.doodle.event.PointerListener
+import io.nacular.doodle.geometry.Size
+import io.nacular.doodle.layout.Insets
 import io.nacular.doodle.layout.constraints.Strength.Companion.Strong
 import io.nacular.doodle.system.SystemPointerEvent
+import io.nacular.doodle.utils.Dimension
 import io.nacular.doodle.utils.addOrAppend
+import io.nacular.doodle.utils.roundToNearest
 import kotlinx.coroutines.launch
 import settings.KnotMenu
 import util.TrajectoryMetadata
 import util.TrajectoryMetadata.Companion.with
 import util.TrajectoryMetadata.Companion.withData
+import kotlin.math.exp
+import kotlin.math.max
+import kotlin.math.pow
+import kotlin.math.roundToInt
 import kotlin.properties.Delegates
 
 object DraggableTrajectory : EntityGroup() {
@@ -44,7 +57,7 @@ object DraggableTrajectory : EntityGroup() {
 
     private var trajectory: TrajectoryMetadata = TrajectoryMetadata.fromTrajectory(
         SerializableTrajectory(
-            TrajectoryStart(Pose2d()),
+            StartPiece(Pose2d()),
             mutableListOf(
                 LinePiece(Vector2d(30.0, 30.0), SplineHeading(45.deg)),
                 SplinePiece(Vector2d(40.0, 0.0), 30.deg)
@@ -81,8 +94,9 @@ object DraggableTrajectory : EntityGroup() {
         knots.clear()
     }
 
-    fun delete(trajectoryPiece: TrajectoryMetadata.PieceWithData) {
-        if (!trajectory.pieceData.remove(trajectoryPiece)) return
+    private fun delete(index: Int) {
+        if (index < 0 || index >= trajectory.pieceData.size) return
+        trajectory.pieceData.removeAt(index)
         update()
         when (mode) {
             Mode.EditHeading -> initializeHeadingEditing()
@@ -91,11 +105,13 @@ object DraggableTrajectory : EntityGroup() {
         }
     }
 
-    private fun addAfter(trajectoryPiece: TrajectoryMetadata.PieceWithData, new: TrajectoryMetadata.PieceWithData) {
-        val index = trajectory.pieceData.indexOf(trajectoryPiece)
-        if (index < 0) return
+    private fun insert(
+        new: TrajectoryMetadata.PieceWithData,
+        relativeTo: Int = trajectory.pieceData.lastIndex,
+        indexTransform: (Int) -> Int,
+    ) {
         trajectory.pieceData.addOrAppend(
-            index + 1,
+            max(0, indexTransform(relativeTo)),
             new
         )
         update()
@@ -106,64 +122,168 @@ object DraggableTrajectory : EntityGroup() {
         }
     }
 
-    fun addSplineAfter(trajectoryPiece: TrajectoryMetadata.PieceWithData) {
-        addAfter(
-            trajectoryPiece,
-            SplinePiece(trajectoryPiece.knotPosition(), 0.deg) with SplineKnot.LengthMode.FIXED_LENGTH
-        )
-    }
-
-    fun addLineAfter(trajectoryPiece: TrajectoryMetadata.PieceWithData) {
-        addAfter(trajectoryPiece, LinePiece(trajectoryPiece.knotPosition(), SplineHeading(0.deg)).withData())
-    }
-
-    private fun initializePathEditing() {
-        disableEditing()
-        knots += PathKnot().apply {
-            position = trajectory.startData.start.pose.vec().toPoint()
-            tangent = trajectory.startData.start.tangent
-            startVisible = false
-//            endVisible = trajectory.pieces[0] is SplinePiece
-            endVisible = true
-            onChange += {
-                trajectory.startData.start.pose = Pose2d(it.position.toVector2d())
-                trajectory.startData.start.tangent = it.tangent
-                update()
-            }
+    private fun addAfter(index: Int, new: TrajectoryMetadata.PieceWithData) =
+        insert(relativeTo = index, new = new) {
+            it + 1
         }
-        val listener = { knot: PathKnot, pieceData: TrajectoryMetadata.PieceWithData ->
-            PointerListener.pressed { event ->
-                if (SystemPointerEvent.Button.Button2 in event.buttons && SystemPointerEvent.Button.Button1 !in event.buttons) {
-                    GUIApp.appScope.launch {
-                        modalManager {
-                            val menu = KnotMenu.createPathKnotMenu(pieceData, knot, knot.startVisible || knot.endVisible) { completed(Unit) }
-                            pointerOutsideModalChanged += PointerListener.pressed {
-                                completed(Unit)
+
+    private fun addBefore(index: Int, new: TrajectoryMetadata.PieceWithData) =
+        insert(relativeTo = index, new = new) {
+            it - 1
+        }
+
+    private fun makeSpline(position: Vector2d) =
+        SplinePiece(position, 0.deg) with SplineKnot.LengthMode.FIXED_LENGTH
+
+    private fun makeLine(position: Vector2d) =
+        LinePiece(position, SplineHeading(0.deg)).withData()
+
+    private fun makeMenu(
+        knot: PathKnot,
+        customMenu: MenuCreationContext.() -> Unit
+    ) {
+        val listener = PointerListener.pressed { event ->
+            if (SystemPointerEvent.Button.Button2 in event.buttons && SystemPointerEvent.Button.Button1 !in event.buttons) {
+                GUIApp.appScope.launch {
+                    modalManager {
+                        val innerMenu = menus({ completed(Unit) }, customMenu)
+                        val menu = KnotMenu.createPathKnotMenu(
+                            listOf(innerMenu),
+                            knot,
+                            knot.startVisible || knot.endVisible
+                        )
+                        pointerOutsideModalChanged += PointerListener.pressed {
+                            completed(Unit)
+                        }
+                        ModalManager.RelativeModal(menu, knot) { modal, knot ->
+                            (modal.top eq knot.bottom + 10)..Strong
+                            (modal.top greaterEq 5)..Strong
+                            (modal.left greaterEq 5)..Strong
+                            (modal.centerX eq knot.center.x)..Strong
+
+                            modal.right lessEq parent.right - 5
+
+                            when {
+                                parent.height.readOnly - knot.bottom > modal.height.readOnly + 15 -> modal.bottom lessEq parent.bottom - 5
+                                else -> modal.bottom lessEq knot.y - 10
                             }
-                            ModalManager.RelativeModal(menu, knot) { modal, knot ->
-                                (modal.top eq knot.bottom + 10)..Strong
-                                (modal.top greaterEq 5)..Strong
-                                (modal.left greaterEq 5)..Strong
-                                (modal.centerX eq knot.center.x)..Strong
 
-                                modal.right lessEq parent.right - 5
-
-                                when {
-                                    parent.height.readOnly - knot.bottom > modal.height.readOnly + 15 -> modal.bottom lessEq parent.bottom - 5
-                                    else -> modal.bottom lessEq knot.y - 10
-                                }
-
-                                modal.width.preserve
-                                modal.height.preserve
-                            }
+                            modal.width.preserve
+                            modal.height.preserve
                         }
                     }
                 }
             }
         }
+        knot.pointerChanged += listener
+    }
+
+    private fun makeMenu(
+        knot: PathKnot,
+        pieceIndex: Int,
+        insertAfter: Boolean = true,
+        insertBefore: Boolean = true,
+        deletable: Boolean = true,
+        nonPathPieces: List<TrajectoryMetadata.PieceWithData> = emptyList()
+    ) = makeMenu(knot) {
+        val knotPosition = { knot.position.toVector2d() }
+        if (insertAfter) menu("Insert After") {
+            action("Spline") { addAfter(pieceIndex, makeSpline(knotPosition())) }
+            action("Line") { addAfter(pieceIndex, makeLine(knotPosition())) }
+            action("Turn") {
+                addAfter(
+                    pieceIndex,
+                    TrajectoryMetadata.PieceWithData(TurnPiece(0.deg), knotPosition)
+                )
+            }
+            action("Wait") {
+                addAfter(
+                    pieceIndex,
+                    TrajectoryMetadata.PieceWithData(WaitPiece(0.0), knotPosition)
+                )
+            }
+        }
+        if (insertBefore) menu("Insert Before") {
+            action("Spline") { addBefore(pieceIndex, makeLine(knotPosition())) }
+            action("Line") { addBefore(pieceIndex, makeLine(knotPosition())) }
+        }
+        if (nonPathPieces.isNotEmpty()) menu("Edit Pieces") {
+            nonPathPieces.forEach {
+                when (val piece = it.trajectoryPiece) {
+                    is TurnPiece -> {
+                        action("Turn ${piece.angle.degrees.roundToInt()}°") {
+
+                        }
+                    }
+                    is WaitPiece -> {
+                        val decimals = 1
+                        val roundTo = 10.0.pow(-decimals)
+                        action("Wait ${piece.duration.format(decimals)}s") { _ ->
+                            val field = TextField(piece.duration.format(decimals)).apply {
+                                borderVisible = true
+                                minimumSize = Size(80.0, 40.0)
+                                size = minimumSize
+                                purpose = TextField.Purpose.Number
+                                insets = Insets(2.0)
+                                textChanged += { _, _, new ->
+                                    val number = new.toDoubleOrNull()?.roundToNearest(roundTo)?.also { duration ->
+                                        piece.duration = duration
+                                    }
+                                    text = number?.format(decimals) ?: ""
+                                }
+                            }
+                            popupManager.show(field, relativeTo = knot) { parent, bounds ->
+                                parent.center eq bounds.center
+                            }
+                            focusManager.requestFocus(field)
+                            field.focusChanged += { _, _, new ->
+                                if (!new) popupManager.hide(field)
+                            }
+                        }
+                    }
+                    else -> {}
+                }
+            }
+        }
+        if (!(!deletable || pieceIndex < 0 || pieceIndex >= trajectory.pieceData.size)) action("Delete") {
+            delete(pieceIndex)
+        }
+    }
+
+    private fun initializePathEditing() {
+        disableEditing()
+        knots += PathKnot().apply {
+            val startData = trajectory.startData
+            val startPos = startData.start.pose::vec
+            position = startPos().toPoint()
+            tangent = startData.start.tangent
+            startVisible = false
+            endVisible = true
+            onChange += {
+                startData.start.pose = Pose2d(it.position.toVector2d())
+                startData.start.tangent = it.tangent
+                update()
+            }
+            val nonPathPieces = trajectory.pieceData.takeWhile {
+                it.trajectoryPiece !is MovableTrajectoryPiece
+            }
+            isSpecial = nonPathPieces.isNotEmpty()
+            makeMenu(
+                this, -1,
+                insertAfter = true,
+                insertBefore = false,
+                deletable = false,
+                nonPathPieces = nonPathPieces
+            )
+        }
+
         trajectory.pieceData.forEachIndexed { i, pieceData ->
-            when (val piece = pieceData.trajectoryPiece) {
-                is SplinePiece -> knots += PathKnot().apply {
+            val piece = pieceData.trajectoryPiece
+            val nonPathPieces = trajectory.pieceData.drop(i + 1).takeWhile {
+                it.trajectoryPiece !is MovableTrajectoryPiece
+            }
+            val knot = when (piece) {
+                is SplinePiece -> PathKnot().apply {
                     position = piece.end.toPoint()
                     tangent = piece.tangent
                     startTangentMag = piece.endTangentMag
@@ -171,7 +291,6 @@ object DraggableTrajectory : EntityGroup() {
                     val nextSpline = trajectory.pieceData.getOrNull(i + 1)?.trajectoryPiece as? SplinePiece
                     endVisible = nextSpline != null
                     nextSpline?.startTangentMag?.let { endTangentMag = it }
-                    pointerChanged += listener(this@apply, pieceData)
                     onChange += {
                         piece.end = it.position.toVector2d()
                         piece.tangent = it.tangent
@@ -180,20 +299,28 @@ object DraggableTrajectory : EntityGroup() {
                         update()
                     }
                 }
-                is LinePiece -> knots += PathKnot().apply {
+                is LinePiece -> PathKnot().apply {
                     position = piece.end.toPoint()
                     tangentMode = SplineKnot.TangentMode.FIXED
                     startVisible = false
                     val nextSpline = trajectory.pieceData.getOrNull(i + 1)?.trajectoryPiece as? SplinePiece
                     endVisible = lengthMode != SplineKnot.LengthMode.FIXED_LENGTH && nextSpline != null
-                    pointerChanged += listener(this@apply, pieceData)
                     onChange += {
                         piece.end = it.position.toVector2d()
                         nextSpline?.startTangentMag = it.endTangentMag
                         update()
                     }
                 }
-                else -> {}
+                else -> null
+            }
+            if (knot != null) {
+                knot.isSpecial = nonPathPieces.isNotEmpty()
+                makeMenu(
+                    knot,
+                    trajectory.pieceData.indexOf(pieceData),
+                    nonPathPieces = nonPathPieces
+                )
+                knots += knot
             }
         }
         children += knots

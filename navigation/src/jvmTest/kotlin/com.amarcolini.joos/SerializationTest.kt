@@ -27,7 +27,7 @@ class SerializationTest {
     @Test
     fun testTrajectory() {
         val data = SerializableTrajectory(
-            TrajectoryStart(Pose2d(10.0)),
+            StartPiece(Pose2d(10.0)),
             mutableListOf(
                 LinePiece(
                     Vector2d(5.0, 3.0),

@@ -20,6 +20,7 @@ import io.nacular.doodle.layout.Insets
 import io.nacular.doodle.layout.ListLayout
 import io.nacular.doodle.layout.WidthSource
 import io.nacular.doodle.layout.constraints.Strength.Companion.Weak
+import util.BetterListLayout
 import util.BetterViewBuilder.Companion.space
 import util.BetterViewBuilder.Companion.viewBuilder
 import util.TrajectoryMetadata
@@ -45,26 +46,13 @@ object KnotMenu {
     }
 
     fun createPathKnotMenu(
-        segment: TrajectoryMetadata.PieceWithData,
+        customMenus: List<View>,
         knot: PathKnot,
         lengthMenu: Boolean = false,
-        close: (Menu) -> Unit = {},
     ): View {
         val menus = MenuFactoryImpl(popupManager, scheduler, focusManager)
         return viewBuilder {
-            +menus(close) {
-                menu("Add") {
-                    action("Spline") {
-                        DraggableTrajectory.addSplineAfter(segment)
-                    }
-                    action("Line") {
-                        DraggableTrajectory.addLineAfter(segment)
-                    }
-                }
-                action("Delete") {
-                    DraggableTrajectory.delete(segment)
-                }
-            }
+            +customMenus
 
             if (lengthMenu) {
                 val lengthModeOptions = listOf("Match", "Fixed", "Free")
@@ -97,7 +85,7 @@ object KnotMenu {
             render = {
                 rect(bounds.atOrigin, radius, Color.White.darker(0.2f).paint)
             }
-            layout = ListLayout(widthSource = WidthSource.Parent)
+            layout = BetterListLayout(widthSource = WidthSource.Parent)
             sizePreferencesChanged += { _, _, new ->
                 size = new.idealSize ?: new.minimumSize
             }

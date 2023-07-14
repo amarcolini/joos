@@ -5,10 +5,7 @@ import com.amarcolini.joos.util.deg
 import io.nacular.doodle.core.Behavior
 import io.nacular.doodle.core.behavior
 import io.nacular.doodle.core.renderProperty
-import io.nacular.doodle.drawing.Canvas
-import io.nacular.doodle.drawing.Color
-import io.nacular.doodle.drawing.Stroke
-import io.nacular.doodle.drawing.circle
+import io.nacular.doodle.drawing.*
 import io.nacular.doodle.geometry.*
 import io.nacular.doodle.system.SystemPointerEvent
 
@@ -122,6 +119,8 @@ class PathKnot : SplineKnot() {
 
     var behavior: Behavior<PathKnot>? by behavior()
 
+    var isSpecial = false
+
     override fun render(canvas: Canvas) {
         super.render(canvas)
         startKnot = Circle(
@@ -137,8 +136,16 @@ class PathKnot : SplineKnot() {
             ).toPoint() + origin, 1.0
         )
 
+        val renderBase = {
+            canvas.circle(
+                point,
+                Stroke(if (isSpecial) Color.Green.darker(0.1f) else Color.Transparent, 0.5),
+                Color.Blue
+            )
+        }
+
         if (!hasFocus) {
-            canvas.circle(point, Color.Blue)
+            renderBase()
             return
         }
 
@@ -146,7 +153,7 @@ class PathKnot : SplineKnot() {
         if (endVisible) canvas.line(point.center, endKnot.center, Stroke(Color.Black, 0.2))
 
         canvas.circle(point.withRadius(point.radius + 1.0), Color(66u, 135u, 245u, 0.8f))
-        canvas.circle(point, Color.Blue)
+        renderBase()
 
         if (startVisible) canvas.circle(startKnot, Stroke(Color.Black, 0.2), Color.Blue)
         if (endVisible) canvas.circle(endKnot, Stroke(Color.Black, 0.2), Color.Blue)

@@ -5,7 +5,9 @@ import com.amarcolini.joos.geometry.Pose2d
 import com.amarcolini.joos.geometry.Vector2d
 import com.amarcolini.joos.path.*
 import com.amarcolini.joos.path.heading.HeadingInterpolation
+import com.amarcolini.joos.path.heading.LinearInterpolator
 import com.amarcolini.joos.path.heading.TangentHeading
+import com.amarcolini.joos.path.heading.TangentInterpolator
 import com.amarcolini.joos.trajectory.Trajectory
 import com.amarcolini.joos.trajectory.TrajectoryBuilder
 import com.amarcolini.joos.trajectory.constraints.TrajectoryConstraints
@@ -49,14 +51,14 @@ data class WaitPiece(
 ) : TrajectoryPiece
 
 @Serializable
-data class TrajectoryStart(
+data class StartPiece(
     var pose: Pose2d,
     var tangent: Angle = pose.heading,
 )
 
 @Serializable
 data class SerializableTrajectory(
-    var start: TrajectoryStart, val pieces: MutableList<TrajectoryPiece>
+    var start: StartPiece, val pieces: MutableList<TrajectoryPiece>
 ) {
     data class TrajectoryResult(
         val trajectory: Trajectory?,
@@ -103,26 +105,39 @@ data class SerializableTrajectory(
             currentPath = Path(currentPath.segments + path.segments)
         }
 
-        fun PathBuilder.tryAddPiece(piece: TrajectoryPiece) {
+        fun splitCurrentPath(newHeading: (Angle) -> Angle = { it }, newTangent: (Angle) -> Angle = { it }) {
+            addToPath(builder.preBuild())
+            val lastSegment = currentPath.segments.last()
+            val endOfLast = when (lastSegment.interpolator) {
+                is TangentInterpolator, is LinearInterpolator -> lastSegment[0.0, 1.0]
+                else -> lastSegment.end()
+            }
+            val newStart = endOfLast.copy(heading = newHeading(endOfLast.heading))
+            builder = PathBuilder(
+                newStart,
+                newTangent(newStart.heading)
+            )
+        }
+
+        fun tryAddPiece(piece: TrajectoryPiece) {
             when (piece) {
-                is LinePiece -> this.addLine(piece.end, piece.heading)
-                is SplinePiece -> this.addSpline(
+                is LinePiece -> builder.addLine(piece.end, piece.heading)
+                is SplinePiece -> builder.addSpline(
                     piece.end, piece.tangent, piece.startTangentMag, piece.endTangentMag, piece.heading
                 )
-                else -> {}
+                is TurnPiece -> splitCurrentPath(newHeading = { it + piece.angle })
+                is WaitPiece -> splitCurrentPath()
             }
         }
 
         pieces.forEach {
             try {
-                builder.tryAddPiece(it)
+                tryAddPiece(it)
             } catch (e: PathBuilderException) {
                 if (e is PathContinuityViolationException) {
-                    addToPath(builder.preBuild())
-                    val newStart = currentPath.segments.last()[0.0, 1.0]
-                    builder = PathBuilder(newStart)
+                    splitCurrentPath()
                     try {
-                        builder.tryAddPiece(it)
+                        tryAddPiece(it)
                     } catch (e: PathBuilderException) {
                         errors += e to it
                     }
