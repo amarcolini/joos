@@ -8,6 +8,7 @@ import io.nacular.doodle.core.renderProperty
 import io.nacular.doodle.drawing.*
 import io.nacular.doodle.geometry.*
 import io.nacular.doodle.system.SystemPointerEvent
+import kotlin.math.roundToInt
 
 abstract class SplineKnot : FieldEntity() {
     init {
@@ -65,14 +66,14 @@ abstract class SplineKnot : FieldEntity() {
                 if (isMove) {
                     if (knotSelected == 0) {
                         val extreme = Point(Field.fieldSize, Field.fieldSize) * 0.5
-                        position = (position + delta).coerceIn(-extreme, extreme)
+                        position = (position + delta).coerceIn(-extreme, extreme).roundToNearest(0.1)
                         onChange.forEach { it(this@SplineKnot) }
                     } else {
                         val vec = (pos).toVector2d() * if (knotSelected == 1) -1.0 else 1.0
                         val newMag = vec.norm() / stretchFactor
                         when (this@SplineKnot.tangentMode) {
                             TangentMode.FREE -> {
-                                val newAngle = vec.angle()
+                                val newAngle = vec.angle().degrees.roundToInt().deg
                                 tangent = newAngle
                             }
                             TangentMode.FIXED -> {}

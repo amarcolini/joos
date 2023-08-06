@@ -13,6 +13,7 @@ import io.nacular.doodle.geometry.Point
 import io.nacular.doodle.geometry.Rectangle
 import io.nacular.doodle.image.Image
 import io.nacular.doodle.utils.observable
+import io.nacular.doodle.utils.roundToNearest
 import io.nacular.measured.units.Angle
 import io.nacular.measured.units.Measure
 import util.GROW
@@ -28,6 +29,7 @@ fun Point.coerceIn(min: Point, max: Point) = Point(x.coerceIn(min.x, max.x), y.c
 operator fun Vector2d.plus(other: Point) = Vector2d(x + other.x, y + other.y)
 operator fun Vector2d.minus(other: Point) = Vector2d(x - other.x, y - other.y)
 fun Point.toVector2d() = Vector2d(x, y)
+fun Point.roundToNearest(value: Double) = Point(x.roundToNearest(value), y.roundToNearest(value))
 val View.origin get() = bounds.atOrigin.center
 var View.cPos
     set(value) {

@@ -83,7 +83,7 @@ abstract class HeadingInterpolator {
 sealed interface HeadingInterpolation
 
 sealed interface ValueHeading {
-    var heading: Angle
+    var target: Angle
 }
 
 @kotlinx.serialization.Serializable
@@ -98,8 +98,8 @@ object ConstantHeading : HeadingInterpolation
 
 @kotlinx.serialization.Serializable
 @SerialName("linear")
-data class LinearHeading(override var heading: Angle) : HeadingInterpolation, ValueHeading
+data class LinearHeading(override var target: Angle) : HeadingInterpolation, ValueHeading
 
 @kotlinx.serialization.Serializable
 @SerialName("spline")
-data class SplineHeading(override var heading: Angle) : HeadingInterpolation, ValueHeading
+data class SplineHeading(override var target: Angle) : HeadingInterpolation, ValueHeading

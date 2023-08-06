@@ -5,6 +5,7 @@ import GUIApp.Companion.focusManager
 import GUIApp.Companion.menus
 import GUIApp.Companion.modalManager
 import GUIApp.Companion.popupManager
+import com.amarcolini.joos.geometry.Angle
 import com.amarcolini.joos.geometry.Pose2d
 import com.amarcolini.joos.geometry.Vector2d
 import com.amarcolini.joos.path.Path
@@ -12,30 +13,27 @@ import com.amarcolini.joos.path.heading.SplineHeading
 import com.amarcolini.joos.path.heading.ValueHeading
 import com.amarcolini.joos.serialization.*
 import com.amarcolini.joos.trajectory.Trajectory
-import com.amarcolini.joos.trajectory.constraints.GenericConstraints
+import com.amarcolini.joos.trajectory.constraints.*
 import com.amarcolini.joos.util.deg
 import io.nacular.doodle.controls.modal.ModalManager
 import io.nacular.doodle.controls.popupmenu.MenuCreationContext
-import io.nacular.doodle.controls.text.TextField
 import io.nacular.doodle.drawing.Color
 import io.nacular.doodle.drawing.Stroke
 import io.nacular.doodle.event.PointerListener
-import io.nacular.doodle.geometry.Size
-import io.nacular.doodle.layout.Insets
 import io.nacular.doodle.layout.constraints.Strength.Companion.Strong
 import io.nacular.doodle.system.SystemPointerEvent
-import io.nacular.doodle.utils.Dimension
 import io.nacular.doodle.utils.addOrAppend
-import io.nacular.doodle.utils.roundToNearest
+import kotlinx.browser.window
 import kotlinx.coroutines.launch
+import kotlinx.serialization.Transient
+import kotlinx.serialization.decodeFromString
+import kotlinx.serialization.json.Json
 import settings.KnotMenu
+import util.NumberField
 import util.TrajectoryMetadata
 import util.TrajectoryMetadata.Companion.with
 import util.TrajectoryMetadata.Companion.withData
-import kotlin.math.exp
 import kotlin.math.max
-import kotlin.math.pow
-import kotlin.math.roundToInt
 import kotlin.properties.Delegates
 
 object DraggableTrajectory : EntityGroup() {
@@ -56,27 +54,61 @@ object DraggableTrajectory : EntityGroup() {
     }
 
     private var trajectory: TrajectoryMetadata = TrajectoryMetadata.fromTrajectory(
-        SerializableTrajectory(
-            StartPiece(Pose2d()),
-            mutableListOf(
-                LinePiece(Vector2d(30.0, 30.0), SplineHeading(45.deg)),
-                SplinePiece(Vector2d(40.0, 0.0), 30.deg)
+        window.localStorage.getItem(GUIApp.trajectoryKey)?.let {
+            try {
+                SerializableTrajectory.fromJSON(it)
+            } catch (_: Exception) {
+                null
+            }
+        }
+            ?: SerializableTrajectory(
+                StartPiece(Pose2d()),
+                mutableListOf(
+                    LinePiece(Vector2d(30.0, 30.0), SplineHeading(45.deg)),
+                    SplinePiece(Vector2d(40.0, 0.0), 30.deg)
+                )
             )
-        )
     )
 
     val numPieces get() = trajectory.pieceData.size
 
-    private val pathEntity: PathEntity = PathEntity(trajectory.getTrajectory().createPath().path, Stroke(Color.Green))
+    private val pathEntity: PathEntity = PathEntity(trajectory.serializableTrajectory().createPath().path, Stroke(Color.Green))
 
     val currentPath: Path get() = pathEntity.path
+
+    data class TempGenericConstraints constructor(
+        var maxVel: Double = 30.0,
+        var maxAccel: Double = 30.0,
+        override var maxAngVel: Angle = 180.deg,
+        override var maxAngAccel: Angle = 180.deg,
+        override var maxAngJerk: Angle = 0.deg
+    ) : TrajectoryConstraints {
+        @Transient
+        override val velConstraint
+            get() = MinVelocityConstraint(
+                listOf(
+                    TranslationalVelocityConstraint(maxVel),
+                    AngularVelocityConstraint(maxAngVel),
+                )
+            )
+
+        @Transient
+        override val accelConstraint
+            get() = MinAccelerationConstraint(
+                listOf(
+                    TranslationalAccelerationConstraint(maxAccel)
+                )
+            )
+    }
+
+    val constraints: TempGenericConstraints = TempGenericConstraints()
 
     var currentTrajectory: Trajectory? = null
         private set
         get() {
             if (!trajectoryIsUpdated) {
-                field = trajectory.getTrajectory().createTrajectory(
-                    GenericConstraints()
+                field = trajectory.serializableTrajectory().createTrajectory(
+                    constraints
                 ).trajectory
                 trajectoryIsUpdated = true
             }
@@ -84,9 +116,19 @@ object DraggableTrajectory : EntityGroup() {
         }
     private var trajectoryIsUpdated = false
 
-    private fun update() {
-        pathEntity.path = trajectory.getTrajectory().createPath().path
+    fun recomputeTrajectory() {
         trajectoryIsUpdated = false
+    }
+
+    private fun update() {
+        pathEntity.path = trajectory.serializableTrajectory().createPath().path
+        trajectoryIsUpdated = false
+    }
+
+    fun serializableTrajectory() = trajectory.serializableTrajectory()
+
+    fun toJSON(): String {
+        return serializableTrajectory().toJSON().replace(Regex("(?<=\\d\\.\\d)\\d+"), "")
     }
 
     fun disableEditing() {
@@ -208,37 +250,43 @@ object DraggableTrajectory : EntityGroup() {
             action("Line") { addBefore(pieceIndex, makeLine(knotPosition())) }
         }
         if (nonPathPieces.isNotEmpty()) menu("Edit Pieces") {
-            nonPathPieces.forEach {
-                when (val piece = it.trajectoryPiece) {
+            nonPathPieces.forEach { data ->
+                when (val piece = data.trajectoryPiece) {
                     is TurnPiece -> {
-                        action("Turn ${piece.angle.degrees.roundToInt()}°") {
-
+                        val decimals = 0
+                        val initialValue = piece.angle.degrees
+                        action("Turn ${initialValue.format(decimals)}°") { _ ->
+                            val field = NumberField(
+                                initialValue,
+                                decimals,
+                                true,
+                                { piece.angle = it.deg },
+                                format = { "${it}°" }
+                            )
+                            popupManager.show(field, relativeTo = knot) { parent, bounds ->
+                                parent.center eq bounds.center
+                            }
+                            field.focusChanged += { _, _, new ->
+                                if (!new) popupManager.hide(field)
+                                else field.selectAll()
+                            }
+                            focusManager.requestFocus(field)
                         }
                     }
                     is WaitPiece -> {
                         val decimals = 1
-                        val roundTo = 10.0.pow(-decimals)
-                        action("Wait ${piece.duration.format(decimals)}s") { _ ->
-                            val field = TextField(piece.duration.format(decimals)).apply {
-                                borderVisible = true
-                                minimumSize = Size(80.0, 40.0)
-                                size = minimumSize
-                                purpose = TextField.Purpose.Number
-                                insets = Insets(2.0)
-                                textChanged += { _, _, new ->
-                                    val number = new.toDoubleOrNull()?.roundToNearest(roundTo)?.also { duration ->
-                                        piece.duration = duration
-                                    }
-                                    text = number?.format(decimals) ?: ""
-                                }
-                            }
+                        val initialValue = piece.duration
+                        action("Wait ${initialValue.format(decimals)}s") { _ ->
+                            val field =
+                                NumberField(initialValue, decimals, false, piece::duration::set, format = { "${it}s" })
                             popupManager.show(field, relativeTo = knot) { parent, bounds ->
                                 parent.center eq bounds.center
                             }
-                            focusManager.requestFocus(field)
                             field.focusChanged += { _, _, new ->
                                 if (!new) popupManager.hide(field)
+                                else field.selectAll()
                             }
+                            focusManager.requestFocus(field)
                         }
                     }
                     else -> {}
@@ -345,11 +393,11 @@ object DraggableTrajectory : EntityGroup() {
 
             knots += HeadingKnot().apply {
                 position = piece.end.toPoint()
-                if (heading != null) tangent = heading.heading
+                if (heading != null) tangent = heading.target
                 else endVisible = false
                 onChange += {
                     piece.end = it.position.toVector2d()
-                    heading?.heading = it.tangent
+                    heading?.target = it.tangent
                     update()
                 }
             }

@@ -162,8 +162,8 @@ class PathBuilder(
         val interpolator = when (headingInterpolation) {
             is TangentHeading -> makeTangentInterpolator(line)
             is ConstantHeading -> makeConstantInterpolator()
-            is LinearHeading -> makeLinearInterpolator(headingInterpolation.heading)
-            is SplineHeading -> makeSplineInterpolator(headingInterpolation.heading)
+            is LinearHeading -> makeLinearInterpolator(headingInterpolation.target)
+            is SplineHeading -> makeSplineInterpolator(headingInterpolation.target)
         }
 
         return addSegment(PathSegment(line, interpolator))
@@ -258,8 +258,8 @@ class PathBuilder(
         val interpolator = when (headingInterpolation) {
             is TangentHeading -> makeTangentInterpolator(spline)
             is ConstantHeading -> makeConstantInterpolator()
-            is LinearHeading -> makeLinearInterpolator(headingInterpolation.heading)
-            is SplineHeading -> makeSplineInterpolator(headingInterpolation.heading)
+            is LinearHeading -> makeLinearInterpolator(headingInterpolation.target)
+            is SplineHeading -> makeSplineInterpolator(headingInterpolation.target)
         }
 
         return addSegment(PathSegment(spline, interpolator))

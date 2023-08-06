@@ -13,6 +13,11 @@ import com.amarcolini.joos.trajectory.TrajectoryBuilder
 import com.amarcolini.joos.trajectory.constraints.TrajectoryConstraints
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
+import kotlinx.serialization.decodeFromString
+import kotlinx.serialization.encodeToString
+import kotlinx.serialization.json.Json
+import kotlin.jvm.JvmOverloads
+import kotlin.jvm.JvmStatic
 
 @Serializable
 sealed interface TrajectoryPiece
@@ -24,13 +29,13 @@ sealed interface MovableTrajectoryPiece {
 
 @Serializable
 @SerialName("line")
-data class LinePiece(
+data class LinePiece @JvmOverloads constructor(
     override var end: Vector2d, override var heading: HeadingInterpolation = TangentHeading
 ) : TrajectoryPiece, MovableTrajectoryPiece
 
 @Serializable
 @SerialName("spline")
-data class SplinePiece(
+data class SplinePiece @JvmOverloads constructor(
     override var end: Vector2d,
     var tangent: Angle,
     var startTangentMag: Double = -1.0,
@@ -51,7 +56,7 @@ data class WaitPiece(
 ) : TrajectoryPiece
 
 @Serializable
-data class StartPiece(
+data class StartPiece @JvmOverloads constructor(
     var pose: Pose2d,
     var tangent: Angle = pose.heading,
 )
@@ -60,6 +65,15 @@ data class StartPiece(
 data class SerializableTrajectory(
     var start: StartPiece, val pieces: MutableList<TrajectoryPiece>
 ) {
+    companion object {
+        private val json by lazy {
+            Json { prettyPrint = false }
+        }
+
+        @JvmStatic
+        fun fromJSON(string: String) = json.decodeFromString<SerializableTrajectory>(string)
+    }
+
     data class TrajectoryResult(
         val trajectory: Trajectory?,
         val errors: List<Pair<Exception, TrajectoryPiece?>>
@@ -70,6 +84,9 @@ data class SerializableTrajectory(
         val errors: List<Pair<Exception, TrajectoryPiece?>>
     )
 
+    fun toJSON() = json.encodeToString(this)
+
+    @JvmOverloads
     fun createTrajectory(constraints: TrajectoryConstraints, resolution: Double = 0.25): TrajectoryResult {
         val errors = ArrayList<Pair<Exception, TrajectoryPiece?>>()
         val builder = TrajectoryBuilder(start.pose, start.tangent, constraints, resolution)

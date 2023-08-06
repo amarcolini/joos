@@ -62,7 +62,7 @@ data class TrajectoryMetadata(
         var lengthMode: SplineKnot.LengthMode
     ) : PieceWithData(trajectoryPiece, trajectoryPiece::end)
 
-    fun getTrajectory() = SerializableTrajectory(startData.start, pieceData.map {
+    fun serializableTrajectory() = SerializableTrajectory(startData.start, pieceData.map {
         it.trajectoryPiece
     }.toMutableList())
 }

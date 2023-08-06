@@ -5,6 +5,7 @@ import io.nacular.doodle.core.View
 import io.nacular.doodle.drawing.Canvas
 import io.nacular.doodle.focus.FocusTraversalPolicy
 import io.nacular.doodle.geometry.Point
+import io.nacular.doodle.geometry.Size
 import io.nacular.doodle.layout.Insets
 import io.nacular.doodle.layout.constraints.Bounds
 import io.nacular.doodle.layout.constraints.ConstraintDslContext
@@ -24,6 +25,18 @@ open class BetterViewBuilder protected constructor() : View() {
                     constraints(it)
                 }
             }
+
+        /**
+         * Creates an empty view just for padding purposes.
+         * @param w the padding width
+         * @param h the padding height
+         */
+        fun padding(w: Double = 0.0, h: Double = 0.0) = viewBuilder {
+            width = w
+            height = h
+            minimumSize = Size(w, h)
+            idealSize = Size(w, h)
+        }
     }
 
     operator fun View.unaryPlus(): View {
