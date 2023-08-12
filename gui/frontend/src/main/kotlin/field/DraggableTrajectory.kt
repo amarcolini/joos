@@ -17,6 +17,7 @@ import com.amarcolini.joos.trajectory.constraints.*
 import com.amarcolini.joos.util.deg
 import io.nacular.doodle.controls.modal.ModalManager
 import io.nacular.doodle.controls.popupmenu.MenuCreationContext
+import io.nacular.doodle.core.View
 import io.nacular.doodle.drawing.Color
 import io.nacular.doodle.drawing.Stroke
 import io.nacular.doodle.event.PointerListener
@@ -26,8 +27,6 @@ import io.nacular.doodle.utils.addOrAppend
 import kotlinx.browser.window
 import kotlinx.coroutines.launch
 import kotlinx.serialization.Transient
-import kotlinx.serialization.decodeFromString
-import kotlinx.serialization.json.Json
 import settings.KnotMenu
 import util.NumberField
 import util.TrajectoryMetadata
@@ -72,7 +71,8 @@ object DraggableTrajectory : EntityGroup() {
 
     val numPieces get() = trajectory.pieceData.size
 
-    private val pathEntity: PathEntity = PathEntity(trajectory.serializableTrajectory().createPath().path, Stroke(Color.Green))
+    private val pathEntity: PathEntity =
+        PathEntity(trajectory.serializableTrajectory().createPath().path, Stroke(Color.Green))
 
     val currentPath: Path get() = pathEntity.path
 
@@ -180,24 +180,18 @@ object DraggableTrajectory : EntityGroup() {
     private fun makeLine(position: Vector2d) =
         LinePiece(position, SplineHeading(0.deg)).withData()
 
-    private fun makeMenu(
-        knot: PathKnot,
-        customMenu: MenuCreationContext.() -> Unit
+    private fun addMenu(
+        knot: SplineKnot,
+        menu: (completed: (Unit) -> Unit) -> View
     ) {
         val listener = PointerListener.pressed { event ->
             if (SystemPointerEvent.Button.Button2 in event.buttons && SystemPointerEvent.Button.Button1 !in event.buttons) {
                 GUIApp.appScope.launch {
                     modalManager {
-                        val innerMenu = menus({ completed(Unit) }, customMenu)
-                        val menu = KnotMenu.createPathKnotMenu(
-                            listOf(innerMenu),
-                            knot,
-                            knot.startVisible || knot.endVisible
-                        )
                         pointerOutsideModalChanged += PointerListener.pressed {
                             completed(Unit)
                         }
-                        ModalManager.RelativeModal(menu, knot) { modal, knot ->
+                        ModalManager.RelativeModal(menu(this::completed), knot) { modal, knot ->
                             (modal.top eq knot.bottom + 10)..Strong
                             (modal.top greaterEq 5)..Strong
                             (modal.left greaterEq 5)..Strong
@@ -218,6 +212,30 @@ object DraggableTrajectory : EntityGroup() {
             }
         }
         knot.pointerChanged += listener
+    }
+
+    private fun makeMenu(
+        knot: PathKnot,
+        customMenu: MenuCreationContext.() -> Unit
+    ) = addMenu(knot) {
+        val innerMenu = menus({ it(Unit) }, customMenu)
+        KnotMenu.createPathKnotMenu(
+            listOf(innerMenu),
+            knot,
+            knot.startVisible || knot.endVisible
+        )
+    }
+
+    private fun makeMenu(
+        knot: HeadingKnot,
+        piece: MovableTrajectoryPiece,
+        customMenu: MenuCreationContext.() -> Unit = {}
+    ) = addMenu(knot) {
+        val innerMenu = menus({ it(Unit) }, customMenu)
+        KnotMenu.createHeadingKnotMenu(
+            listOf(innerMenu),
+            knot, piece
+        )
     }
 
     private fun makeMenu(
@@ -306,7 +324,7 @@ object DraggableTrajectory : EntityGroup() {
             position = startPos().toPoint()
             tangent = startData.start.tangent
             startVisible = false
-            endVisible = true
+            endVisible = trajectory.pieceData[0].trajectoryPiece is SplinePiece
             onChange += {
                 startData.start.pose = Pose2d(it.position.toVector2d())
                 startData.start.tangent = it.tangent
@@ -327,6 +345,7 @@ object DraggableTrajectory : EntityGroup() {
 
         trajectory.pieceData.forEachIndexed { i, pieceData ->
             val piece = pieceData.trajectoryPiece
+            if (piece !is MovableTrajectoryPiece) return@forEachIndexed
             val nonPathPieces = trajectory.pieceData.drop(i + 1).takeWhile {
                 it.trajectoryPiece !is MovableTrajectoryPiece
             }
@@ -359,17 +378,14 @@ object DraggableTrajectory : EntityGroup() {
                         update()
                     }
                 }
-                else -> null
             }
-            if (knot != null) {
-                knot.isSpecial = nonPathPieces.isNotEmpty()
-                makeMenu(
-                    knot,
-                    trajectory.pieceData.indexOf(pieceData),
-                    nonPathPieces = nonPathPieces
-                )
-                knots += knot
-            }
+            knot.isSpecial = nonPathPieces.isNotEmpty()
+            makeMenu(
+                knot,
+                trajectory.pieceData.indexOf(pieceData),
+                nonPathPieces = nonPathPieces
+            )
+            knots += knot
         }
         children += knots
         recomputeTransforms()
@@ -397,9 +413,13 @@ object DraggableTrajectory : EntityGroup() {
                 else endVisible = false
                 onChange += {
                     piece.end = it.position.toVector2d()
-                    heading?.target = it.tangent
+                    val newHeading = (piece.heading as? ValueHeading)?.apply {
+                        target = it.tangent
+                    }
+                    it.endVisible = newHeading != null
                     update()
                 }
+                makeMenu(this, piece)
             }
         }
         children += knots

@@ -1,6 +1,8 @@
 package field
 
 import com.amarcolini.joos.geometry.Vector2d
+import com.amarcolini.joos.path.heading.HeadingInterpolation
+import com.amarcolini.joos.path.heading.TangentHeading
 import com.amarcolini.joos.util.deg
 import io.nacular.doodle.core.Behavior
 import io.nacular.doodle.core.behavior

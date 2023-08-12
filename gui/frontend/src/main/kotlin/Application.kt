@@ -90,7 +90,7 @@ class GUIApp(
             themeManager.selected?.install(display, sequenceOf(view))
         }
 
-        fun parseURL(url: String) = when(url.lowercase()) {
+        fun parseURL(url: String) = when (url.lowercase()) {
             "meow" -> "https://i.natgeofe.com/n/548467d8-c5f1-4551-9f58-6817a8d2c45e/NationalGeographic_2572187_square.jpg"
             else -> url
         }
@@ -112,7 +112,7 @@ class GUIApp(
         themeManager.selected = nativeTheme + basicTheme + DefaultTheme(basicTheme.config)
 
         appScope.launch {
-            val fallback = "./background/Generic.png"
+            val fallback = "./background/generic.png"
             val url =
                 window.localStorage.getItem(fieldImageKey)?.let { parseURL(it) } ?: fallback
             Field.backgrounds["Generic"] = imageLoader.load(url) ?: imageLoader.load(fallback) ?: run {
