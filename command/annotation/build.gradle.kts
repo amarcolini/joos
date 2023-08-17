@@ -47,19 +47,15 @@ repositories {
 }
 
 publishing {
-    publications {
-        create<MavenPublication>("release") {
-            from(components["java"])
-            artifactId = "annotation"
-            pom {
-                name.set("Joos")
-                description.set("A comprehensive kotlin library designed for FTC.")
-                url.set("https://github.com/amarcolini/joos")
-                developers {
-                    developer {
-                        id.set("amarcolini")
-                        name.set("Alessandro Marcolini")
-                    }
+    publications.filterIsInstance<MavenPublication>().forEach {
+        it.pom {
+            name.set("Joos")
+            description.set("A comprehensive kotlin library designed for FTC.")
+            url.set("https://github.com/amarcolini/joos")
+            developers {
+                developer {
+                    id.set("amarcolini")
+                    name.set("Alessandro Marcolini")
                 }
             }
         }
