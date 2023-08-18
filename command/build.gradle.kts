@@ -42,6 +42,9 @@ dependencies {
 
     testImplementation("org.junit.jupiter:junit-jupiter-api:5.9.0")
     testRuntimeOnly("org.junit.jupiter:junit-jupiter-engine:5.9.0")
+    testImplementation("org.firstinspires.ftc:RobotCore:8.1.1")
+    testImplementation("org.firstinspires.ftc:Hardware:8.1.1")
+    testImplementation("org.firstinspires.ftc:FtcCommon:8.1.1")
 
     testImplementation("org.knowm.xchart:xchart:3.8.2")
 }

@@ -112,6 +112,7 @@ object KnotMenu {
                         numField.value = (heading.target.degrees)
                         valueEditor.visible = true
                     }
+
                     else -> {
                         valueEditor.visible = false
                     }

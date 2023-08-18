@@ -3,11 +3,11 @@ import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 
 class TelemetryTest {
-    private lateinit var telemetry: SuperTelemetry
+    private val telemetry = SuperTelemetry
 
     @BeforeEach
     fun init() {
-        telemetry = SuperTelemetry()
+        telemetry.reset()
     }
 
     private fun printTelemetry() {

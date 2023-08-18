@@ -104,6 +104,9 @@ allprojects {
         sourceCompatibility = JavaVersion.VERSION_1_8.toString()
     }
 
+    rootProject.plugins.withType(org.jetbrains.kotlin.gradle.targets.js.nodejs.NodeJsRootPlugin::class.java) {
+        rootProject.the<org.jetbrains.kotlin.gradle.targets.js.nodejs.NodeJsRootExtension>().nodeVersion = "16.0.0"
+    }
 //    tasks.findByPath(":gui:mergeClasses")?.configure<Copy> {
 //        duplicatesStrategy = DuplicatesStrategy.EXCLUDE
 //    }

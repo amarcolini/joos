@@ -277,7 +277,7 @@ class CommandTest {
         scheduler.update()
 
         assert(runCount == 1)
-        btn1.state = btn1.state
+        btn1.update(btn1.state)
         scheduler.update()
         assert(runCount == 1)
         btn2.toggle()

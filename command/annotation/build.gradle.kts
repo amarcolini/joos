@@ -14,7 +14,6 @@ kotlin {
         compilations.all {
             kotlinOptions {
                 jvmTarget = "1.8"
-                apiVersion = "1.5"
             }
         }
         withJava()
@@ -22,7 +21,9 @@ kotlin {
             useJUnitPlatform()
         }
     }
-    js(IR).browser()
+    js(IR) {
+        browser {}
+    }
 
     sourceSets {
         val commonMain by getting
