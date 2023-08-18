@@ -1,4 +1,4 @@
 jdk:
   - openjdk11
 install:
-  - ./gradlew build publishToMavenLocal --stacktrace --debug
+  - bash ./gradlew build publishToMavenLocal --stacktrace --debug
