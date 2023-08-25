@@ -16,8 +16,7 @@ import kotlin.jvm.JvmOverloads
  * @param moduleOrientations module orientations
  * @param trackWidth lateral distance between pairs of wheels on different sides of the robot
  * @param wheelBase distance between pairs of wheels on the same side of the robot
- * @param drive the drive this localizer is using
- * @param useExternalHeading whether to use [drive]'s external heading sensor
+ * @param externalHeadingSensor An optional external heading sensor to use for heading measurement
  */
 class SwerveLocalizer @JvmOverloads constructor(
     private val wheelPositions: () -> List<Double>,
@@ -25,8 +24,7 @@ class SwerveLocalizer @JvmOverloads constructor(
     private val moduleOrientations: () -> List<Angle>,
     private val trackWidth: Double,
     private val wheelBase: Double = trackWidth,
-    private val drive: Drive,
-    private val useExternalHeading: Boolean = true
+    private val externalHeadingSensor: AngleSensor? = null
 ) : Localizer {
     private var _poseEstimate = Pose2d()
     override var poseEstimate: Pose2d
@@ -34,7 +32,7 @@ class SwerveLocalizer @JvmOverloads constructor(
         set(value) {
             lastWheelPositions = emptyList()
             lastExtHeading = null
-            if (useExternalHeading) drive.externalHeading = value.heading
+            externalHeadingSensor?.setAngle(value.heading)
             _poseEstimate = value
         }
     override var poseVelocity: Pose2d? = null
@@ -45,7 +43,7 @@ class SwerveLocalizer @JvmOverloads constructor(
     override fun update() {
         val wheelPositions = wheelPositions()
         val moduleOrientations = moduleOrientations()
-        val extHeading: Angle? = if (useExternalHeading) drive.externalHeading else null
+        val extHeading: Angle? = externalHeadingSensor?.getAngle()
         if (lastWheelPositions.isNotEmpty()) {
             val wheelDeltas = wheelPositions
                 .zip(lastWheelPositions)
@@ -67,7 +65,7 @@ class SwerveLocalizer @JvmOverloads constructor(
         }
 
         val wheelVelocities = wheelVelocities()
-        val extHeadingVel = if (useExternalHeading) drive.getExternalHeadingVelocity() else null
+        val extHeadingVel = externalHeadingSensor?.getAngularVelocity()
         poseVelocity =
             if (wheelVelocities != null)
                 SwerveKinematics.wheelToRobotVelocities(

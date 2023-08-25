@@ -57,7 +57,6 @@ class CRServo constructor(
             .onEnd { this.power = 0.0 }
             .requires(this)
 
-
     /**
      * The percentage of velocity of the servo in the range `[-1.0, 1.0]`.
      */

@@ -18,22 +18,6 @@ abstract class Drive {
      */
     abstract var localizer: Localizer
 
-    private var headingOffset: Angle = Angle()
-
-    /**
-     * The raw heading used for computing [externalHeading]. Not affected by [externalHeading] setter.
-     */
-    protected abstract val rawExternalHeading: Angle
-
-    /**
-     * The robot's heading as measured by an external sensor (e.g., IMU, gyroscope).
-     */
-    var externalHeading: Angle
-        get() = rawExternalHeading + headingOffset
-        set(value) {
-            headingOffset = -rawExternalHeading + value
-        }
-
     /**
      * The robot's current pose estimate.
      */

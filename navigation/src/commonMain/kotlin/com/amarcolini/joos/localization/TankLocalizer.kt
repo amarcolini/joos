@@ -15,16 +15,13 @@ import kotlin.jvm.JvmOverloads
  * @param wheelPositions wheel positions in linear distance units
  * @param wheelVelocities wheel velocities in linear distance units
  * @param trackWidth lateral distance between pairs of wheels on different sides of the robot
- * @param drive the drive this localizer is using
- * @param useExternalHeading whether to use [drive]'s external heading sensor
+ * @param externalHeadingSensor An optional external heading sensor to use for heading measurement
  */
-@JsExport
 class TankLocalizer @JvmOverloads constructor(
     private val wheelPositions: () -> List<Double>,
     private val wheelVelocities: () -> List<Double>? = { null },
     private val trackWidth: Double,
-    private val drive: Drive,
-    private val useExternalHeading: Boolean = true
+    private val externalHeadingSensor: AngleSensor? = null
 ) : Localizer {
     private var _poseEstimate = Pose2d()
     override var poseEstimate: Pose2d
@@ -32,7 +29,7 @@ class TankLocalizer @JvmOverloads constructor(
         set(value) {
             lastWheelPositions = emptyList()
             lastExtHeading = null
-            if (useExternalHeading) drive.externalHeading = value.heading
+            externalHeadingSensor?.setAngle(value.heading)
             _poseEstimate = value
         }
     override var poseVelocity: Pose2d? = null
@@ -42,7 +39,7 @@ class TankLocalizer @JvmOverloads constructor(
 
     override fun update() {
         val wheelPositions = wheelPositions()
-        val extHeading: Angle? = if (useExternalHeading) drive.externalHeading else null
+        val extHeading: Angle? = externalHeadingSensor?.getAngle()
         if (lastWheelPositions.isNotEmpty()) {
             val wheelDeltas = wheelPositions
                 .zip(lastWheelPositions)
@@ -60,7 +57,7 @@ class TankLocalizer @JvmOverloads constructor(
         }
 
         val wheelVelocities = wheelVelocities()
-        val extHeadingVel = if (useExternalHeading) drive.getExternalHeadingVelocity() else null
+        val extHeadingVel = externalHeadingSensor?.getAngularVelocity()
         if (wheelVelocities != null) {
             poseVelocity =
                 TankKinematics.wheelToRobotVelocities(wheelVelocities, trackWidth).let {

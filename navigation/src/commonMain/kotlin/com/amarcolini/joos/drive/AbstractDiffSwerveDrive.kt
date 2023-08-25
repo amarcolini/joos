@@ -6,6 +6,7 @@ import com.amarcolini.joos.control.PIDFController
 import com.amarcolini.joos.geometry.Angle
 import com.amarcolini.joos.geometry.Pose2d
 import com.amarcolini.joos.kinematics.DiffSwerveKinematics
+import com.amarcolini.joos.localization.AngleSensor
 import com.amarcolini.joos.localization.DiffSwerveLocalizer
 import com.amarcolini.joos.localization.Localizer
 import com.amarcolini.joos.util.wrap
@@ -23,13 +24,14 @@ abstract class AbstractDiffSwerveDrive(
     protected val feedforward: FeedforwardCoefficients,
     protected val orientationPID: PIDCoefficients,
     protected val trackWidth: Double,
+    protected val externalHeadingSensor: AngleSensor,
 ) : Drive() {
 
-    override var localizer: Localizer = DiffSwerveLocalizer(
-        ::getGearRotations,
+    override var localizer: Localizer = DiffSwerveLocalizer.withModuleSensors(
+        ::getModuleOrientations,
         ::getGearPositions,
         ::getGearVelocities,
-        trackWidth, this, true
+        trackWidth, externalHeadingSensor
     )
 
     override fun setDriveSignal(driveSignal: DriveSignal) {
@@ -46,20 +48,12 @@ abstract class AbstractDiffSwerveDrive(
             driveSignal.vel,
             trackWidth
         )
-        val (leftAngVel, rightAngVel) = DiffSwerveKinematics.robotToModuleAngularVelocities(
-            driveSignal.vel,
-            driveSignal.accel,
-            trackWidth
-        )
-
         this.leftVel = leftVel
         this.leftAccel = leftAccel
         this.rightVel = rightVel
         this.rightAccel = rightAccel
         leftModuleController.setTarget(leftOrientation.radians)
         rightModuleController.setTarget(rightOrientation.radians)
-        leftModuleController.setOutputBounds(-leftAngVel.radians, leftAngVel.radians)
-        rightModuleController.setOutputBounds(-rightAngVel.radians, rightAngVel.radians)
     }
 
     override fun setDrivePower(drivePower: Pose2d) {
@@ -73,13 +67,11 @@ abstract class AbstractDiffSwerveDrive(
         this.rightAccel = 0.0
         leftModuleController.setTarget(leftOrientation.radians)
         rightModuleController.setTarget(rightOrientation.radians)
-        leftModuleController.outputBounded = false
-        rightModuleController.outputBounded = false
     }
 
-    private fun getModuleOrientations(): List<Angle> {
+    protected open fun getModuleOrientations(): Pair<Angle, Angle> {
         val (topLeft, bottomLeft, topRight, bottomRight) = getGearRotations()
-        return listOf(
+        return Pair(
             DiffSwerveKinematics.gearToModuleOrientation(topLeft, bottomLeft),
             DiffSwerveKinematics.gearToModuleOrientation(topRight, bottomRight),
         )
@@ -91,6 +83,8 @@ abstract class AbstractDiffSwerveDrive(
     init {
         leftModuleController.setInputBounds(-PI * 0.5, PI * 0.5)
         rightModuleController.setInputBounds(-PI * 0.5, PI * 0.5)
+        leftModuleController.outputBounded = false
+        rightModuleController.outputBounded = false
     }
 
     private var leftVel = 0.0

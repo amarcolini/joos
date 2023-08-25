@@ -9,8 +9,8 @@ import com.amarcolini.joos.drive.DriveSignal
 import com.amarcolini.joos.followers.TrajectoryFollower
 import com.amarcolini.joos.geometry.Angle
 import com.amarcolini.joos.geometry.Pose2d
-import com.amarcolini.joos.hardware.Imu
 import com.amarcolini.joos.hardware.Motor
+import com.amarcolini.joos.localization.AngleSensor
 import com.amarcolini.joos.trajectory.Trajectory
 import com.amarcolini.joos.trajectory.TrajectoryBuilder
 import com.amarcolini.joos.trajectory.constraints.TrajectoryConstraints
@@ -21,7 +21,7 @@ import com.amarcolini.joos.trajectory.constraints.TrajectoryConstraints
 abstract class DriveComponent : Drive(), Component {
     abstract var trajectoryFollower: TrajectoryFollower
     abstract val constraints: TrajectoryConstraints
-    protected abstract val imu: Imu?
+    protected abstract val externalHeadingSensor: AngleSensor?
     private val poseHistory = ArrayList<Pose2d>()
     var pathColor: String = "#4CAF50"
     var turnColor: String = "#7c4dff"
@@ -112,11 +112,6 @@ abstract class DriveComponent : Drive(), Component {
      */
     fun getCurrentTrajectory(): Trajectory? =
         if (trajectoryFollower.isFollowing()) trajectoryFollower.trajectory else null
-
-    override val rawExternalHeading: Angle
-        get() = imu?.heading ?: Angle()
-
-    override fun getExternalHeadingVelocity(): Angle? = imu?.headingVelocity
 
     abstract fun setRunMode(runMode: Motor.RunMode)
     abstract fun setZeroPowerBehavior(zeroPowerBehavior: Motor.ZeroPowerBehavior)

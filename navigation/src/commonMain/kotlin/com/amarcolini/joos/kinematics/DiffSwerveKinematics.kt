@@ -17,7 +17,6 @@ import kotlin.jvm.JvmStatic
  * is half the difference between the top and bottom gear velocities, and the angular velocity is the half the sum
  * (assuming all gears are the same size).
  */
-@JsExport
 object DiffSwerveKinematics {
 
     /**

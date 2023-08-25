@@ -7,11 +7,11 @@ import com.amarcolini.joos.followers.HolonomicPIDVAFollower
 import com.amarcolini.joos.followers.TrajectoryFollower
 import com.amarcolini.joos.geometry.Angle
 import com.amarcolini.joos.geometry.Pose2d
-import com.amarcolini.joos.hardware.Imu
 import com.amarcolini.joos.hardware.Motor
 import com.amarcolini.joos.hardware.MotorGroup
 import com.amarcolini.joos.hardware.Servo
 import com.amarcolini.joos.kinematics.SwerveKinematics
+import com.amarcolini.joos.localization.AngleSensor
 import com.amarcolini.joos.localization.Localizer
 import com.amarcolini.joos.localization.SwerveLocalizer
 import com.amarcolini.joos.trajectory.constraints.SwerveConstraints
@@ -27,7 +27,7 @@ open class SwerveDrive @JvmOverloads constructor(
     private val backLeft: Pair<Motor, Servo>,
     private val backRight: Pair<Motor, Servo>,
     private val frontRight: Pair<Motor, Servo>,
-    final override val imu: Imu? = null,
+    final override val externalHeadingSensor: AngleSensor? = null,
     constraints: SwerveConstraints = SwerveConstraints(
         listOf(
             frontLeft,
@@ -65,7 +65,7 @@ open class SwerveDrive @JvmOverloads constructor(
         ::getWheelVelocities,
         ::getModuleOrientations,
         constraints.trackWidth, constraints.wheelBase,
-        this, imu != null
+        externalHeadingSensor
     )
 
     override fun setDriveSignal(driveSignal: DriveSignal) {

@@ -6,10 +6,10 @@ import com.amarcolini.joos.drive.DriveSignal
 import com.amarcolini.joos.followers.HolonomicPIDVAFollower
 import com.amarcolini.joos.followers.TrajectoryFollower
 import com.amarcolini.joos.geometry.Pose2d
-import com.amarcolini.joos.hardware.Imu
 import com.amarcolini.joos.hardware.Motor
 import com.amarcolini.joos.hardware.MotorGroup
 import com.amarcolini.joos.kinematics.MecanumKinematics
+import com.amarcolini.joos.localization.AngleSensor
 import com.amarcolini.joos.localization.Localizer
 import com.amarcolini.joos.localization.MecanumLocalizer
 import com.amarcolini.joos.trajectory.constraints.MecanumConstraints
@@ -25,7 +25,7 @@ open class MecanumDrive @JvmOverloads constructor(
     private val backLeft: Motor,
     private val backRight: Motor,
     private val frontRight: Motor,
-    final override val imu: Imu? = null,
+    final override val externalHeadingSensor: AngleSensor? = null,
     constraints: MecanumConstraints = MecanumConstraints(
         listOf(
             frontLeft,
@@ -43,7 +43,7 @@ open class MecanumDrive @JvmOverloads constructor(
     @JvmOverloads
     constructor(
         motors: MotorGroup,
-        imu: Imu? = null,
+        externalHeadingSensor: AngleSensor? = null,
         constraints: MecanumConstraints = MecanumConstraints(motors.maxDistanceVelocity),
         translationalPID: PIDCoefficients = PIDCoefficients(1.0, 0.0, 0.5),
         headingPID: PIDCoefficients = PIDCoefficients(1.0, 0.0, 0.5)
@@ -52,7 +52,7 @@ open class MecanumDrive @JvmOverloads constructor(
         motors.motors[1],
         motors.motors[2],
         motors.motors[3],
-        imu, constraints, translationalPID, headingPID
+        externalHeadingSensor, constraints, translationalPID, headingPID
     )
 
     private val wheels = listOf(frontLeft, backLeft, backRight, frontRight)
@@ -78,7 +78,7 @@ open class MecanumDrive @JvmOverloads constructor(
         ::getWheelPositions,
         ::getWheelVelocities,
         constraints.trackWidth, constraints.wheelBase, constraints.lateralMultiplier,
-        this, imu != null
+        externalHeadingSensor
     )
 
     private fun getWheelPositions() = wheels.map { it.distance }

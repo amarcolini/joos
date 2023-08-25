@@ -1,11 +1,11 @@
 package com.amarcolini.joos.localization
 
-import com.amarcolini.joos.drive.Drive
 import com.amarcolini.joos.geometry.Angle
 import com.amarcolini.joos.geometry.Pose2d
 import com.amarcolini.joos.kinematics.DiffSwerveKinematics
 import com.amarcolini.joos.kinematics.Kinematics
 import kotlin.jvm.JvmOverloads
+import kotlin.jvm.JvmStatic
 
 /**
  * Default localizer for differential swerve drives based on the drive encoder positions and (optionally) a
@@ -15,24 +15,43 @@ import kotlin.jvm.JvmOverloads
  * @param gearPositions the position of each gear in linear distance units
  * @param gearVelocities the current velocities of each gear in linear distance units
  * @param trackWidth lateral distance between pairs of wheels on different sides of the robot
- * @param drive the drive this localizer is using
- * @param useExternalHeading whether to use [drive]'s external heading sensor
+ * @param externalHeadingSensor An optional external heading sensor to use for heading measurement
  */
 class DiffSwerveLocalizer @JvmOverloads constructor(
     private val gearRotations: () -> List<Angle>,
     private val gearPositions: () -> List<Double>,
     private val gearVelocities: () -> List<Double>? = { null },
     private val trackWidth: Double,
-    private val drive: Drive,
-    private val useExternalHeading: Boolean = true
+    private val externalHeadingSensor: AngleSensor? = null
 ) : Localizer {
+    companion object {
+        /**
+         * Uses [moduleOrientations] to get module orientations instead of gear rotations. Useful when using an
+         * external sensor to measure module orientation.
+         */
+        @JvmOverloads
+        @JvmStatic
+        fun withModuleSensors(
+            moduleOrientations: () -> Pair<Angle, Angle>,
+            gearPositions: () -> List<Double>,
+            gearVelocities: () -> List<Double>? = { null },
+            trackWidth: Double,
+            externalHeadingSensor: AngleSensor? = null
+        ) = DiffSwerveLocalizer(
+            {
+                val orientations = moduleOrientations()
+                listOf(orientations.first, orientations.first, orientations.second, orientations.second)
+            }, gearPositions, gearVelocities, trackWidth, externalHeadingSensor
+        )
+    }
+
     private var _poseEstimate = Pose2d()
     override var poseEstimate: Pose2d
         get() = _poseEstimate
         set(value) {
             lastGearPositions = emptyList()
             lastExtHeading = null
-            if (useExternalHeading) drive.externalHeading = value.heading
+            externalHeadingSensor?.setAngle(value.heading)
             _poseEstimate = value
         }
     override var poseVelocity: Pose2d? = null
@@ -43,7 +62,7 @@ class DiffSwerveLocalizer @JvmOverloads constructor(
     override fun update() {
         val gearRotations = gearRotations()
         val gearPositions = gearPositions()
-        val extHeading: Angle? = if (useExternalHeading) drive.externalHeading else null
+        val extHeading: Angle? = externalHeadingSensor?.getAngle()
         if (lastGearPositions.isNotEmpty()) {
             val gearDeltas = gearPositions
                 .zip(lastGearPositions)
@@ -64,7 +83,7 @@ class DiffSwerveLocalizer @JvmOverloads constructor(
         }
 
         val gearVelocities = gearVelocities()
-        val extHeadingVel = if (useExternalHeading) drive.getExternalHeadingVelocity() else null
+        val extHeadingVel = externalHeadingSensor?.getAngularVelocity()
         poseVelocity =
             if (gearVelocities != null)
                 DiffSwerveKinematics.gearToRobotVelocities(

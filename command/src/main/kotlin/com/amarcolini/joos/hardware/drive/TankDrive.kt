@@ -6,10 +6,10 @@ import com.amarcolini.joos.drive.DriveSignal
 import com.amarcolini.joos.followers.TankPIDVAFollower
 import com.amarcolini.joos.followers.TrajectoryFollower
 import com.amarcolini.joos.geometry.Pose2d
-import com.amarcolini.joos.hardware.Imu
 import com.amarcolini.joos.hardware.Motor
 import com.amarcolini.joos.hardware.MotorGroup
 import com.amarcolini.joos.kinematics.TankKinematics
+import com.amarcolini.joos.localization.AngleSensor
 import com.amarcolini.joos.localization.Localizer
 import com.amarcolini.joos.localization.TankLocalizer
 import com.amarcolini.joos.trajectory.constraints.TankConstraints
@@ -25,7 +25,7 @@ import kotlin.math.min
 open class TankDrive @JvmOverloads constructor(
     private val left: MotorGroup,
     private val right: MotorGroup,
-    final override val imu: Imu? = null,
+    final override val externalHeadingSensor: AngleSensor? = null,
     constraints: TankConstraints = TankConstraints(
         min(
             left.maxDistanceVelocity,
@@ -55,7 +55,7 @@ open class TankDrive @JvmOverloads constructor(
         { listOf(left.distance, right.distance) },
         { listOf(left.distanceVelocity, right.distanceVelocity) },
         constraints.trackWidth,
-        this, imu != null
+        externalHeadingSensor
     )
 
     override fun setDriveSignal(driveSignal: DriveSignal) {

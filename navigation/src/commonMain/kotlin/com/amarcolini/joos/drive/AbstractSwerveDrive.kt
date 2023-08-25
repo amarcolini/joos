@@ -4,6 +4,7 @@ import com.amarcolini.joos.control.FeedforwardCoefficients
 import com.amarcolini.joos.geometry.Angle
 import com.amarcolini.joos.geometry.Pose2d
 import com.amarcolini.joos.kinematics.SwerveKinematics
+import com.amarcolini.joos.localization.AngleSensor
 import com.amarcolini.joos.localization.Localizer
 import com.amarcolini.joos.localization.SwerveLocalizer
 import kotlin.jvm.JvmOverloads
@@ -18,7 +19,8 @@ import kotlin.jvm.JvmOverloads
 abstract class AbstractSwerveDrive @JvmOverloads constructor(
     protected val feedforward: FeedforwardCoefficients,
     protected val trackWidth: Double,
-    protected val wheelBase: Double = trackWidth
+    protected val wheelBase: Double = trackWidth,
+    protected val externalHeadingSensor: AngleSensor
 ) : Drive() {
 
     override var localizer: Localizer = SwerveLocalizer(
@@ -26,7 +28,7 @@ abstract class AbstractSwerveDrive @JvmOverloads constructor(
         ::getWheelVelocities,
         ::getModuleOrientations,
         trackWidth, wheelBase,
-        this, true
+        externalHeadingSensor
     )
 
     override fun setDriveSignal(driveSignal: DriveSignal) {

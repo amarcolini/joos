@@ -3,6 +3,7 @@ package com.amarcolini.joos.drive
 import com.amarcolini.joos.control.FeedforwardCoefficients
 import com.amarcolini.joos.geometry.Pose2d
 import com.amarcolini.joos.kinematics.MecanumKinematics
+import com.amarcolini.joos.localization.AngleSensor
 import com.amarcolini.joos.localization.Localizer
 import com.amarcolini.joos.localization.MecanumLocalizer
 import kotlin.jvm.JvmOverloads
@@ -19,14 +20,15 @@ abstract class AbstractMecanumDrive @JvmOverloads constructor(
     protected val feedforward: FeedforwardCoefficients,
     protected val trackWidth: Double,
     protected val wheelBase: Double = trackWidth,
-    protected val lateralMultiplier: Double = 1.0
+    protected val lateralMultiplier: Double = 1.0,
+    protected val externalHeadingSensor: AngleSensor
 ) : Drive() {
 
     override var localizer: Localizer = MecanumLocalizer(
         ::getWheelPositions,
         ::getWheelVelocities,
         trackWidth, wheelBase, lateralMultiplier,
-        this, true
+        externalHeadingSensor
     )
 
     override fun setDriveSignal(driveSignal: DriveSignal) {

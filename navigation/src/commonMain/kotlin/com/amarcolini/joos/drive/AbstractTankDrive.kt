@@ -4,6 +4,7 @@ import com.amarcolini.joos.control.FeedforwardCoefficients
 import com.amarcolini.joos.geometry.Pose2d
 import com.amarcolini.joos.kinematics.Kinematics
 import com.amarcolini.joos.kinematics.TankKinematics
+import com.amarcolini.joos.localization.AngleSensor
 import com.amarcolini.joos.localization.Localizer
 import com.amarcolini.joos.localization.TankLocalizer
 import kotlin.js.ExperimentalJsExport
@@ -18,14 +19,15 @@ import kotlin.js.JsExport
 @JsExport
 abstract class AbstractTankDrive constructor(
     protected val feedforward: FeedforwardCoefficients,
-    protected val trackWidth: Double
+    protected val trackWidth: Double,
+    protected val externalHeadingSensor: AngleSensor
 ) : Drive() {
 
     override var localizer: Localizer = TankLocalizer(
         ::getWheelPositions,
         ::getWheelVelocities,
         trackWidth,
-        this, true
+        externalHeadingSensor
     )
 
     override fun setDriveSignal(driveSignal: DriveSignal) {
