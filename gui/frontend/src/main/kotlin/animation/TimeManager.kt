@@ -24,8 +24,9 @@ object TimeManager {
     }
         private set
 
-    var duration: Double by observable(5.0) { _, _ ->
+    var duration: Double by observable(5.0) { _, newDuration ->
         animation = null
+        time = time.coerceIn(0.0, newDuration)
     }
 
     private val animationChanged_ = SetPool<(Animation<Double>?, Animation<Double>?) -> Unit>()

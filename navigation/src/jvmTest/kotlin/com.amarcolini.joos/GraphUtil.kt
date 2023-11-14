@@ -2,6 +2,7 @@ package com.amarcolini.joos
 
 import com.amarcolini.joos.path.ParametricCurve
 import com.amarcolini.joos.profile.MotionProfile
+import com.amarcolini.joos.trajectory.PathTrajectorySegment
 import com.amarcolini.joos.util.DoubleProgression
 import org.knowm.xchart.BitmapEncoder
 import org.knowm.xchart.QuickChart

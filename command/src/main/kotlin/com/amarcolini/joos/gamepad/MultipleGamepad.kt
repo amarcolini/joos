@@ -2,6 +2,8 @@ package com.amarcolini.joos.gamepad
 
 import com.amarcolini.joos.command.Component
 import com.qualcomm.robotcore.hardware.Gamepad
+import java.util.function.BooleanSupplier
+import kotlin.reflect.KProperty0
 
 /**
  * A container class that holds two gamepads for convenience.
@@ -18,4 +20,11 @@ class MultipleGamepad(
         p1.update()
         p2.update()
     }
+
+    operator fun invoke(buttons: MultipleGamepad.() -> KProperty0<Boolean>): BooleanSupplier =
+        object : BooleanSupplier {
+            private val supplier = buttons(this@MultipleGamepad)
+
+            override fun getAsBoolean(): Boolean = supplier.get()
+        }
 }

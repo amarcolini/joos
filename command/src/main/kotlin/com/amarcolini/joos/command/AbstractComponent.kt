@@ -17,7 +17,7 @@ abstract class AbstractComponent : Component {
      * The global [SuperTelemetry] instance.
      */
     @JvmField
-    protected val telem: SuperTelemetry = CommandScheduler.telemetry
+    protected val telem: SuperTelemetry = CommandScheduler.telem
 
     override fun update() {
         subcomponents.forEach { it.update() }

@@ -2,7 +2,7 @@ package com.amarcolini.joos.hardware.drive
 
 import com.amarcolini.joos.command.Component
 import com.amarcolini.joos.control.PIDCoefficients
-import com.amarcolini.joos.control.PIDFController
+import com.amarcolini.joos.control.PIDController
 import com.amarcolini.joos.drive.DriveSignal
 import com.amarcolini.joos.followers.HolonomicPIDVAFollower
 import com.amarcolini.joos.followers.TrajectoryFollower
@@ -34,7 +34,7 @@ open class DiffSwerveDrive @JvmOverloads constructor(
             leftModule.second,
             rightModule.first,
             rightModule.second
-        ).minOf { it.maxDistanceVelocity }
+        ).minOf { it.maxDistanceVelocity }, 1.0
     ),
     moduleOrientationPID: PIDCoefficients,
     translationalPID: PIDCoefficients = PIDCoefficients(4.0, 0.0, 0.5),
@@ -43,8 +43,8 @@ open class DiffSwerveDrive @JvmOverloads constructor(
 
     class Builder(private val leftModule: Pair<Motor, Motor>, private val rightModule: Pair<Motor, Motor>) {
         constructor(leftModule: MotorGroup, rightModule: MotorGroup) : this(
-            leftModule.motors[0] to leftModule.motors[1],
-            rightModule.motors[0] to rightModule.motors[1]
+            leftModule[0] to leftModule[1],
+            rightModule[0] to rightModule[1]
         )
 
         private var leftModuleAngleSensor: AngleSensor? = null
@@ -104,14 +104,14 @@ open class DiffSwerveDrive @JvmOverloads constructor(
         rightModule: MotorGroup,
         externalHeadingSensor: AngleSensor? = null,
         constraints: DiffSwerveConstraints = DiffSwerveConstraints(
-            listOf(leftModule, rightModule).minOf { it.maxDistanceVelocity }
+            listOf(leftModule, rightModule).minOf { it.maxDistanceVelocity }, 1.0
         ),
         moduleOrientationPID: PIDCoefficients,
         translationalPID: PIDCoefficients = PIDCoefficients(4.0, 0.0, 0.5),
         headingPID: PIDCoefficients = PIDCoefficients(4.0, 0.0, 0.5)
     ) : this(
-        leftModule.motors[0] to leftModule.motors[1],
-        rightModule.motors[0] to rightModule.motors[1],
+        leftModule[0] to leftModule[1],
+        rightModule[0] to rightModule[1],
         externalHeadingSensor, constraints, moduleOrientationPID, translationalPID, headingPID
     )
 
@@ -140,11 +140,11 @@ open class DiffSwerveDrive @JvmOverloads constructor(
         ::getModuleOrientations,
         { gears.map { it.distance } },
         { gears.map { it.distanceVelocity } },
-        constraints.trackWidth, externalHeadingSensor
-    )
+        constraints.trackWidth
+    ).let { if (externalHeadingSensor != null) it.addHeadingSensor(externalHeadingSensor) else it }
 
-    protected val leftModuleController = PIDFController(moduleOrientationPID)
-    protected val rightModuleController = PIDFController(moduleOrientationPID)
+    protected val leftModuleController = PIDController(moduleOrientationPID)
+    protected val rightModuleController = PIDController(moduleOrientationPID)
 
     init {
         leftModuleController.setInputBounds(-PI * 0.5, PI * 0.5)
@@ -227,15 +227,13 @@ open class DiffSwerveDrive @JvmOverloads constructor(
             if (abs((leftModuleController.targetPosition - leftOrientation.radians).wrap(-PI, PI)) <= (PI * 0.5)) 1
             else -1
         val leftControl = leftModuleController.update(leftOrientation.radians)
-        leftModule.first.setSpeed(
+        leftModule.first.setDistanceVelocity(
             leftVel * leftDirection + leftControl,
             leftAccel * leftDirection,
-            Motor.RotationUnit.UPS
         )
-        leftModule.second.setSpeed(
+        leftModule.second.setDistanceVelocity(
             -leftVel * leftDirection + leftControl,
             -leftAccel * leftDirection,
-            Motor.RotationUnit.UPS
         )
 
         val (rightVel, rightAccel) = targetSpeeds[1]
@@ -243,15 +241,13 @@ open class DiffSwerveDrive @JvmOverloads constructor(
             if (abs((rightModuleController.targetPosition - rightOrientation.radians).wrap(-PI, PI)) <= (PI * 0.5)) 1
             else -1
         val rightControl = rightModuleController.update(rightOrientation.radians)
-        rightModule.first.setSpeed(
+        rightModule.first.setDistanceVelocity(
             rightVel * rightDirection + rightControl,
             rightAccel * rightDirection,
-            Motor.RotationUnit.UPS
         )
-        rightModule.second.setSpeed(
+        rightModule.second.setDistanceVelocity(
             -rightVel * rightDirection + rightControl,
             -rightAccel * rightDirection,
-            Motor.RotationUnit.UPS
         )
 
         gears.forEach { it.update() }

@@ -30,7 +30,7 @@ open class TankDrive @JvmOverloads constructor(
         min(
             left.maxDistanceVelocity,
             right.maxDistanceVelocity
-        )
+        ), 1.0
     ),
     axialPID: PIDCoefficients = PIDCoefficients(1.0, 0.0, 0.5),
     headingPID: PIDCoefficients = PIDCoefficients(1.0, 0.0, 0.5)
@@ -55,8 +55,7 @@ open class TankDrive @JvmOverloads constructor(
         { listOf(left.distance, right.distance) },
         { listOf(left.distanceVelocity, right.distanceVelocity) },
         constraints.trackWidth,
-        externalHeadingSensor
-    )
+    ).let { if (externalHeadingSensor != null) it.addHeadingSensor(externalHeadingSensor) else it }
 
     override fun setDriveSignal(driveSignal: DriveSignal) {
         wheels.zip(
@@ -71,7 +70,7 @@ open class TankDrive @JvmOverloads constructor(
             )
         ).forEach { (motor, power) ->
             val (vel, accel) = power
-            motor.setSpeed(vel, accel, Motor.RotationUnit.UPS)
+            motor.setDistanceVelocity(vel, accel)
         }
     }
 

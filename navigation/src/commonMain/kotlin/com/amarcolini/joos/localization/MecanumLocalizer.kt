@@ -9,14 +9,13 @@ import com.amarcolini.joos.util.*
 import kotlin.jvm.JvmOverloads
 
 /**
- * Default localizer for mecanum drives based on the drive encoders and (optionally) a heading sensor.
+ * Default localizer for mecanum drives based on the drive encoders.
  *
  * @param wheelPositions wheel positions in linear distance units
  * @param wheelVelocities wheel velocities in linear distance units
  * @param trackWidth lateral distance between pairs of wheels on different sides of the robot
  * @param wheelBase distance between pairs of wheels on the same side of the robot
  * @param lateralMultiplier lateral multiplier
- * @param externalHeadingSensor An optional external heading sensor to use for heading measurement
  */
 class MecanumLocalizer @JvmOverloads constructor(
     private val wheelPositions: () -> List<Double>,
@@ -24,25 +23,22 @@ class MecanumLocalizer @JvmOverloads constructor(
     private val trackWidth: Double,
     private val wheelBase: Double = trackWidth,
     private val lateralMultiplier: Double = 1.0,
-    private val externalHeadingSensor: AngleSensor? = null
-) : Localizer {
+) : DeadReckoningLocalizer {
     private var _poseEstimate = Pose2d()
     override var poseEstimate: Pose2d
         get() = _poseEstimate
         set(value) {
             lastWheelPositions = emptyList()
-            lastExtHeading = null
-            externalHeadingSensor?.setAngle(value.heading)
             _poseEstimate = value
         }
     override var poseVelocity: Pose2d? = null
         private set
     private var lastWheelPositions = emptyList<Double>()
-    private var lastExtHeading: Angle? = null
+    override var lastRobotPoseDelta: Pose2d = Pose2d()
+        private set
 
     override fun update() {
         val wheelPositions = wheelPositions()
-        val extHeading: Angle? = externalHeadingSensor?.getAngle()
         if (lastWheelPositions.isNotEmpty()) {
             val wheelDeltas = wheelPositions
                 .zip(lastWheelPositions)
@@ -53,18 +49,14 @@ class MecanumLocalizer @JvmOverloads constructor(
                 wheelBase,
                 lateralMultiplier
             )
-            val lastExtHeading = lastExtHeading
-            val finalHeadingDelta = if (extHeading != null && lastExtHeading != null)
-                (extHeading - lastExtHeading).normDelta()
-            else robotPoseDelta.heading
             _poseEstimate = Kinematics.relativeOdometryUpdate(
                 _poseEstimate,
-                Pose2d(robotPoseDelta.vec(), finalHeadingDelta)
+                robotPoseDelta
             )
+            lastRobotPoseDelta = robotPoseDelta
         }
 
         val wheelVelocities = wheelVelocities()
-        val extHeadingVel = externalHeadingSensor?.getAngularVelocity()
         poseVelocity =
             if (wheelVelocities != null)
                 MecanumKinematics.wheelToRobotVelocities(
@@ -72,13 +64,9 @@ class MecanumLocalizer @JvmOverloads constructor(
                     trackWidth,
                     wheelBase,
                     lateralMultiplier
-                ).let {
-                    if (extHeadingVel != null) Pose2d(it.vec(), extHeadingVel)
-                    else it
-                }
+                )
             else null
 
         lastWheelPositions = wheelPositions
-        lastExtHeading = extHeading
     }
 }

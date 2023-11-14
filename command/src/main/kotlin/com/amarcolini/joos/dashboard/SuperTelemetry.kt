@@ -217,6 +217,7 @@ object SuperTelemetry {
                         lineable.items.isEmpty() && !lineable.isRetained
                     } else !lineable.isRetained
                 }
+
                 else -> !lineable.isRetained
             }
         }
@@ -241,6 +242,7 @@ object SuperTelemetry {
                     telemetries.forEach { it.addData(line.caption, line.value) }
                     packet.put(line.caption, line.value)
                 }
+
                 else -> {
                     val string = line.composed()
                     telemetries.forEach { it.addLine(string) }
@@ -357,11 +359,13 @@ object SuperTelemetry {
                     canvas.setStrokeWidth(1)
                     drawSampledPath(it.path, pathColor, resolution)
                 }
+
                 is TurnSegment -> {
                     val pose = it.start()
                     canvas.setFill(turnColor)
                     canvas.fillCircle(pose.x, pose.y, 2.0)
                 }
+
                 is WaitSegment -> {
                     val pose = it.start()
                     canvas.setStrokeWidth(1)

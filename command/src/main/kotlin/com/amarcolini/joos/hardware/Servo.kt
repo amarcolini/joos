@@ -22,7 +22,7 @@ import kotlin.math.sign
  * @param range the range of the servo
  */
 class Servo @JvmOverloads constructor(
-    private val servo: Servo,
+    servo: Servo,
     @JvmField
     val range: Angle = 300.deg,
     private val clock: NanoClock = NanoClock.system()
@@ -65,13 +65,16 @@ class Servo @JvmOverloads constructor(
         range, clock
     )
 
+    @JvmField
+    val internal = servo
+
     /**
      * Whether this servo is reversed.
      */
     var reversed: Boolean = false
         @JvmName("setReversed")
         set(value) {
-            servo.direction =
+            internal.direction =
                 if (value) Servo.Direction.REVERSE else Servo.Direction.FORWARD
             field = value
         }
@@ -86,11 +89,11 @@ class Servo @JvmOverloads constructor(
      * @see scaleRange
      */
     var angle: Angle = 0.deg
-        get() = range * servo.position
+        get() = range * internal.position
         set(value) {
             val actual = value.coerceIn(currentAngleRange.first, currentAngleRange.second)
             field = actual
-            servo.position = actual / range
+            internal.position = actual / range
         }
 
     /**
@@ -172,7 +175,7 @@ class Servo @JvmOverloads constructor(
     var position: Double = 0.0
         set(value) {
             field = value.coerceIn(0.0, 1.0)
-            servo.position = field * (currentRange.second - currentRange.first) + currentRange.first
+            internal.position = field * (currentRange.second - currentRange.first) + currentRange.first
         }
 
     /**

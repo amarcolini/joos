@@ -1,14 +1,15 @@
 package com.amarcolini.joos.drive
 
-import com.amarcolini.joos.control.FeedforwardCoefficients
+import com.amarcolini.joos.control.Feedforward
 import com.amarcolini.joos.control.PIDCoefficients
-import com.amarcolini.joos.control.PIDFController
+import com.amarcolini.joos.control.PIDController
 import com.amarcolini.joos.geometry.Angle
 import com.amarcolini.joos.geometry.Pose2d
 import com.amarcolini.joos.kinematics.DiffSwerveKinematics
 import com.amarcolini.joos.localization.AngleSensor
 import com.amarcolini.joos.localization.DiffSwerveLocalizer
 import com.amarcolini.joos.localization.Localizer
+import com.amarcolini.joos.util.rad
 import com.amarcolini.joos.util.wrap
 import kotlin.math.PI
 import kotlin.math.abs
@@ -16,23 +17,21 @@ import kotlin.math.abs
 /**
  * This class provides the basic functionality of a differential swerve drive using [DiffSwerveKinematics].
  *
- * @param feedforward motor feedforward coefficients
- * @param orientationPID module orientation PID coefficients
- * @param trackWidth lateral distance between pairs of wheels on different sides of the robot
+ * @param orientationPID Module orientation PID coefficients
+ * @param trackWidth Lateral distance between pairs of wheels on different sides of the robot.
  */
 abstract class AbstractDiffSwerveDrive(
-    protected val feedforward: FeedforwardCoefficients,
     protected val orientationPID: PIDCoefficients,
     protected val trackWidth: Double,
-    protected val externalHeadingSensor: AngleSensor,
+    protected val externalHeadingSensor: AngleSensor? = null,
 ) : Drive() {
 
     override var localizer: Localizer = DiffSwerveLocalizer.withModuleSensors(
         ::getModuleOrientations,
         ::getGearPositions,
         ::getGearVelocities,
-        trackWidth, externalHeadingSensor
-    )
+        trackWidth
+    ).let { if (externalHeadingSensor != null) it.addHeadingSensor(externalHeadingSensor) else it }
 
     override fun setDriveSignal(driveSignal: DriveSignal) {
         val (leftVel, rightVel) = DiffSwerveKinematics.robotToWheelVelocities(
@@ -57,10 +56,11 @@ abstract class AbstractDiffSwerveDrive(
     }
 
     override fun setDrivePower(drivePower: Pose2d) {
+        val actualDrivePower = drivePower.copy(heading = drivePower.heading.value.rad)
         val (leftVel, rightVel) =
-            DiffSwerveKinematics.robotToWheelVelocities(drivePower, 1.0)
+            DiffSwerveKinematics.robotToWheelVelocities(actualDrivePower, 1.0)
         val (leftOrientation, rightOrientation) =
-            DiffSwerveKinematics.robotToModuleOrientations(drivePower, 1.0)
+            DiffSwerveKinematics.robotToModuleOrientations(actualDrivePower, 1.0)
         this.leftVel = leftVel
         this.leftAccel = 0.0
         this.rightVel = rightVel
@@ -77,8 +77,8 @@ abstract class AbstractDiffSwerveDrive(
         )
     }
 
-    private val leftModuleController = PIDFController(orientationPID)
-    private val rightModuleController = PIDFController(orientationPID)
+    protected val leftModuleController = PIDController(orientationPID)
+    protected val rightModuleController = PIDController(orientationPID)
 
     init {
         leftModuleController.setInputBounds(-PI * 0.5, PI * 0.5)
@@ -114,8 +114,7 @@ abstract class AbstractDiffSwerveDrive(
             leftAccel * leftDirection, -leftAccel * leftDirection,
             rightAccel * rightDirection, -rightAccel * rightDirection
         )
-        val powers = feedforward.calculate(velocities, accelerations)
-        setMotorPowers(powers[0], powers[1], powers[2], powers[3])
+        setWheelVelocities(velocities, accelerations)
     }
 
     /**
@@ -127,6 +126,12 @@ abstract class AbstractDiffSwerveDrive(
         topRight: Double,
         bottomRight: Double
     )
+
+    /**
+     * Sets the wheel velocities (and accelerations) of each motor, in distance units per second. Velocities and accelerations
+     * match the ordering in [setMotorPowers].
+     */
+    abstract fun setWheelVelocities(velocities: List<Double>, accelerations: List<Double>)
 
     /**
      * Returns the total rotation the gears. Angles should exactly match the ordering in

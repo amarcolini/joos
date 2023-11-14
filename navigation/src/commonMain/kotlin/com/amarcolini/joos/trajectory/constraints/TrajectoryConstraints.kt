@@ -32,25 +32,12 @@ data class MecanumConstraints @JvmOverloads constructor(
     @JvmField val trackWidth: Double,
     @JvmField val wheelBase: Double,
     @JvmField val lateralMultiplier: Double,
-    @JvmField val maxVel: Double,
-    @JvmField val maxAccel: Double,
+    @JvmField val maxVel: Double = 30.0,
+    @JvmField val maxAccel: Double = 30.0,
     override val maxAngVel: Angle = 180.deg,
     override val maxAngAccel: Angle = 180.deg,
     override val maxAngJerk: Angle = 0.deg
 ) : TrajectoryConstraints {
-    @JvmOverloads
-    constructor(
-        trackWidth: Double = 1.0,
-        wheelBase: Double = trackWidth,
-        lateralMultiplier: Double = 1.0,
-        maxVel: Double = 30.0,
-        maxAccel: Double = 30.0,
-        maxAngVel: Angle = 180.deg,
-        maxAngAccel: Angle = 180.deg,
-        maxAngJerk: Angle = 0.deg
-    ) : this(
-        0.0, trackWidth, wheelBase, lateralMultiplier, maxVel, maxAccel, maxAngVel, maxAngAccel, maxAngJerk
-    )
 
     @Transient
     override val velConstraint = MinVelocityConstraint(
@@ -101,24 +88,12 @@ data class GenericConstraints @JvmOverloads constructor(
 data class TankConstraints @JvmOverloads constructor(
     @JvmField val maxWheelVel: Double,
     @JvmField val trackWidth: Double,
-    @JvmField val maxVel: Double,
-    @JvmField val maxAccel: Double,
+    @JvmField val maxVel: Double = 30.0,
+    @JvmField val maxAccel: Double = 30.0,
     override val maxAngVel: Angle = 180.deg,
     override val maxAngAccel: Angle = 180.deg,
     override val maxAngJerk: Angle = 0.deg
 ) : TrajectoryConstraints {
-    @JvmOverloads
-    @JsName("forMotors")
-    constructor(
-        trackWidth: Double = 1.0,
-        maxVel: Double = 30.0,
-        maxAccel: Double = 30.0,
-        maxAngVel: Angle = 180.deg,
-        maxAngAccel: Angle = 180.deg,
-        maxAngJerk: Angle = 0.deg
-    ) : this(
-        0.0, trackWidth, maxVel, maxAccel, maxAngVel, maxAngAccel, maxAngJerk
-    )
 
     @Transient
     override val velConstraint = MinVelocityConstraint(
@@ -143,24 +118,12 @@ data class SwerveConstraints @JvmOverloads constructor(
     @JvmField val maxWheelVel: Double,
     @JvmField val trackWidth: Double,
     @JvmField val wheelBase: Double,
-    @JvmField val maxVel: Double,
-    @JvmField val maxAccel: Double,
+    @JvmField val maxVel: Double = 30.0,
+    @JvmField val maxAccel: Double = 30.0,
     override val maxAngVel: Angle = 180.deg,
     override val maxAngAccel: Angle = 180.deg,
     override val maxAngJerk: Angle = 0.deg
 ) : TrajectoryConstraints {
-    @JvmOverloads
-    constructor(
-        trackWidth: Double = 1.0,
-        wheelBase: Double = trackWidth,
-        maxVel: Double = 30.0,
-        maxAccel: Double = 30.0,
-        maxAngVel: Angle = 180.deg,
-        maxAngAccel: Angle = 180.deg,
-        maxAngJerk: Angle = 0.deg
-    ) : this(
-        0.0, trackWidth, wheelBase, maxVel, maxAccel, maxAngVel, maxAngAccel, maxAngJerk
-    )
 
     @Transient
     override val velConstraint = MinVelocityConstraint(
@@ -184,23 +147,12 @@ data class SwerveConstraints @JvmOverloads constructor(
 data class DiffSwerveConstraints @JvmOverloads constructor(
     @JvmField val maxGearVel: Double,
     @JvmField val trackWidth: Double,
-    @JvmField val maxVel: Double,
-    @JvmField val maxAccel: Double,
+    @JvmField val maxVel: Double = 30.0,
+    @JvmField val maxAccel: Double = 30.0,
     override val maxAngVel: Angle = 180.deg,
     override val maxAngAccel: Angle = 180.deg,
     override val maxAngJerk: Angle = 0.deg
 ) : TrajectoryConstraints {
-    @JvmOverloads
-    constructor(
-        trackWidth: Double = 1.0,
-        maxVel: Double = 30.0,
-        maxAccel: Double = 30.0,
-        maxAngVel: Angle = 180.deg,
-        maxAngAccel: Angle = 180.deg,
-        maxAngJerk: Angle = 0.deg
-    ) : this(
-        0.0, trackWidth, maxVel, maxAccel, maxAngVel, maxAngAccel, maxAngJerk
-    )
 
     override val velConstraint: TrajectoryVelocityConstraint = MinVelocityConstraint(
         listOf(

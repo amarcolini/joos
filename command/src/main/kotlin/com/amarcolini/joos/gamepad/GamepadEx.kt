@@ -3,6 +3,8 @@ package com.amarcolini.joos.gamepad
 import com.amarcolini.joos.command.Component
 import com.amarcolini.joos.geometry.Vector2d
 import com.qualcomm.robotcore.hardware.Gamepad
+import java.util.function.BooleanSupplier
+import kotlin.reflect.KProperty0
 
 /**
  * A class that simplifies the use of [Gamepad]s.
@@ -172,6 +174,13 @@ class GamepadEx(gamepad: Gamepad) : Component {
     fun justDeactivated(button: GamepadButton) = getButton(button).justDeactivated
 
     fun justChanged(button: GamepadButton) = getButton(button).justChanged
+
+    operator fun invoke(buttons: GamepadEx.() -> KProperty0<Boolean>): BooleanSupplier =
+        object : BooleanSupplier {
+            private val supplier = buttons(this@GamepadEx)
+
+            override fun getAsBoolean(): Boolean = supplier.get()
+        }
 
     fun getLeftStick() = Vector2d(
         internal.left_stick_x.toDouble(),

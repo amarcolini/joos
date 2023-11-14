@@ -1,9 +1,8 @@
 package com.amarcolini.joos.hardware
 
-import com.amarcolini.joos.command.Command
-import com.amarcolini.joos.command.Command.Companion.emptyCommand
 import com.amarcolini.joos.command.Component
-import com.amarcolini.joos.control.FeedforwardCoefficients
+import com.amarcolini.joos.control.DCMotorFeedforward
+import com.amarcolini.joos.control.Feedforward
 import com.amarcolini.joos.control.PIDCoefficients
 import com.amarcolini.joos.geometry.Angle
 import com.amarcolini.joos.hardware.Motor.RunMode
@@ -12,7 +11,7 @@ import com.qualcomm.robotcore.hardware.HardwareMap
 /**
  * A class that runs multiple motors together as a unit.
  */
-class MotorGroup(vararg val motors: Motor) : Component {
+class MotorGroup(private vararg val motors: Motor) : Component, List<Motor> by motors.toList() {
     /**
      * Constructs a motor group out of several motor groups.
      */
@@ -32,11 +31,11 @@ class MotorGroup(vararg val motors: Motor) : Component {
 
     /**
      * @param hMap the hardware map from the OpMode
-     * @param kind the kind of all the motors
+     * @param type the kind of all the motors
      * @param ids the device ids from the RC config
      */
-    constructor(hMap: HardwareMap, kind: Motor.Kind, vararg ids: String) : this(
-        *ids.map { Motor(hMap, it, kind.maxRPM, kind.TPR) }.toTypedArray()
+    constructor(hMap: HardwareMap, type: Motor.Type, vararg ids: String) : this(
+        *ids.map { Motor(hMap, it, type.maxRPM, type.TPR) }.toTypedArray()
     )
 
     /**
@@ -53,87 +52,12 @@ class MotorGroup(vararg val motors: Motor) : Component {
 
     /**
      * @param hMap the hardware map from the OpMode
-     * @param kind the kind of all the motors
+     * @param type the kind of all the motors
      * @param ids the device ids from the RC config and whether those motors should be reversed
      */
     @SafeVarargs
-    constructor(hMap: HardwareMap, kind: Motor.Kind, vararg ids: Pair<String, Boolean>) : this(
-        hMap, kind.maxRPM, kind.TPR, *ids
-    )
-
-    /**
-     * @param hMap the hardware map from the OpMode
-     * @param kind the kind of all the motors
-     * @param wheelRadius the radius of the wheels each motor is turning
-     * @param gearRatio the gear ratio from the output shaft to the wheel each motor is turning
-     * @param ids the device ids from the RC config and whether those motors should be reversed
-     */
-    @JvmOverloads
-    @SafeVarargs
-    constructor(
-        hMap: HardwareMap,
-        kind: Motor.Kind,
-        wheelRadius: Double,
-        gearRatio: Double = 1.0,
-        vararg ids: Pair<String, Boolean>
-    ) : this(hMap, kind.maxRPM, kind.TPR, wheelRadius, gearRatio, *ids)
-
-    /**
-     * @param hMap the hardware map from the OpMode
-     * @param kind the kind of all the motors
-     * @param wheelRadius the radius of the wheels each motor is turning
-     * @param gearRatio the gear ratio from the output shaft to the wheel each motor is turning
-     * @param ids the device ids from the RC config
-     */
-    @JvmOverloads
-    constructor(
-        hMap: HardwareMap,
-        kind: Motor.Kind,
-        wheelRadius: Double,
-        gearRatio: Double = 1.0,
-        vararg ids: String
-    ) : this(hMap, kind.maxRPM, kind.TPR, wheelRadius, gearRatio, *ids)
-
-    /**
-     * @param hMap the hardware map from the OpMode
-     * @param maxRPM the revolutions per minute of all the motors
-     * @param TPR the ticks per revolution of all the motors
-     * @param wheelRadius the radius of the wheels each motor is turning
-     * @param gearRatio the gear ratio from the output shaft to the wheel each motor is turning
-     * @param ids the device ids from the RC config
-     */
-    @JvmOverloads
-    constructor(
-        hMap: HardwareMap,
-        maxRPM: Double,
-        TPR: Double = 1.0,
-        wheelRadius: Double,
-        gearRatio: Double,
-        vararg ids: String,
-    ) : this(
-        *ids.map { Motor(hMap, it, maxRPM, TPR, wheelRadius, gearRatio) }.toTypedArray()
-    )
-
-    /**
-     * @param hMap the hardware map from the OpMode
-     * @param maxRPM the revolutions per minute of all the motors
-     * @param TPR the ticks per revolution of all the motors
-     * @param wheelRadius the radius of the wheels each motor is turning
-     * @param gearRatio the gear ratio from the output shaft to the wheel each motor is turning
-     * @param ids the device ids from the RC config and whether those motors should be reversed
-     */
-    @JvmOverloads
-    @SafeVarargs
-    constructor(
-        hMap: HardwareMap,
-        maxRPM: Double,
-        TPR: Double = 1.0,
-        wheelRadius: Double,
-        gearRatio: Double,
-        vararg ids: Pair<String, Boolean>,
-    ) : this(
-        *ids.map { Motor(hMap, it.first, maxRPM, TPR, wheelRadius, gearRatio).apply { reversed = it.second } }
-            .toTypedArray()
+    constructor(hMap: HardwareMap, type: Motor.Type, vararg ids: Pair<String, Boolean>) : this(
+        hMap, type.maxRPM, type.TPR, *ids
     )
 
     private val states = motors.associateWith { it.reversed }
@@ -161,15 +85,60 @@ class MotorGroup(vararg val motors: Motor) : Component {
     val rotation: List<Angle> get() = motors.map { it.rotation }
 
     /**
+     * The average currentPosition that all motors in the group have travelled.
+     * @see velocity
+     * @see getPositions
+     */
+    val currentPosition: Double get() = getPositions().average()
+
+    /**
+     * The currentPosition that each motor in the group has travelled.
+     * @see velocity
+     * @see currentPosition
+     * @see getVelocities
+     */
+    fun getPositions() = motors.map { it.currentPosition }
+
+    /**
+     * The average velocity of all motors in the group.
+     */
+    val velocity: Double get() = getVelocities().average()
+
+    /**
+     * The velocity of each motor in the group.
+     * @see velocity
+     * @see currentPosition
+     * @see getPositions
+     */
+    fun getVelocities() = motors.map { it.velocity }
+
+    /**
      * The average distance that all motors in the group have travelled.
      * @see distanceVelocity
+     * @see getDistances
      */
-    val distance: Double get() = motors.map { it.distance }.average()
+    val distance: Double get() = getDistances().average()
+
+    /**
+     * The distance that each motor in the group has travelled.
+     * @see distanceVelocity
+     * @see distance
+     * @see getDistanceVelocities
+     */
+    fun getDistances() = motors.map { it.distance }
 
     /**
      * The average distance velocity of all motors in the group.
      */
-    val distanceVelocity: Double get() = motors.map { it.distanceVelocity }.average()
+    val distanceVelocity: Double get() = getDistanceVelocities().average()
+
+    /**
+     * The distance velocity of each motor in the group.
+     * @see distanceVelocity
+     * @see distance
+     * @see getDistances
+     */
+    fun getDistanceVelocities() = motors.map { it.distanceVelocity }
 
     /**
      * Whether the motor group is reversed.
@@ -197,163 +166,152 @@ class MotorGroup(vararg val motors: Motor) : Component {
     }
 
     /**
-     * Sets the speed of the motor.
+     * Sets the velocity/accleration of all motors in encoder ticks per second.
      *
      * *Note*: Because of physical constraints, motors may move at different speeds.
      *
-     * @param velocity the velocity to set
-     * @param acceleration the acceleration to set
-     * @param unit the units [velocity] and [acceleration] are expressed in (revolutions per minute by default)
+     * @param velocity The velocity to set.
+     * @param acceleration The acceleration to set.
      */
     @JvmOverloads
-    fun setSpeed(
-        velocity: Double,
-        acceleration: Double = 0.0,
-        unit: Motor.RotationUnit = Motor.RotationUnit.RPM
-    ): Unit = motors.forEach { it.setSpeed(velocity, acceleration, unit) }
+    fun setTickVelocity(velocity: Double, acceleration: Double = 0.0) =
+        motors.forEach { it.setTickVelocity(velocity, acceleration) }
 
     /**
-     * Sets the percentage of power/velocity of the motor group in the range `[-1.0, 1.0]`.
+     * Sets the velocities/accelerations of each motor in encoder ticks per second.
+     *
+     * *Note*: Because of physical constraints, motors may move at different speeds.
+     *
+     * @param velocities The velocities for each motor.
+     * @param accelerations The accelerations for each motor.
+     */
+    @JvmOverloads
+    fun setTickVelocities(velocities: List<Double>, accelerations: List<Double> = emptyList()) =
+        motors.forEachIndexed { i, motor ->
+            velocities.getOrNull(i)?.let { motor.setTickVelocity(it, accelerations.getOrElse(i) { 0.0 }) }
+        }
+
+    /**
+     * Sets the velocity/acceleration of all motors in distance units per second.
+     *
+     * *Note*: Because of physical constraints, motors may move at different speeds.
+     *
+     * @param velocity The velocity to set.
+     * @param acceleration The acceleration to set.
+     */
+    @JvmOverloads
+    fun setDistanceVelocity(velocity: Double, acceleration: Double = 0.0) =
+        motors.forEach { it.setDistanceVelocity(velocity, acceleration) }
+
+    /**
+     * Sets the velocities/accelerations of each motor in encoder ticks per second.
+     *
+     * *Note*: Because of physical constraints, motors may move at different speeds.
+     *
+     * @param velocities The velocities for each motor.
+     * @param accelerations The accelerations for each motor.
+     */
+    @JvmOverloads
+    fun setDistanceVelocities(velocities: List<Double>, accelerations: List<Double> = emptyList()) =
+        motors.forEachIndexed { i, motor ->
+            velocities.getOrNull(i)?.let { motor.setDistanceVelocity(it, accelerations.getOrElse(i) { 0.0 }) }
+        }
+
+    /**
+     * Sets the velocity of all motors in revolutions per second.
+     *
+     * *Note*: Because of physical constraints, motors may move at different speeds.
+     *
+     * @param rpm The revolutions per second to set.
+     */
+    fun setRPM(rpm: Double) = motors.forEach { it.setRPM(rpm) }
+
+    /**
+     * Sets the percentage of power/velocity of all motors in the range `[-1.0, 1.0]`.
      *
      * *Note*: Since power is expressed as a percentage, motors may move at different speeds.
      */
     fun setPower(power: Double): Unit = motors.forEach { it.power = power }
 
+    /**
+     * Sets the percentage of power/velocity of each motor in the range `[-1.0, 1.0]`.
+     *
+     * *Note*: Since power is expressed as a percentage, motors may move at different speeds.
+     */
+    fun setPowers(powers: List<Double>): Unit = motors.zip(powers).forEach { (motor, power) -> motor.power = power }
+
+    /**
+     * Returns the previously set zero power behavior. Note that this may not accurately reflect the actual zero
+     * power behavior of all the motors, since they are independent of each other.
+     */
     var zeroPowerBehavior: Motor.ZeroPowerBehavior = Motor.ZeroPowerBehavior.FLOAT
+        /**
+         * Sets the distance per tick of all the motors in the group.
+         */
         set(value) {
             motors.forEach { it.zeroPowerBehavior = value }
             field = value
         }
 
+    /**
+     * Returns the previously set run mode. Note that this may not accurately reflect the actual run mode
+     * of all the motors, since they are independent of each other.
+     */
     var runMode: RunMode = RunMode.RUN_WITHOUT_ENCODER
+        /**
+         * Sets the distance per tick of all the motors in the group.
+         */
         set(value) {
             motors.forEach { it.runMode = value }
             field = value
         }
 
     /**
-     * PID coefficients used in [RunMode.RUN_USING_ENCODER].
+     * Returns the previously set PID coefficients. Note that this may not accurately reflect the actual coefficients
+     * of all the motors, since they are independent of each other.
      */
     var veloCoefficients: PIDCoefficients = PIDCoefficients(1.0)
+        /**
+         * Sets the distance per tick of all the motors in the group.
+         */
         set(value) {
             motors.forEach { it.veloCoefficients = value }
             field = value
         }
 
     /**
-     * PID coefficients used in [RunMode.RUN_TO_POSITION].
+     * Returns the previously set feedforward. Note that this may not accurately reflect the actual feedforward
+     * of all the motors, since they are independent of each other.
      */
-    var positionCoefficients: PIDCoefficients = PIDCoefficients(1.0)
+    var feedforward: Feedforward = DCMotorFeedforward(1 / maxTPS)
+        /**
+         * Sets the feedforward of all the motors in the group.
+         */
         set(value) {
-            motors.forEach { it.positionCoefficients = value }
+            motors.forEach { it.feedforward = value }
             field = value
         }
 
     /**
-     * Feedforward coefficients used in both [RunMode.RUN_USING_ENCODER] and [RunMode.RUN_WITHOUT_ENCODER].
+     * Returns the previously set distance per tick. Note that this may not accurately reflect the actual distance
+     * per tick of all the motors, since they are independent of each other.
      */
-    var feedforwardCoefficients: FeedforwardCoefficients = FeedforwardCoefficients(1 / maxDistanceVelocity)
+    var distancePerTick: Double = 1.0
+        /**
+         * Sets the distance per tick of all the motors in the group.
+         */
         set(value) {
-            motors.forEach { it.feedforwardCoefficients = value }
+            motors.forEach { it.distancePerTick = value }
             field = value
         }
-
-    /**
-     * The target position used by [RunMode.RUN_TO_POSITION].
-     */
-    var targetPosition: Int = 0
-        set(value) {
-            motors.forEach { it.targetPosition = value }
-            field = value
-        }
-
-    /**
-     * Sets [targetPosition] with the target [angle].
-     */
-    fun setTargetAngle(angle: Angle) {
-        motors.forEach { it.setTargetAngle(angle) }
-    }
-
-    /**
-     * Sets [targetPosition] with the target [angle], where [angle] is in [Angle.defaultUnits].
-     */
-    fun setTargetAngle(angle: Double) = setTargetAngle(Angle(angle))
-
-    /**
-     * Sets [targetPosition] with the target [distance].
-     */
-    fun setTargetDistance(distance: Double) {
-        motors.forEach { it.setTargetDistance(distance) }
-    }
-
-
-    /**
-     * The position error considered tolerable for [RunMode.RUN_TO_POSITION] to be considered at the set point.
-     */
-    var positionTolerance: Int = 10
-        set(value) {
-            motors.forEach { it.positionTolerance = value }
-            field = value
-        }
-
-    /**
-     * Returns a command that runs all the motors in the group until
-     * all of them have reached the desired [position].
-     */
-    fun goToPosition(position: Int): Command = emptyCommand()
-        .onInit {
-            runMode = RunMode.RUN_TO_POSITION
-            targetPosition = position
-        }
-        .requires(this)
-        .runUntil { !isBusy() }
-        .onEnd { setSpeed(0.0) }
-
-    /**
-     * Returns a command that runs all the motors in the group until
-     * all of them have reached the desired [distance].
-     */
-    fun goToDistance(distance: Double): Command = emptyCommand()
-        .onInit {
-            runMode = RunMode.RUN_TO_POSITION
-            setTargetDistance(distance)
-        }
-        .requires(this)
-        .runUntil { !isBusy() }
-        .onEnd { setSpeed(0.0) }
-
-    /**
-     * Returns a command that runs all the motors in the group until
-     * all of them have reached the desired [angle].
-     */
-    fun goToAngle(angle: Angle): Command = emptyCommand()
-        .onInit {
-            runMode = RunMode.RUN_TO_POSITION
-            setTargetAngle(angle)
-        }
-        .requires(this)
-        .runUntil { !isBusy() }
-        .onEnd { setSpeed(0.0) }
-
-    /**
-     * Returns a command that runs all the motors in the group until
-     * all of them have reached the desired [angle], where [angle] is
-     * in [Angle.defaultUnits].
-     */
-    fun goToAngle(angle: Double): Command = goToAngle(Angle(angle))
 
     /**
      * Resets the encoders of all the motors in the group.
      */
-    fun resetEncoder(): Unit = motors.forEach { it.resetEncoder() }
+    fun resetEncoders(): Unit = motors.forEach { it.resetEncoder() }
 
     /**
-     * Returns whether any of the motors in the group are currently moving towards the desired setpoint using [RunMode.RUN_TO_POSITION].
-     */
-    fun isBusy(): Boolean = motors.any { it.isBusy() }
-
-    /**
-     * Updates both [RunMode.RUN_USING_ENCODER] and [RunMode.RUN_TO_POSITION]. Running this method is
+     * Updates [RunMode.RUN_USING_ENCODER]. Running this method is
      * not necessary for [RunMode.RUN_WITHOUT_ENCODER].
      */
     override fun update() {

@@ -1,9 +1,7 @@
 package com.amarcolini.joos.control
 
 import com.amarcolini.joos.util.epsilonEquals
-import kotlin.js.ExperimentalJsExport
 import kotlin.js.JsExport
-import kotlin.js.JsName
 import kotlin.jvm.JvmField
 import kotlin.jvm.JvmOverloads
 import kotlin.math.sign
@@ -15,31 +13,19 @@ import kotlin.math.sign
  * @param kStatic additive constant
  */
 @JsExport
-data class FeedforwardCoefficients @JvmOverloads constructor(
+data class DCMotorFeedforward @JvmOverloads constructor(
     @JvmField var kV: Double = 0.0,
     @JvmField var kA: Double = 0.0,
     @JvmField var kStatic: Double = 0.0
-) {
-    /**
-     * Computes the motor feedforward (i.e., open loop powers) for the given set of coefficients.
-     */
-    @JsName("calculateMultiple")
-    fun calculate(
-        vels: List<Double>,
-        accels: List<Double>
-    ) =
-        vels.zip(accels)
-            .map { (vel, accel) -> calculate(vel, accel) }
-
+) : Feedforward() {
     /**
      * Computes the motor feedforward (i.e., open loop power) for the given set of coefficients
      * on top of the given base output.
      */
-    @JvmOverloads
-    fun calculate(
+    override fun calculate(
         vel: Double,
         accel: Double,
-        base: Double = 0.0
+        base: Double
     ): Double {
         val basePower = vel * kV + accel * kA + base
         return if (basePower epsilonEquals 0.0) 0.0

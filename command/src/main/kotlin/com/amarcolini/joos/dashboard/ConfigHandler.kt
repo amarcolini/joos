@@ -3,8 +3,6 @@ package com.amarcolini.joos.dashboard
 import android.content.Context
 import android.util.Log
 import com.acmerobotics.dashboard.FtcDashboard
-import com.acmerobotics.dashboard.config.reflection.FieldProvider
-import com.acmerobotics.dashboard.config.variable.BasicVariable
 import com.acmerobotics.dashboard.config.variable.ConfigVariable
 import com.acmerobotics.dashboard.config.variable.CustomVariable
 import com.acmerobotics.dashboard.config.variable.VariableType
@@ -15,7 +13,6 @@ import com.qualcomm.ftccommon.FtcEventLoop
 import org.firstinspires.ftc.ftccommon.external.OnCreateEventLoop
 import java.lang.reflect.Field
 import java.lang.reflect.Method
-import java.lang.reflect.Modifier
 import kotlin.reflect.*
 import kotlin.reflect.full.*
 import kotlin.reflect.jvm.jvmErasure
@@ -44,6 +41,9 @@ object ConfigHandler {
     private val mutableConfigProviders: List<MutableProviderData<Any?>>
     private val immutableConfigProviders: List<ImmutableProviderData<Any?>>
 
+    fun getLogs(): List<String> = logs
+    private val logs = ArrayList<String>()
+
     init {
         var kotlin: List<Pair<String, KProperty0<Any>>>? = null
         var java: List<Pair<String, Field>>? = null
@@ -64,6 +64,7 @@ object ConfigHandler {
         try {
             val resultClass = Class.forName("com.amarcolini.joos.dashboard.ConfigResults")
             val isKotlin = resultClass.getDeclaredField("isKotlin").get(null) as Boolean
+            logs += "isKotlin: $isKotlin"
             val resultList = resultClass.getDeclaredMethod("getResults").invoke(null)
             if (isKotlin) {
                 kotlin = resultList as List<Pair<String, KProperty0<Any>>>
@@ -103,7 +104,8 @@ object ConfigHandler {
                     .invoke(null) as List<Method>).map { method ->
                     ImmutableProviderData(
                         method::invoke as (() -> Any?, (Any?) -> Unit) -> ConfigVariable<*>,
-                        method.annotations.filterIsInstance<ImmutableConfigProvider>().getOrNull(0)?.priority ?: throw IllegalStateException(
+                        method.annotations.filterIsInstance<ImmutableConfigProvider>().getOrNull(0)?.priority
+                            ?: throw IllegalStateException(
                                 "Config providers should have the ConfigProvider annotation."
                             ),
                     ) { method.returnType.isAssignableFrom(it.jvmErasure.java) }
@@ -148,6 +150,7 @@ object ConfigHandler {
                     if (property !is KMutableProperty<*> || property.setter.visibility != KVisibility.PUBLIC) null
                     else ConfigUtils.createVariable(property as KMutableProperty1<Any, *>, parent)
                 }
+
                 VariableType.CUSTOM -> {
                     val providedConfig = mutableConfigProviders.filter {
                         it.isType(property.returnType)
@@ -172,6 +175,7 @@ object ConfigHandler {
                     }
                     customVariable
                 }
+
                 else -> throw RuntimeException(
                     "Unsupported field type: ${propertyClass.qualifiedName}"
                 )
@@ -214,12 +218,14 @@ object ConfigHandler {
             val rootVariable = configRoot.getVariable(group) as? CustomVariable ?: CustomVariable().also {
                 configRoot.putVariable(group, it)
             }
+            logs += "dealing with variable of type ${property.returnType}"
             val type = VariableType.fromClass(property.returnType.jvmErasure.java)
             val variable =
                 if (property is KMutableProperty0<*> && type != VariableType.CUSTOM) ConfigUtils.createVariable(
                     property
-                )
-                else if (property.returnType.hasAnnotation<Immutable>() && property is KMutableProperty0<*>) {
+                ).also { logs += "simple variable" }
+                else if (property.returnType.jvmErasure.hasAnnotation<Immutable>() && property is KMutableProperty0<*>) {
+                    logs += "immutable object (mutable variable)"
                     fun parse(type: KType, getter: () -> Any?, setter: (Any?) -> Unit): ConfigVariable<*>? {
                         val providedConfig = immutableConfigProviders.filter {
                             it.isType(type)
@@ -255,15 +261,19 @@ object ConfigHandler {
                                     Long::class.createType() -> addVariable(
                                         { (it as Long).toDouble() },
                                         { it.toLong() })
+
                                     Float::class.createType() -> addVariable(
                                         { (it as Float).toDouble() },
                                         { it.toFloat() })
+
                                     Short::class.createType() -> addVariable(
                                         { (it as Short).toInt() },
                                         { it.toShort() })
+
                                     Byte::class.createType() -> addVariable(
                                         { (it as Byte).toInt() },
                                         { it.toByte() })
+
                                     Int::class.createType() -> addVariable<Int>()
                                     Double::class.createType() -> addVariable<Double>()
                                     String::class.createType() -> addVariable<String>()
@@ -290,7 +300,10 @@ object ConfigHandler {
                         return null
                     }
                     parse(property.returnType, property.getter, property.setter as (Any?) -> Unit)
-                } else parse(property.get())
+                } else parse(property.get()).also {
+                    logs += "mutable object (immutable variable)"
+                    logs += "annotations: ${property.annotations}"
+                }
             if (variable != null) {
                 rootVariable.putVariable(property.name, variable)
             }

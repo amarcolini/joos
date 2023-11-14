@@ -32,7 +32,7 @@ interface CommandInterface {
      *
      * @see CommandScheduler.schedulePolicy
      */
-    fun schedule(vararg runnables: Runnable): Boolean = CommandScheduler.schedule(*runnables)
+    fun schedule(runnable: Runnable): Boolean = CommandScheduler.schedule(runnable)
 
     /**
      * Schedules commands for execution.

@@ -15,7 +15,6 @@ repositories {
 }
 
 tasks.withType<Test> {
-    useJUnitPlatform()
     testLogging {
         events("passed", "skipped", "failed")
     }
@@ -31,20 +30,20 @@ dependencies {
     implementation("org.jetbrains.kotlin:kotlin-reflect:${Versions.kotlin}")
 
     implementation("org.apache.commons:commons-math3:3.6.1")
-    compileOnly("org.firstinspires.ftc:RobotCore:8.1.1")
-    compileOnly("org.firstinspires.ftc:Hardware:8.1.1")
-    compileOnly("org.firstinspires.ftc:FtcCommon:8.1.1")
-    api("com.acmerobotics.dashboard:dashboard:0.4.9") {
+    compileOnly("org.firstinspires.ftc:RobotCore:${Versions.ftc}")
+    compileOnly("org.firstinspires.ftc:Hardware:${Versions.ftc}")
+    compileOnly("org.firstinspires.ftc:FtcCommon:${Versions.ftc}")
+    api("com.acmerobotics.dashboard:dashboard:0.4.12") {
         exclude(group = "org.firstinspires.ftc")
     }
     api(project(":navigation"))
-    implementation(project(":command:annotation"))
+    api(project(":command:annotation"))
 
-    testImplementation("org.junit.jupiter:junit-jupiter-api:5.9.0")
-    testRuntimeOnly("org.junit.jupiter:junit-jupiter-engine:5.9.0")
-    testImplementation("org.firstinspires.ftc:RobotCore:8.1.1")
-    testImplementation("org.firstinspires.ftc:Hardware:8.1.1")
-    testImplementation("org.firstinspires.ftc:FtcCommon:8.1.1")
+    testImplementation("junit:junit:4.13.2")
+    testImplementation("org.firstinspires.ftc:RobotCore:${Versions.ftc}")
+    testImplementation("org.firstinspires.ftc:Hardware:${Versions.ftc}")
+    testImplementation("org.firstinspires.ftc:FtcCommon:${Versions.ftc}")
+    testImplementation("org.robolectric:robolectric:4.10.3")
 
     testImplementation("org.knowm.xchart:xchart:3.8.2")
 }

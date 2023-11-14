@@ -1,13 +1,12 @@
 package com.amarcolini.joos.followers
 
 import com.amarcolini.joos.control.PIDCoefficients
-import com.amarcolini.joos.control.PIDFController
+import com.amarcolini.joos.control.PIDController
 import com.amarcolini.joos.drive.DriveSignal
 import com.amarcolini.joos.geometry.Pose2d
 import com.amarcolini.joos.kinematics.Kinematics
 import com.amarcolini.joos.trajectory.Trajectory
 import com.amarcolini.joos.util.NanoClock
-import kotlin.js.ExperimentalJsExport
 import kotlin.js.JsExport
 import kotlin.jvm.JvmOverloads
 import kotlin.math.sign
@@ -32,8 +31,8 @@ class TankPIDVAFollower @JvmOverloads constructor(
     timeout: Double = 0.0,
     clock: NanoClock = NanoClock.system()
 ) : TrajectoryFollower(admissibleError, timeout, clock) {
-    private val axialController = PIDFController(axialCoeffs)
-    private val crossTrackController = PIDFController(crossTrackCoeffs)
+    private val axialController = PIDController(axialCoeffs)
+    private val crossTrackController = PIDController(crossTrackCoeffs)
 
     override var lastError: Pose2d = Pose2d()
 

@@ -20,6 +20,9 @@ import io.nacular.doodle.core.View
 import io.nacular.doodle.drawing.Color
 import io.nacular.doodle.drawing.lighter
 import io.nacular.doodle.drawing.paint
+import io.nacular.doodle.event.KeyCode
+import io.nacular.doodle.event.KeyEvent
+import io.nacular.doodle.event.KeyListener
 import io.nacular.doodle.geometry.Size
 import io.nacular.doodle.layout.HorizontalFlowLayout
 import io.nacular.doodle.layout.Insets
@@ -102,10 +105,12 @@ object Settings : View() {
                         setShowTrajectory(false)
                         DraggableTrajectory.mode = DraggableTrajectory.Mode.EditPath
                     }
+
                     1 -> {
                         setShowTrajectory(false)
                         DraggableTrajectory.mode = DraggableTrajectory.Mode.EditHeading
                     }
+
                     2 -> {
                         DraggableTrajectory.disableEditing()
                         val trajectory: Trajectory? = DraggableTrajectory.currentTrajectory
@@ -137,6 +142,7 @@ object Settings : View() {
                             TimeManager.stop()
                             "Start"
                         }
+
                         else -> {
                             TimeManager.play()
                             TimeManager.animation?.completed?.plusAssign {
@@ -157,10 +163,20 @@ object Settings : View() {
                 initialValue,
                 1,
                 false,
-                setter
+                {}
             ).apply {
-                insets = Insets(2.0)
-                width = 70.0
+//                this.insets = Insets(2.0)
+                this.width = 70.0
+                this.focusChanged += { _, _, new ->
+                    if (!new) setter(this.value)
+                }
+                this.keyChanged += object : KeyListener {
+                    override fun pressed(event: KeyEvent) {
+                        if (event.code == KeyCode.Enter || event.code == KeyCode.NumpadEnter) {
+                            setter(this@apply.value)
+                        }
+                    }
+                }
             }
         }
 

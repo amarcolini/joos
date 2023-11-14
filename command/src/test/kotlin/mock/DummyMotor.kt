@@ -1,3 +1,5 @@
+package mock
+
 import com.amarcolini.joos.util.NanoClock
 import com.qualcomm.robotcore.hardware.*
 import com.qualcomm.robotcore.hardware.configuration.typecontainers.MotorConfigurationType
@@ -13,7 +15,7 @@ class DummyMotor(
     private val kV: Double = 1.0,
     private val kA: Double = Double.POSITIVE_INFINITY,
     private val kStatic: Double = 0.0,
-    private val clock: NanoClock = NanoClock.system()
+    private val clock: NanoClock = DummyClock
 ) : DcMotorEx {
     override fun getManufacturer(): HardwareDevice.Manufacturer = HardwareDevice.Manufacturer.Other
     override fun getDeviceName() = "dummy"
@@ -74,13 +76,13 @@ class DummyMotor(
 
     override fun getPortNumber(): Int = -1
 
-    override fun setZeroPowerBehavior(zeroPowerBehavior: DcMotor.ZeroPowerBehavior?) {
-        TODO("Not yet implemented")
+    private var zeroPowerBehavior: DcMotor.ZeroPowerBehavior = DcMotor.ZeroPowerBehavior.FLOAT
+
+    override fun setZeroPowerBehavior(zeroPowerBehavior: DcMotor.ZeroPowerBehavior) {
+        this.zeroPowerBehavior = zeroPowerBehavior
     }
 
-    override fun getZeroPowerBehavior(): DcMotor.ZeroPowerBehavior {
-        TODO("Not yet implemented")
-    }
+    override fun getZeroPowerBehavior(): DcMotor.ZeroPowerBehavior = this.zeroPowerBehavior
 
     override fun setPowerFloat() {
         TODO("Not yet implemented")

@@ -1,26 +1,25 @@
 package com.amarcolini.joos.drive
 
-import com.amarcolini.joos.control.FeedforwardCoefficients
+import com.amarcolini.joos.control.Feedforward
 import com.amarcolini.joos.geometry.Angle
 import com.amarcolini.joos.geometry.Pose2d
 import com.amarcolini.joos.kinematics.SwerveKinematics
 import com.amarcolini.joos.localization.AngleSensor
 import com.amarcolini.joos.localization.Localizer
 import com.amarcolini.joos.localization.SwerveLocalizer
+import com.amarcolini.joos.util.rad
 import kotlin.jvm.JvmOverloads
 
 /**
  * This class provides the basic functionality of a swerve drive using [SwerveKinematics].
  *
- * @param feedforward motor feedforward coefficients
- * @param trackWidth lateral distance between pairs of wheels on different sides of the robot
- * @param wheelBase distance between pairs of wheels on the same side of the robot
+ * @param trackWidth Lateral distance between pairs of wheels on different sides of the robot.
+ * @param wheelBase Distance between pairs of wheels on the same side of the robot.
  */
 abstract class AbstractSwerveDrive @JvmOverloads constructor(
-    protected val feedforward: FeedforwardCoefficients,
     protected val trackWidth: Double,
     protected val wheelBase: Double = trackWidth,
-    protected val externalHeadingSensor: AngleSensor
+    protected val externalHeadingSensor: AngleSensor? = null
 ) : Drive() {
 
     override var localizer: Localizer = SwerveLocalizer(
@@ -28,8 +27,7 @@ abstract class AbstractSwerveDrive @JvmOverloads constructor(
         ::getWheelVelocities,
         ::getModuleOrientations,
         trackWidth, wheelBase,
-        externalHeadingSensor
-    )
+    ).let { if (externalHeadingSensor != null) it.addHeadingSensor(externalHeadingSensor) else it }
 
     override fun setDriveSignal(driveSignal: DriveSignal) {
         val velocities = SwerveKinematics.robotToWheelVelocities(
@@ -43,22 +41,22 @@ abstract class AbstractSwerveDrive @JvmOverloads constructor(
             trackWidth,
             wheelBase
         )
-        val powers = feedforward.calculate(velocities, accelerations)
         val orientations = SwerveKinematics.robotToModuleOrientations(
             driveSignal.vel,
             trackWidth,
             wheelBase
         )
-        setMotorPowers(powers[0], powers[1], powers[2], powers[3])
+        setWheelVelocities(velocities, accelerations)
         setModuleOrientations(orientations[0], orientations[1], orientations[2], orientations[3])
     }
 
     override fun setDrivePower(drivePower: Pose2d) {
+        val actualDrivePower = drivePower.copy(heading = drivePower.heading.value.rad)
         val avg = (trackWidth + wheelBase) / 2.0
         val powers =
-            SwerveKinematics.robotToWheelVelocities(drivePower, trackWidth / avg, wheelBase / avg)
+            SwerveKinematics.robotToWheelVelocities(actualDrivePower, trackWidth / avg, wheelBase / avg)
         val orientations = SwerveKinematics.robotToModuleOrientations(
-            drivePower,
+            actualDrivePower,
             trackWidth / avg,
             wheelBase / avg
         )
@@ -71,18 +69,24 @@ abstract class AbstractSwerveDrive @JvmOverloads constructor(
      */
     abstract fun setMotorPowers(
         frontLeft: Double,
-        rearLeft: Double,
-        rearRight: Double,
+        backLeft: Double,
+        backRight: Double,
         frontRight: Double
     )
+
+    /**
+     * Sets the wheel velocities (and accelerations) of each motor, in distance units per second. Velocities and accelerations
+     * match the ordering in [setMotorPowers].
+     */
+    abstract fun setWheelVelocities(velocities: List<Double>, accelerations: List<Double>)
 
     /**
      * Sets the module orientations.
      */
     abstract fun setModuleOrientations(
         frontLeft: Angle,
-        rearLeft: Angle,
-        rearRight: Angle,
+        backLeft: Angle,
+        backRight: Angle,
         frontRight: Angle
     )
 

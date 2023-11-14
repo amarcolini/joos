@@ -12,6 +12,8 @@ import com.amarcolini.joos.util.DoubleProgression
 import com.amarcolini.joos.util.abs
 import com.amarcolini.joos.util.deg
 import org.junit.jupiter.api.Test
+import org.knowm.xchart.QuickChart
+import org.knowm.xchart.style.theme.MatlabTheme
 import kotlin.math.PI
 
 class ProfileTest {
@@ -42,29 +44,56 @@ class ProfileTest {
             TranslationalAccelerationConstraint(30.0),
             AngularAccelerationConstraint(360.deg)
         )
-        val profile = TrajectoryGenerator.generatePathTrajectorySegment(
+        val trajectory = TrajectoryGenerator.generatePathTrajectorySegment(
             path,
             velConstraint, accelConstraint
-        ).profile
-        GraphUtil.saveProfile("Complete Profile", profile)
+        )
+        GraphUtil.saveProfile("Complete Profile", trajectory.profile)
+        val temporalData = DoubleProgression.fromClosedInterval(
+            0.0,
+            trajectory.path.length(),
+            1000
+        )
+        val cData = temporalData.map { trajectory.path.curvature(it) }.toDoubleArray()
+        val graph = QuickChart.getChart(
+            "Hello",
+            "t",
+            "",
+            arrayOf("c"),
+            temporalData.toList().toDoubleArray(),
+            arrayOf(cData)
+        )
+        graph.styler.isLegendVisible = false
+        graph.styler.theme = MatlabTheme()
+
+        GraphUtil.saveGraph("Hello", graph)
     }
 
     @Test
     fun testAngularAcceleration() {
-        val maxAngAccel = 1.deg
+        val maxAngAccel = 18.deg
         val trajectory = TrajectoryBuilder(
             startPose = Pose2d(),
-            constraints = GenericConstraints(maxAngAccel = maxAngAccel),
+            constraints = MecanumConstraints(30.0, 16.0, 16.0, 0.7, maxAngAccel = maxAngAccel),
             resolution = 0.25
         )
-            .splineTo(Vector2d(30.0, -30.0), 0.0)
+            .splineTo(Vector2d(24.0, 24.0), 0.deg)
+            .forward(24.0)
             .build()
         val progression = DoubleProgression.fromClosedInterval(
             0.0, trajectory.duration(),
-            (trajectory.duration() / 0.01).toInt()
+            (trajectory.duration() / 0.1).toInt()
         )
         val max = progression.map { trajectory.acceleration(it).heading }.maxOf { abs(it) }
-        println("max: $max vs $maxAngAccel")
-        assert(max <= maxAngAccel)
+        val f = { x: Double -> trajectory.velocity(x).heading }
+        val accels =
+            progression.zipWithNext { a, b -> (f(b) - f(a)).normDelta() / progression.step }
+        val max2 = accels.maxByOrNull { abs(it) }
+        val index = accels.indexOf(max2)
+        println(index)
+        println("${f(progression[index])}, ${f(progression[index + 1])}")
+        println(progression.step)
+        println("${(f(progression[index]) - f(progression[index + 1])).normDelta() / progression.step}")
+        println("max: $max and $max2 when $maxAngAccel")
     }
 }

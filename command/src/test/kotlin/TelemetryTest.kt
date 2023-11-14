@@ -1,11 +1,11 @@
 import com.amarcolini.joos.dashboard.SuperTelemetry
-import org.junit.jupiter.api.BeforeEach
-import org.junit.jupiter.api.Test
+import org.junit.Before
+import org.junit.Test
 
 class TelemetryTest {
     private val telemetry = SuperTelemetry
 
-    @BeforeEach
+    @Before
     fun init() {
         telemetry.reset()
     }

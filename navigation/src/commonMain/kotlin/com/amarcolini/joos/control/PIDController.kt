@@ -2,23 +2,20 @@ package com.amarcolini.joos.control
 
 import com.amarcolini.joos.util.NanoClock
 import com.amarcolini.joos.util.wrap
-import kotlin.js.ExperimentalJsExport
 import kotlin.js.JsExport
 import kotlin.jvm.JvmOverloads
 import kotlin.math.abs
-import kotlin.math.sign
+import kotlin.math.max
 
 /**
- * PID controller with [kF] as a custom feedforward term for other plants.
+ * PID controller.
  *
  * @param pid traditional PID coefficients
- * @param kF custom feedforward that depends on position and/or velocity (e.g., a gravity term for arms)
  * @param clock clock
  */
 @JsExport
-class PIDFController @JvmOverloads constructor(
+class PIDController @JvmOverloads constructor(
     pid: PIDCoefficients,
-    var kF: (Double, Double?) -> Double = { _, _ -> 0.0 },
     private val clock: NanoClock = NanoClock.system()
 ) {
     var pid: PIDCoefficients = pid
@@ -50,11 +47,6 @@ class PIDFController @JvmOverloads constructor(
     var targetVelocity: Double = 0.0
 
     /**
-     * Target acceleration.
-     */
-    var targetAcceleration: Double = 0.0
-
-    /**
      * Error computed in the last call to [update].
      */
     var lastError: Double = 0.0
@@ -66,7 +58,7 @@ class PIDFController @JvmOverloads constructor(
     var tolerance: Double = 0.05
 
     /**
-     * Returns whether the controller is at the target position.
+     * Returns whether the controller is at the target position with an error within [tolerance].
      */
     fun isAtSetPoint() = abs(lastError) <= tolerance
 
@@ -76,12 +68,10 @@ class PIDFController @JvmOverloads constructor(
     @JvmOverloads
     fun setTarget(
         targetPosition: Double,
-        targetVelocity: Double = this.targetVelocity,
-        targetAcceleration: Double = this.targetAcceleration
+        targetVelocity: Double = this.targetVelocity
     ) {
         this.targetPosition = targetPosition
         this.targetVelocity = targetVelocity
-        this.targetAcceleration = targetAcceleration
     }
 
     /**
@@ -146,19 +136,22 @@ class PIDFController @JvmOverloads constructor(
             }
             val errorDeriv =
                 measuredVelocity?.let { targetVelocity - it } ?: ((error - lastError) / dt)
-            val filteredDeriv = (errorDeriv * pid.N) / (errorSum + pid.N)
 
             lastError = error
             lastUpdateTimestamp = currentTimestamp
 
             val output = pid.kP * error + pid.kI * errorSum +
-                    pid.kD * filteredDeriv + kF(
-                measuredPosition,
-                measuredVelocity
-            )
+                    pid.kD * errorDeriv
 
             if (outputBounded) {
                 val clamped = output.coerceIn(minOutput, maxOutput)
+                if (isIntegrating && output != clamped && output - pid.kI * errorSum in minOutput..maxOutput) {
+                    /*
+                     If the controller output is saturated and the integral term is the reason, then we reduce the
+                     integral term and stop integrating to prevent windup.
+                     */
+                    errorSum -= (output - clamped) / pid.kI
+                }
                 isIntegrating = output == clamped
                 clamped
             } else {

@@ -1,17 +1,13 @@
 package com.amarcolini.joos.profile
 
 import com.amarcolini.joos.util.DoubleProgression
-import com.amarcolini.joos.util.solveQuadratic
 import com.amarcolini.joos.util.epsilonEquals
 import com.amarcolini.joos.util.minus
-import kotlin.js.ExperimentalJsExport
+import com.amarcolini.joos.util.solveQuadratic
 import kotlin.js.JsExport
 import kotlin.jvm.JvmOverloads
 import kotlin.jvm.JvmStatic
-import kotlin.math.abs
-import kotlin.math.ceil
-import kotlin.math.max
-import kotlin.math.sqrt
+import kotlin.math.*
 
 /**
  * Motion profile generator with arbitrary start and end motion states and either dynamic constraints or jerk limiting.

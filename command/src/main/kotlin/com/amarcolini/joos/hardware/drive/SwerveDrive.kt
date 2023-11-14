@@ -34,7 +34,7 @@ open class SwerveDrive @JvmOverloads constructor(
             backLeft,
             backRight,
             frontRight
-        ).minOf { it.first.maxDistanceVelocity }
+        ).minOf { it.first.maxDistanceVelocity }, 1.0, 1.0
     ),
     translationalPID: PIDCoefficients = PIDCoefficients(1.0, 0.0, 0.5),
     headingPID: PIDCoefficients = PIDCoefficients(1.0, 0.0, 0.5)
@@ -65,8 +65,7 @@ open class SwerveDrive @JvmOverloads constructor(
         ::getWheelVelocities,
         ::getModuleOrientations,
         constraints.trackWidth, constraints.wheelBase,
-        externalHeadingSensor
-    )
+    ).let { if (externalHeadingSensor != null) it.addHeadingSensor(externalHeadingSensor) else it }
 
     override fun setDriveSignal(driveSignal: DriveSignal) {
         wheels.zip(
@@ -84,7 +83,7 @@ open class SwerveDrive @JvmOverloads constructor(
             )
         ).forEach { (motor, power) ->
             val (vel, accel) = power
-            motor.setSpeed(vel, accel, Motor.RotationUnit.UPS)
+            motor.setDistanceVelocity(vel, accel)
         }
         servos.zip(
             SwerveKinematics.robotToModuleOrientations(

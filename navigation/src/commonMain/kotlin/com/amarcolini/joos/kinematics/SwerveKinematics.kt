@@ -15,7 +15,7 @@ import kotlin.math.sin
 
 /**
  * Swerve drive kinematic equations. All wheel positions and velocities are given starting with front left and
- * proceeding counter-clockwise (i.e., front left, rear left, rear right, front right). Robot poses are specified in a
+ * proceeding counter-clockwise (i.e., front left, back left, back right, front right). Robot poses are specified in a
  * coordinate system with positive x pointing forward, positive y pointing left, and positive heading measured
  * counter-clockwise from the x-axis.
  */
@@ -215,10 +215,10 @@ object SwerveKinematics {
 
         val vx = vectors.sumOf { it.x } / 4
         val vy = vectors.sumOf { it.y } / 4
-        val (frontLeft, rearLeft, rearRight, frontRight) = vectors
+        val (frontLeft, backLeft, backRight, frontRight) = vectors
         val omega = ((
-                y * (rearRight.x + frontRight.x - frontLeft.x - rearLeft.x) +
-                        x * (frontLeft.y + frontRight.y - rearLeft.y - rearRight.y)
+                y * (backRight.x + frontRight.x - frontLeft.x - backLeft.x) +
+                        x * (frontLeft.y + frontRight.y - backLeft.y - backRight.y)
                 ) / (4 * (x * x + y * y))).rad
 
         return Pose2d(vx, vy, omega)

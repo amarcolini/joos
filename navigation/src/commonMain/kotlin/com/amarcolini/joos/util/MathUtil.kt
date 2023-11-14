@@ -23,6 +23,7 @@ fun solveQuadratic(a: Double, b: Double, c: Double): List<Double> {
             (-b + sqrt(disc)) / (2 * a),
             (-b - sqrt(disc)) / (2 * a)
         )
+
         else -> emptyList()
     }
 }

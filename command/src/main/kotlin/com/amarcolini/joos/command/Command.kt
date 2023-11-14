@@ -15,7 +15,7 @@ abstract class Command {
      * The global [SuperTelemetry] instance.
      */
     @JvmField
-    protected val telem: SuperTelemetry = CommandScheduler.telemetry
+    protected val telem: SuperTelemetry = CommandScheduler.telem
 
     companion object {
         /**
@@ -92,26 +92,26 @@ abstract class Command {
 
     /**
      * Runs this command independently of the [CommandScheduler]. Initializes, executes and ends this command synchronously
-     * while also updating all of its required components and updating [CommandScheduler.telemetry].
+     * while also updating all of its required components and updating [CommandScheduler.telem].
      *
      * *Note*: If this command does not end by itself, this method will run continuously.
      */
     fun runBlocking() {
         requirements.forEach { it.update() }
         init()
-        CommandScheduler.telemetry.update()
+        telem.update()
         var interrupted = false
         do {
             requirements.forEach { it.update() }
             execute()
-            CommandScheduler.telemetry.update()
+            telem.update()
             if (Thread.currentThread().isInterrupted) {
                 interrupted = true
                 break
             }
         } while (!isFinished())
         end(interrupted)
-        CommandScheduler.telemetry.update()
+        telem.update()
     }
 
     //These are for chaining commands

@@ -16,16 +16,17 @@ class TimeCommand constructor(
 ) : Command() {
     constructor(execute: BiFunction<Double, Double, Boolean>) : this(execute, NanoClock.system())
 
-    private var start: Double = 0.0
+    private var start: Double? = null
     private var lastUpdate: Double? = null
 
     override fun init() {
-        start = clock.seconds()
-        execute()
+        start = null
+        lastUpdate = null
     }
 
     private var isFinished = false
     override fun execute() {
+        val start = start ?: clock.seconds().also { start = it }
         val t = clock.seconds() - start
         isFinished = execute.apply(t, t - (lastUpdate ?: t))
         lastUpdate = t

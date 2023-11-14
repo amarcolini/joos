@@ -2,18 +2,39 @@ import com.amarcolini.joos.command.*
 import com.amarcolini.joos.gamepad.Button
 import com.amarcolini.joos.util.NanoClock
 import com.amarcolini.joos.util.epsilonEquals
-import org.junit.jupiter.api.BeforeEach
-import org.junit.jupiter.api.Test
+import com.qualcomm.robotcore.eventloop.opmode.MockOpModeManager
+import mock.DummyMotor
+import org.junit.Before
+import org.junit.Test
+import org.junit.runner.RunWith
 import kotlin.math.abs
+import org.robolectric.RobolectricTestRunner
+import org.robolectric.RuntimeEnvironment
+import org.robolectric.annotation.Config
 
 private const val logOutput: Boolean = true
 
+@RunWith(RobolectricTestRunner::class)
+@Config(manifest = Config.NONE)
 class CommandTest {
     private val scheduler = CommandScheduler
 
-    @BeforeEach
+    @Before
     fun reset() {
         scheduler.reset()
+    }
+
+    @Test
+    fun testOpMode() {
+        val opmode = JavaOpMode()
+        val opmodemanager = MockOpModeManager(opmode)
+        opmodemanager.hMap.dcMotor.put("my_motor", DummyMotor())
+        opmodemanager.setUpOpMode()
+        opmodemanager.initOpMode()
+        Thread.sleep(100)
+        opmodemanager.startOpMode()
+        Thread.sleep(200)
+        opmodemanager.stopOpMode()
     }
 
     @Test

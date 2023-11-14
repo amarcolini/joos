@@ -89,6 +89,7 @@ object DraggableTrajectory : EntityGroup() {
                 listOf(
                     TranslationalVelocityConstraint(maxVel),
                     AngularVelocityConstraint(maxAngVel),
+                    AngularAccelVelocityConstraint(maxAngAccel, maxAccel)
                 )
             )
 
@@ -96,7 +97,8 @@ object DraggableTrajectory : EntityGroup() {
         override val accelConstraint
             get() = MinAccelerationConstraint(
                 listOf(
-                    TranslationalAccelerationConstraint(maxAccel)
+                    TranslationalAccelerationConstraint(maxAccel),
+                    AngularAccelerationConstraint(maxAngAccel)
                 )
             )
     }
@@ -291,6 +293,7 @@ object DraggableTrajectory : EntityGroup() {
                             focusManager.requestFocus(field)
                         }
                     }
+
                     is WaitPiece -> {
                         val decimals = 1
                         val initialValue = piece.duration
@@ -307,6 +310,7 @@ object DraggableTrajectory : EntityGroup() {
                             focusManager.requestFocus(field)
                         }
                     }
+
                     else -> {}
                 }
             }
@@ -326,7 +330,7 @@ object DraggableTrajectory : EntityGroup() {
             startVisible = false
             endVisible = trajectory.pieceData[0].trajectoryPiece is SplinePiece
             onChange += {
-                startData.start.pose = Pose2d(it.position.toVector2d())
+                startData.start.pose = Pose2d(it.position.toVector2d(), startData.start.pose.heading)
                 startData.start.tangent = it.tangent
                 update()
             }
@@ -366,6 +370,7 @@ object DraggableTrajectory : EntityGroup() {
                         update()
                     }
                 }
+
                 is LinePiece -> PathKnot().apply {
                     position = piece.end.toPoint()
                     tangentMode = SplineKnot.TangentMode.FIXED
@@ -394,11 +399,13 @@ object DraggableTrajectory : EntityGroup() {
     private fun initializeHeadingEditing() {
         disableEditing()
         knots += HeadingKnot().apply {
-            position = trajectory.startData.start.pose.vec().toPoint()
+            val startData = trajectory.startData
+            position = startData.start.pose.vec().toPoint()
+            tangent = startData.start.pose.heading
             startVisible = false
             endVisible = true
             onChange += {
-                trajectory.startData.start.pose = Pose2d(it.position.toVector2d(), it.tangent)
+                startData.start.pose = Pose2d(it.position.toVector2d(), it.tangent)
                 update()
             }
         }

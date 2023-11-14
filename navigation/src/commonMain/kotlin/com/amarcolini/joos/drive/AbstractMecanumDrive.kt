@@ -1,35 +1,33 @@
 package com.amarcolini.joos.drive
 
-import com.amarcolini.joos.control.FeedforwardCoefficients
+import com.amarcolini.joos.control.Feedforward
 import com.amarcolini.joos.geometry.Pose2d
 import com.amarcolini.joos.kinematics.MecanumKinematics
 import com.amarcolini.joos.localization.AngleSensor
 import com.amarcolini.joos.localization.Localizer
 import com.amarcolini.joos.localization.MecanumLocalizer
+import com.amarcolini.joos.util.rad
 import kotlin.jvm.JvmOverloads
 
 /**
  * This class provides the basic functionality of a mecanum drive using [MecanumKinematics].
  *
- * @param feedforward motor feedforward coefficients
- * @param trackWidth lateral distance between pairs of wheels on different sides of the robot
- * @param wheelBase distance between pairs of wheels on the same side of the robot
- * @param lateralMultiplier lateral multiplier
+ * @param trackWidth Lateral distance between pairs of wheels on different sides of the robot.
+ * @param wheelBase Distance between pairs of wheels on the same side of the robot.
+ * @param lateralMultiplier Lateral multiplier.
  */
 abstract class AbstractMecanumDrive @JvmOverloads constructor(
-    protected val feedforward: FeedforwardCoefficients,
     protected val trackWidth: Double,
     protected val wheelBase: Double = trackWidth,
     protected val lateralMultiplier: Double = 1.0,
-    protected val externalHeadingSensor: AngleSensor
+    protected val externalHeadingSensor: AngleSensor? = null
 ) : Drive() {
 
     override var localizer: Localizer = MecanumLocalizer(
         ::getWheelPositions,
         ::getWheelVelocities,
         trackWidth, wheelBase, lateralMultiplier,
-        externalHeadingSensor
-    )
+    ).let { if (externalHeadingSensor != null) it.addHeadingSensor(externalHeadingSensor) else it }
 
     override fun setDriveSignal(driveSignal: DriveSignal) {
         val velocities = MecanumKinematics.robotToWheelVelocities(
@@ -44,13 +42,12 @@ abstract class AbstractMecanumDrive @JvmOverloads constructor(
             wheelBase,
             lateralMultiplier
         )
-        val powers = feedforward.calculate(velocities, accelerations)
-        setMotorPowers(powers[0], powers[1], powers[2], powers[3])
+        setWheelVelocities(velocities, accelerations)
     }
 
     override fun setDrivePower(drivePower: Pose2d) {
         val powers = MecanumKinematics.robotToWheelVelocities(
-            drivePower,
+            drivePower.copy(heading = drivePower.heading.value.rad),
             1.0,
             1.0,
             lateralMultiplier
@@ -63,10 +60,16 @@ abstract class AbstractMecanumDrive @JvmOverloads constructor(
      */
     abstract fun setMotorPowers(
         frontLeft: Double,
-        rearLeft: Double,
-        rearRight: Double,
+        backLeft: Double,
+        backRight: Double,
         frontRight: Double
     )
+
+    /**
+     * Sets the wheel velocities (and accelerations) of each motor, in distance units per second. Velocities and accelerations
+     * match the ordering in [setMotorPowers].
+     */
+    abstract fun setWheelVelocities(velocities: List<Double>, accelerations: List<Double>)
 
     /**
      * Returns the positions of the wheels in linear distance units. Positions should exactly match the ordering in

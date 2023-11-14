@@ -149,7 +149,7 @@ abstract class ParametricCurve {
      * Computes the curvature of a parametric curve at the internal parameter [t].
      */
     @JvmOverloads
-    fun curvature(s: Double, t: Double = reparam(s)): Double = secondDeriv(s, t).norm()
+    fun curvature(s: Double, t: Double = reparam(s)): Double = tangentAngleDeriv(s, t).radians
 
     /**
      * Automatically reparameterizes this curve by computing many small samples. This is computationally
@@ -220,9 +220,11 @@ abstract class ParametricCurve {
                     s < sSamples[mid] -> {
                         hi = mid - 1
                     }
+
                     s > sSamples[mid] -> {
                         lo = mid + 1
                     }
+
                     else -> {
                         return tSamples[mid]
                     }

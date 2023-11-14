@@ -8,7 +8,7 @@ import kotlin.jvm.JvmStatic
 
 /**
  * Mecanum drive kinematic equations. All wheel positions and velocities are given starting with front left and
- * proceeding counter-clockwise (i.e., front left, rear left, rear right, front right). Robot poses are specified in a
+ * proceeding counter-clockwise (i.e., front left, back left, back right, front right). Robot poses are specified in a
  * coordinate system with positive x pointing forward, positive y pointing left, and positive heading measured
  * counter-clockwise from the x-axis.
  *
@@ -88,11 +88,11 @@ object MecanumKinematics {
         lateralMultiplier: Double = 1.0
     ): Pose2d {
         val k = (trackWidth + wheelBase) / 2.0
-        val (frontLeft, rearLeft, rearRight, frontRight) = wheelVelocities
+        val (frontLeft, backLeft, backRight, frontRight) = wheelVelocities
         return Pose2d(
             wheelVelocities.sum(),
-            (rearLeft + frontRight - frontLeft - rearRight) / lateralMultiplier,
-            (rearRight + frontRight - frontLeft - rearLeft) / k
+            (backLeft + frontRight - frontLeft - backRight) / lateralMultiplier,
+            (backRight + frontRight - frontLeft - backLeft) / k
         ) * 0.25
     }
 }

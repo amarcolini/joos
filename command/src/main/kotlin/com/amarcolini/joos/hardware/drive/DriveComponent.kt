@@ -38,7 +38,7 @@ abstract class DriveComponent : Drive(), Component {
     override fun update() {
         updatePoseEstimate()
         if (dashboardEnabled) {
-            val telemetry = CommandScheduler.telemetry
+            val telemetry = CommandScheduler.telem
             val trajectory = getCurrentTrajectory()
             if (trajectory != null) {
                 poseHistory.add(poseEstimate)

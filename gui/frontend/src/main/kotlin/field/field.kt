@@ -107,7 +107,7 @@ abstract class FieldEntity : View() {
         val size = min(parent.width, parent.height)
         transform = AffineTransform().translate(parent.bounds.atOrigin.center - center)
             .rotate(center, Measure(-PI * 0.5, Angle.radians))
-            .scale(center, size / Field.fieldSize, size / Field.fieldSize)
+            .scale(center, size / Field.fieldSize, -size / Field.fieldSize)
     }
 }
 

@@ -16,7 +16,7 @@ class AngularAccelerationConstraint(val maxAngAccel: Angle) : TrajectoryAccelera
     constructor(maxAngAccel: Double) : this(Angle(maxAngAccel))
 
     private val actualMaxAngAccel = maxAngAccel.radians
-    override fun get(deriv: Pose2d, lastDeriv: Pose2d, ds: Double, lastVel: Double): List<Pair<Double, Double>> {
+    override fun get(deriv: Pose2d, lastDeriv: Pose2d, ds: Double, lastVel: Double): IntervalSet {
         val currentCurvature = deriv.heading.radians
         val lastCurvature = lastDeriv.heading.radians
 
@@ -32,16 +32,20 @@ class AngularAccelerationConstraint(val maxAngAccel: Angle) : TrajectoryAccelera
         val v1star = (part0 + sqrt(part1 - part2)) * denom
         val v2star = (part0 - sqrt(part1 - part2)) * denom
 
-        val v1hat = -(2 * ds * actualMaxAngAccel) / (lastCurvature * lastVel) - lastVel
-        val v2hat = (2 * ds * actualMaxAngAccel) / (lastCurvature * lastVel) - lastVel
+        val v1hat = (-(2 * ds * actualMaxAngAccel) / (lastCurvature * lastVel)) - lastVel
+        val v2hat = ((2 * ds * actualMaxAngAccel) / (lastCurvature * lastVel)) - lastVel
 
         return when {
-            currentCurvature > 0 ->
+            currentCurvature > 0 -> {
                 if (part1 - part2 < 0) listOf(v2 to v1)
                 else listOf(v2 to v2star, v1star to v1)
-            currentCurvature < 0 ->
+            }
+
+            currentCurvature < 0 -> {
                 if (part1 + part2 < 0) listOf(v1star to v2star)
                 else listOf(v1star to v1, v2 to v2star)
+            }
+
             else -> when {
                 lastCurvature > 0 -> listOf(v1hat to v2hat)
                 lastCurvature < 0 -> listOf(v2hat to v1hat)

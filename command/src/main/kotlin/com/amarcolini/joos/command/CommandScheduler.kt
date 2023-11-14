@@ -18,13 +18,19 @@ object CommandScheduler : OpModeManagerNotifier.Notifications {
      * The global telemetry object used for both FTC Dashboard and the Driver Station.
      */
     @JvmField
-    val telemetry: SuperTelemetry = SuperTelemetry
+    val telem: SuperTelemetry = SuperTelemetry
 
     /**
-     * Resets [telemetry].
+     * The global telemetry object used for both FTC Dashboard and the Driver Station.
+     */
+    @JvmField
+    val telemetry = telem
+
+    /**
+     * Resets [telem].
      */
     @JvmStatic
-    fun resetTelemetry(): Unit = telemetry.reset()
+    fun resetTelemetry(): Unit = telem.reset()
 
     /**
      * The current gamepads being used, or null if no OpMode is active.
@@ -45,7 +51,7 @@ object CommandScheduler : OpModeManagerNotifier.Notifications {
                 null
             } else MultipleGamepad(value.gamepad1, value.gamepad2).also {
                 gamepad?.unregister()
-                telemetry.register(value.telemetry)
+                telem.register(value.telemetry)
                 it.register()
             }
             field = value
@@ -165,7 +171,7 @@ object CommandScheduler : OpModeManagerNotifier.Notifications {
      * @see schedulePolicy
      */
     @JvmStatic
-    fun schedule(vararg runnables: Runnable): Boolean = schedule(*runnables.map { BasicCommand(it) }.toTypedArray())
+    fun schedule(runnable: Runnable): Boolean = schedule(Command.of(runnable))
 
     /**
      * Schedules commands for execution.
@@ -216,7 +222,7 @@ object CommandScheduler : OpModeManagerNotifier.Notifications {
             }
         }
 
-        telemetry.update()
+        telem.update()
 
         //Updates action cache
         actionCache.removeIf { it() }
@@ -337,6 +343,7 @@ object CommandScheduler : OpModeManagerNotifier.Notifications {
     fun requiring(component: Component): Command? = requirements[component]
 
     override fun onOpModePreInit(opMode: OpMode) {
+        reset()
         this.opMode = opMode
     }
 
