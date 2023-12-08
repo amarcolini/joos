@@ -91,11 +91,6 @@ repositories {
     mavenCentral()
 }
 
-//val sourcesJar = tasks.register<Jar>("sourcesJar") {
-//    from(sourceSets["main"].allSource)
-//    archiveClassifier.set("sources")
-//}
-
 publishing {
     publications.filterIsInstance<MavenPublication>().forEach {
         it.pom {

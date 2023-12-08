@@ -33,7 +33,7 @@ dependencies {
     compileOnly("org.firstinspires.ftc:RobotCore:${Versions.ftc}")
     compileOnly("org.firstinspires.ftc:Hardware:${Versions.ftc}")
     compileOnly("org.firstinspires.ftc:FtcCommon:${Versions.ftc}")
-    api("com.acmerobotics.dashboard:dashboard:0.4.12") {
+    api("com.acmerobotics.dashboard:dashboard:0.4.14") {
         exclude(group = "org.firstinspires.ftc")
     }
     api(project(":navigation"))
@@ -67,20 +67,20 @@ android {
     defaultConfig {
         minSdk = 24
     }
+    publishing {
+        singleVariant("release") {
+            withSourcesJar()
+            withJavadocJar()
+        }
+    }
 }
 
-val sourcesJar = tasks.register<Jar>("sourcesJar") {
-    from(android.sourceSets["main"].java.srcDirs)
-    archiveClassifier.set("sources")
-}
-
-project.afterEvaluate {
+afterEvaluate {
     publishing {
         publications {
             create<MavenPublication>("release") {
                 from(components["release"])
                 artifactId = "command"
-                artifact(sourcesJar.get())
                 pom {
                     name.set("Joos")
                     description.set("A comprehensive kotlin library designed for FTC.")

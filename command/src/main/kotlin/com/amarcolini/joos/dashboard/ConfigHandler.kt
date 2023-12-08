@@ -3,6 +3,8 @@ package com.amarcolini.joos.dashboard
 import android.content.Context
 import android.util.Log
 import com.acmerobotics.dashboard.FtcDashboard
+import com.acmerobotics.dashboard.config.reflection.ArrayProvider
+import com.acmerobotics.dashboard.config.variable.BasicVariable
 import com.acmerobotics.dashboard.config.variable.ConfigVariable
 import com.acmerobotics.dashboard.config.variable.CustomVariable
 import com.acmerobotics.dashboard.config.variable.VariableType
@@ -15,6 +17,7 @@ import java.lang.reflect.Field
 import java.lang.reflect.Method
 import kotlin.reflect.*
 import kotlin.reflect.full.*
+import kotlin.reflect.jvm.javaField
 import kotlin.reflect.jvm.jvmErasure
 import kotlin.reflect.jvm.kotlinProperty
 
@@ -41,9 +44,6 @@ object ConfigHandler {
     private val mutableConfigProviders: List<MutableProviderData<Any?>>
     private val immutableConfigProviders: List<ImmutableProviderData<Any?>>
 
-    fun getLogs(): List<String> = logs
-    private val logs = ArrayList<String>()
-
     init {
         var kotlin: List<Pair<String, KProperty0<Any>>>? = null
         var java: List<Pair<String, Field>>? = null
@@ -64,7 +64,6 @@ object ConfigHandler {
         try {
             val resultClass = Class.forName("com.amarcolini.joos.dashboard.ConfigResults")
             val isKotlin = resultClass.getDeclaredField("isKotlin").get(null) as Boolean
-            logs += "isKotlin: $isKotlin"
             val resultList = resultClass.getDeclaredMethod("getResults").invoke(null)
             if (isKotlin) {
                 kotlin = resultList as List<Pair<String, KProperty0<Any>>>
@@ -142,6 +141,69 @@ object ConfigHandler {
         FtcDashboard.getInstance()?.updateConfig()
     }
 
+    private fun createVariableFromArray(
+        array: () -> Array<*>,
+        arrayType: KClass<*>,
+        parent: Any,
+        indices: IntArray
+    ): ConfigVariable<*>? {
+        return when (val type = VariableType.fromClass(arrayType.java)) {
+            VariableType.BOOLEAN, VariableType.INT, VariableType.DOUBLE, VariableType.STRING, VariableType.ENUM -> BasicVariable<Boolean>(
+                type,
+                BetterArrayProvider<Boolean>(array, *indices.copyOf())
+            )
+
+            VariableType.CUSTOM -> {
+                return try {
+                    var value: Any? = null
+                    try {
+                        value = BetterArrayProvider.getArrayRecursive(array(), indices)
+                    } catch (ignored: ArrayIndexOutOfBoundsException) {
+                    }
+                    if (value == null) {
+                        return CustomVariable(null)
+                    }
+                    val customVariable = CustomVariable()
+                    if (fieldClass.isArray) {
+                        val newIndices: IntArray = Arrays.copyOf(indices, indices.size + 1)
+                        var i = 0
+                        while (i < Array.getLength(value)) {
+                            newIndices[newIndices.size - 1] = i
+                            customVariable.putVariable(
+                                Integer.toString(i),
+                                createVariableFromArrayField(field, fieldClass.componentType, parent, newIndices)
+                            )
+                            i++
+                        }
+                    } else {
+                        for (nestedField in fieldClass.fields) {
+                            if (Modifier.isFinal(field.modifiers)) {
+                                continue
+                            }
+                            val name = nestedField.name
+                            customVariable.putVariable(
+                                name,
+                                createVariableFromField(nestedField, value)
+                            )
+                        }
+                    }
+                    customVariable
+                } catch (e: IllegalAccessException) {
+                    throw java.lang.RuntimeException(e)
+                }
+                throw java.lang.RuntimeException(
+                    "Unsupported field type: " +
+                            fieldClass.name
+                )
+            }
+
+            else -> throw java.lang.RuntimeException(
+                "Unsupported field type: " +
+                        fieldClass.name
+            )
+        }
+    }
+
     private fun parse(value: Any?): ConfigVariable<*>? {
         fun internalParse(property: KProperty1<Any, Any?>, parent: Any): ConfigVariable<*>? {
             val propertyClass = property.returnType.jvmErasure
@@ -191,6 +253,19 @@ object ConfigHandler {
                 }.maxByOrNull { it.priority }?.function?.invoke(value)
                 if (providedConfig != null) return providedConfig
                 val customVariable = CustomVariable()
+                if (value is Array<*>) {
+                    for (i in 0 until value.size) {
+                        customVariable.putVariable(
+                            i.toString(),
+                            createVariableFromArrayField(
+                                field,
+                                field.getType().getComponentType(),
+                                parent,
+                                intArrayOf(i)
+                            )
+                        )
+                    }
+                }
                 for (memberProperty in value::class.declaredMemberProperties) {
                     if (memberProperty.visibility != KVisibility.PUBLIC || (memberProperty is KMutableProperty<*> && memberProperty.setter.visibility != KVisibility.PUBLIC)) continue
                     val name = memberProperty.name
@@ -218,14 +293,12 @@ object ConfigHandler {
             val rootVariable = configRoot.getVariable(group) as? CustomVariable ?: CustomVariable().also {
                 configRoot.putVariable(group, it)
             }
-            logs += "dealing with variable of type ${property.returnType}"
             val type = VariableType.fromClass(property.returnType.jvmErasure.java)
             val variable =
                 if (property is KMutableProperty0<*> && type != VariableType.CUSTOM) ConfigUtils.createVariable(
                     property
-                ).also { logs += "simple variable" }
+                )
                 else if (property.returnType.jvmErasure.hasAnnotation<Immutable>() && property is KMutableProperty0<*>) {
-                    logs += "immutable object (mutable variable)"
                     fun parse(type: KType, getter: () -> Any?, setter: (Any?) -> Unit): ConfigVariable<*>? {
                         val providedConfig = immutableConfigProviders.filter {
                             it.isType(type)
@@ -300,10 +373,7 @@ object ConfigHandler {
                         return null
                     }
                     parse(property.returnType, property.getter, property.setter as (Any?) -> Unit)
-                } else parse(property.get()).also {
-                    logs += "mutable object (immutable variable)"
-                    logs += "annotations: ${property.annotations}"
-                }
+                } else parse(property.get())
             if (variable != null) {
                 rootVariable.putVariable(property.name, variable)
             }

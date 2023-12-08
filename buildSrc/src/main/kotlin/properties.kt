@@ -3,5 +3,5 @@ object Versions {
     const val dokka = "1.8.20"
     const val android = "7.2.0"
     const val library = "0.4.9"
-    const val ftc = "9.0.0"
+    const val ftc = "9.0.1"
 }
