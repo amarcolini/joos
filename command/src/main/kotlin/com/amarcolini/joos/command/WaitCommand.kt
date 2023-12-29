@@ -7,7 +7,7 @@ import com.amarcolini.joos.util.NanoClock
  *
  * @param duration the duration in seconds
  */
-class WaitCommand @JvmOverloads constructor(var duration: Double, private val clock: NanoClock = NanoClock.system()) :
+class WaitCommand @JvmOverloads constructor(var duration: Double, private val clock: NanoClock = NanoClock.system) :
     Command() {
     private var start = clock.seconds()
 

@@ -45,12 +45,14 @@ class HeadingLocalizer(
     private val headingSensor: AngleSensor,
     private val deadReckoningLocalizer: DeadReckoningLocalizer,
 ) : Localizer {
-    override var poseEstimate: Pose2d = Pose2d()
+    override var poseEstimate: Pose2d
         set(value) {
             deadReckoningLocalizer.poseEstimate = value
             headingSensor.setAngle(value.heading)
-            field = value
+            _poseEstimate = value
         }
+        get() = _poseEstimate
+    private var _poseEstimate: Pose2d = Pose2d()
     override var poseVelocity: Pose2d? = null
         private set
 
@@ -58,8 +60,12 @@ class HeadingLocalizer(
         deadReckoningLocalizer.update()
         val robotPoseDelta = deadReckoningLocalizer.lastRobotPoseDelta
 
-        poseEstimate =
-            Kinematics.relativeOdometryUpdate(poseEstimate, robotPoseDelta.copy(heading = headingSensor.getAngle()))
+        val heading = headingSensor.getAngle()
+        _poseEstimate =
+            Kinematics.relativeOdometryUpdate(
+                _poseEstimate,
+                robotPoseDelta.copy(heading = heading - poseEstimate.heading)
+            ).copy(heading = heading)
         poseVelocity =
             headingSensor.getAngularVelocity()?.let { deadReckoningLocalizer.poseVelocity?.copy(heading = it) }
     }

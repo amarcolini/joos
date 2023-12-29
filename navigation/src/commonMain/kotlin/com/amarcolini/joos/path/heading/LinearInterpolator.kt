@@ -1,6 +1,7 @@
 package com.amarcolini.joos.path.heading
 
 import com.amarcolini.joos.geometry.Angle
+import com.amarcolini.joos.util.rad
 import com.amarcolini.joos.util.times
 
 /**
@@ -15,5 +16,5 @@ class LinearInterpolator(private val startHeading: Angle, private val angle: Ang
 
     override fun internalDeriv(s: Double, t: Double): Angle = angle / curve.length()
 
-    override fun internalSecondDeriv(s: Double, t: Double): Angle = Angle()
+    override fun internalSecondDeriv(s: Double, t: Double): Angle = 0.rad
 }

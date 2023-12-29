@@ -134,7 +134,7 @@ class ConfigSymbolProcessor(
             }
             logger.info("Property isn't an immutable primitive.")
             if (property.type.annotations.any {
-                    it.annotationType.resolve().declaration.qualifiedName?.asString() == Immutable::class.qualifiedName
+                    it.annotationType.resolve().declaration.qualifiedName?.asString() == immutableName
                 } && (!property.isMutable || property.modifiers.contains(Modifier.FINAL))) {
                 logger.info("Property type has Immutable annotation but isn't mutable (fail).")
                 return

@@ -1,6 +1,5 @@
 package com.amarcolini.joos.geometry
 
-import com.amarcolini.joos.dashboard.Immutable
 import com.amarcolini.joos.serialization.format
 import com.amarcolini.joos.util.*
 import kotlin.js.ExperimentalJsExport
@@ -18,7 +17,6 @@ import kotlin.math.sqrt
  */
 @JsExport
 @kotlinx.serialization.Serializable
-@Immutable
 data class Vector2d @JvmOverloads constructor(
     @JvmField val x: Double = 0.0,
     @JvmField val y: Double = 0.0
@@ -35,7 +33,12 @@ data class Vector2d @JvmOverloads constructor(
     /**
      * Returns the magnitude of this vector.
      */
-    fun norm(): Double = sqrt(x * x + y * y)
+    fun norm(): Double = sqrt(squaredNorm())
+
+    /**
+     * Returns the squared magnitude of this vector.
+     */
+    fun squaredNorm(): Double = x * x + y * y
 
     /**
      * Returns the angle of this vector.
@@ -107,12 +110,6 @@ data class Vector2d @JvmOverloads constructor(
         val newY = x * sin + y * cos
         return Vector2d(newX, newY)
     }
-
-    /**
-     * Rotates this vector by [angle], where [angle] is in [Angle.defaultUnits].
-     */
-    @JsName("rotatedDefault")
-    fun rotated(angle: Double): Vector2d = rotated(Angle(angle))
 
     /**
      * Returns whether two vectors are approximately equal (within [EPSILON]).

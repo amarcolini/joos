@@ -3,15 +3,10 @@ package com.amarcolini.joos.kinematics
 import com.amarcolini.joos.geometry.Angle
 import com.amarcolini.joos.geometry.Pose2d
 import com.amarcolini.joos.geometry.Vector2d
-import com.amarcolini.joos.util.cos
 import com.amarcolini.joos.util.rad
-import com.amarcolini.joos.util.sin
-import kotlin.js.ExperimentalJsExport
 import kotlin.js.JsExport
 import kotlin.jvm.JvmOverloads
 import kotlin.jvm.JvmStatic
-import kotlin.math.cos
-import kotlin.math.sin
 
 /**
  * Swerve drive kinematic equations. All wheel positions and velocities are given starting with front left and
@@ -152,7 +147,7 @@ object SwerveKinematics {
             )
         )
             .map { (vel, accel) ->
-                (vel.x * accel.x + vel.y * accel.y) / vel.norm()
+                (vel dot accel) / vel.norm()
             }
 
     /**
@@ -182,7 +177,7 @@ object SwerveKinematics {
                 wheelBase
             )
         ).map { (vel, accel) ->
-            ((vel.x * accel.y - vel.y * accel.x) / (vel.x * vel.x + vel.y * vel.y)).rad
+            ((vel cross accel) / (vel.squaredNorm())).rad
         }
 
     /**
@@ -207,10 +202,7 @@ object SwerveKinematics {
         val vectors = wheelVelocities
             .zip(moduleOrientations)
             .map { (vel, orientation) ->
-                Vector2d(
-                    vel * cos(orientation),
-                    vel * sin(orientation)
-                )
+                Vector2d.polar(vel, orientation)
             }
 
         val vx = vectors.sumOf { it.x } / 4

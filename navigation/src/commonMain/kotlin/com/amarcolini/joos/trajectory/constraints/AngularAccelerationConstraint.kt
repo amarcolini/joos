@@ -9,12 +9,6 @@ import kotlin.math.sqrt
  * Constraint limiting angular acceleration.
  */
 class AngularAccelerationConstraint(val maxAngAccel: Angle) : TrajectoryAccelerationConstraint {
-    /**
-     * Constructs an [AngularAccelerationConstraint] where [maxAngAccel] is in degrees or radians as specified by
-     * [Angle.defaultUnits].
-     */
-    constructor(maxAngAccel: Double) : this(Angle(maxAngAccel))
-
     private val actualMaxAngAccel = maxAngAccel.radians
     override fun get(deriv: Pose2d, lastDeriv: Pose2d, ds: Double, lastVel: Double): IntervalSet {
         val currentCurvature = deriv.heading.radians

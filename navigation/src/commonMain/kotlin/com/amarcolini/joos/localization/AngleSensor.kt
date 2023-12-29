@@ -1,6 +1,7 @@
 package com.amarcolini.joos.localization
 
 import com.amarcolini.joos.geometry.Angle
+import com.amarcolini.joos.util.rad
 import kotlin.jvm.JvmOverloads
 import kotlin.jvm.JvmStatic
 
@@ -19,7 +20,7 @@ abstract class AngleSensor {
         }
     }
 
-    private var offset: Angle = Angle()
+    private var offset: Angle = 0.rad
 
     /**
      * The raw angle measurement.

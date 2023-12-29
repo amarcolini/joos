@@ -25,6 +25,19 @@ class CommandTest {
     }
 
     @Test
+    fun testComplexOpMode() {
+        val opmode = ComplexOpMode()
+        val opmodemanager = MockOpModeManager(opmode)
+        opmodemanager.hMap.dcMotor.put("my_motor", DummyMotor())
+        opmodemanager.setUpOpMode()
+        opmodemanager.initOpMode()
+        Thread.sleep(100)
+        opmodemanager.startOpMode()
+        Thread.sleep(200)
+        opmodemanager.stopOpMode()
+    }
+
+    @Test
     fun testOpMode() {
         val opmode = JavaOpMode()
         val opmodemanager = MockOpModeManager(opmode)

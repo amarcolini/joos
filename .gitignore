@@ -7,3 +7,5 @@ build/
 !buildSrc/
 local.properties
 /gui/old/
+/navigation/graphs
+/navigation/lets-plot-images

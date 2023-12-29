@@ -50,9 +50,7 @@ object CommandScheduler : OpModeManagerNotifier.Notifications {
                 reset()
                 null
             } else MultipleGamepad(value.gamepad1, value.gamepad2).also {
-                gamepad?.unregister()
                 telem.register(value.telemetry)
-                it.register()
             }
             field = value
         }
@@ -186,10 +184,12 @@ object CommandScheduler : OpModeManagerNotifier.Notifications {
     @JvmStatic
     fun schedule(repeat: Boolean, runnable: Runnable): Boolean = schedule(BasicCommand(runnable).runUntil { !repeat })
 
-    private var isBusy = false
+    internal var isBusy = false
 
     @JvmStatic
     fun update() {
+        gamepad?.update()
+
         //Updates all registered components
         components.forEach { it.update() }
 
@@ -282,12 +282,12 @@ object CommandScheduler : OpModeManagerNotifier.Notifications {
     }
 
     /**
-     * Maps a condition to commands. If the condition returns true, the commands are scheduled.
+     * Maps a condition to a runnable. If the condition returns true, a command is scheduled.
      * A command can be mapped to multiple conditions.
      */
     @JvmStatic
-    fun map(condition: BooleanSupplier, vararg runnables: Runnable) {
-        map(condition, *runnables.map { Command.of(it) }.toTypedArray())
+    fun map(condition: BooleanSupplier, runnable: Runnable) {
+        map(condition, Command.of(runnable))
     }
 
     /**

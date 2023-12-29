@@ -3,10 +3,7 @@ package com.amarcolini.joos.followers
 import com.amarcolini.joos.drive.DriveSignal
 import com.amarcolini.joos.geometry.Pose2d
 import com.amarcolini.joos.kinematics.Kinematics
-import com.amarcolini.joos.util.NanoClock
-import com.amarcolini.joos.util.cos
-import com.amarcolini.joos.util.epsilonEquals
-import com.amarcolini.joos.util.sin
+import com.amarcolini.joos.util.*
 import kotlin.js.ExperimentalJsExport
 import kotlin.js.JsExport
 import kotlin.jvm.JvmOverloads
@@ -25,11 +22,11 @@ import kotlin.math.sqrt
  */
 @JsExport
 class RamseteFollower @JvmOverloads constructor(
-    private val b: Double,
-    private val zeta: Double,
+    private val b: Double = 0.051,
+    private val zeta: Double = 0.018,
     admissibleError: Pose2d = Pose2d(),
     timeout: Double = 0.0,
-    clock: NanoClock = NanoClock.system()
+    clock: NanoClock = NanoClock.system
 ) : TrajectoryFollower(admissibleError, timeout, clock) {
     override var lastError: Pose2d = Pose2d()
 
@@ -66,6 +63,6 @@ class RamseteFollower @JvmOverloads constructor(
         lastError = Kinematics.calculateRobotPoseError(targetPose, currentPose)
 
         // TODO: is Ramsete acceleration FF worth?
-        return DriveSignal(Pose2d(v, 0.0, omega))
+        return DriveSignal(Pose2d(v, 0.0, omega.rad))
     }
 }

@@ -17,7 +17,7 @@ kotlin {
         compilations.all {
             kotlinOptions {
                 jvmTarget = "1.8"
-                apiVersion = "1.5"
+//                apiVersion = "1.8.20"
             }
         }
         withJava()
@@ -36,33 +36,27 @@ kotlin {
         binaries.executable()
         generateTypeScriptDefinitions()
     }
+    withSourcesJar()
 
 
     sourceSets {
         val commonMain by getting
         val commonTest by getting
-        val jvmMain by getting {
-            dependencies {
-                implementation("org.apache.commons:commons-math3:3.6.1")
-            }
-        }
         val jvmTest by getting {
             dependencies {
                 implementation("org.knowm.xchart:xchart:3.8.1")
+                implementation("org.jetbrains.lets-plot:lets-plot-kotlin-jvm:4.5.0")
+                implementation("org.jetbrains.lets-plot:lets-plot-image-export:4.1.0")
                 implementation("org.apache.commons:commons-math3:3.6.1")
                 implementation("org.ejml:ejml-core:0.41")
                 implementation("org.ejml:ejml-ddense:0.41")
                 implementation("space.kscience:kmath-core:0.3.0")
             }
         }
-        val jsMain by getting {
-            dependencies {
-                implementation("space.kscience:kmath-core:0.3.0")
-            }
-        }
         val jsTest by getting {
             dependencies {
                 implementation(kotlin("test-js"))
+                implementation("space.kscience:kmath-core:0.3.0")
             }
         }
         all {
@@ -74,11 +68,11 @@ kotlin {
 }
 
 dependencies {
-    commonMainImplementation(project(mapOf("path" to ":command:annotation")))
     commonMainApi("org.jetbrains.kotlin:kotlin-stdlib:${Versions.kotlin}")
     commonMainImplementation("org.jetbrains.kotlin:kotlin-reflect:${Versions.kotlin}")
     commonMainImplementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.5.0")
     commonTestImplementation(kotlin("test"))
+    dokkaPlugin("org.jetbrains.dokka:mathjax-plugin:${Versions.dokka}")
 //    implementation("com.fasterxml.jackson.core:jackson-databind:2.13.3")
 //    implementation("com.fasterxml.jackson.dataformat:jackson-dataformat-yaml:2.13.3")
 //    implementation("com.fasterxml.jackson.module:jackson-module-kotlin:2.13.3")
@@ -116,6 +110,6 @@ publishing {
 
 tasks.clean.configure {
     doFirst {
-        delete(file("graphs"), file("config"))
+        delete(file("graphs"), file("config"), file("lets-plot-images"))
     }
 }

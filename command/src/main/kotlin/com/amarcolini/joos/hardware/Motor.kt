@@ -27,7 +27,7 @@ class Motor @JvmOverloads constructor(
     val maxRPM: Double,
     @JvmField
     val TPR: Double = 1.0,
-    clock: NanoClock = NanoClock.system()
+    clock: NanoClock = NanoClock.system
 ) : Component {
     @JvmField
     val internal = motor
@@ -44,7 +44,7 @@ class Motor @JvmOverloads constructor(
         id: String,
         maxRPM: Double,
         TPR: Double = 1.0,
-        clock: NanoClock = NanoClock.system()
+        clock: NanoClock = NanoClock.system
     ) : this(
         hMap.get(DcMotorEx::class.java, id),
         maxRPM,
@@ -62,7 +62,7 @@ class Motor @JvmOverloads constructor(
         hMap: HardwareMap,
         id: String,
         type: Motor.Type,
-        clock: NanoClock = NanoClock.system()
+        clock: NanoClock = NanoClock.system
     ) : this(hMap.get(DcMotorEx::class.java, id), type.maxRPM, type.TPR, clock)
 
     /**
@@ -73,7 +73,7 @@ class Motor @JvmOverloads constructor(
     constructor(
         motor: DcMotorEx,
         type: Motor.Type,
-        clock: NanoClock = NanoClock.system()
+        clock: NanoClock = NanoClock.system
     ) : this(motor, type.maxRPM, type.TPR, clock)
 
     enum class RunMode {
@@ -141,7 +141,7 @@ class Motor @JvmOverloads constructor(
     class Encoder internal constructor(
         private val getPosition: () -> Int,
         private val getVelocity: () -> Double,
-        private val clock: NanoClock = NanoClock.system()
+        private val clock: NanoClock = NanoClock.system
     ) {
         /**
          * Constructs an encoder from the provided [id] of the corresponding motor.

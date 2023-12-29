@@ -13,7 +13,9 @@ import kotlin.jvm.JvmSynthetic
 import kotlin.math.*
 
 /**
- * Returns the real solutions to the quadratic ax^2 + bx + c.
+ * Returns the real solutions to the quadratic \(ax^2 + bx + c\).
+ *
+ * @usesMathJax
  */
 fun solveQuadratic(a: Double, b: Double, c: Double): List<Double> {
     val disc = b * b - 4 * a * c
@@ -49,13 +51,139 @@ fun wrap(n: Int, min: Int, max: Int): Int =
  */
 fun clamp(n: Double, min: Double, max: Double): Double = n.coerceIn(min, max)
 
+/**
+ * Does a linear regression of the form `y = mx + b`.
+ *
+ * @return `m` and `b`
+ */
+fun doLinearRegression(x: List<Double>, y: List<Double>): Pair<Double, Double> {
+    require(x.size == y.size) { "x and y lists must have the same size!" }
+    val xsum = x.sum()
+    val ysum = y.sum()
+    val xysum = x.zip(y).sumOf { it.first * it.second }
+    val x2sum = x.sumOf { it * it }
+    val slope = (x.size * xysum - xsum * ysum) / (x.size * x2sum - xsum * xsum)
+    val intercept = (ysum - slope * xsum) / x.size
+    return slope to intercept
+}
+
+/**
+ * Does a linear regression of the form `y = mx`.
+ *
+ * @return `m`
+ */
+fun doLinearRegressionNoIntercept(x: List<Double>, y: List<Double>): Double {
+    val numerator = x.zip(y).sumOf { it.first * it.second }
+    val denominator = x.sumOf { it * it }
+    return numerator / denominator
+}
+
+/**
+ * Generates [n] rows of Pascal's triangle.
+ */
+fun generatePascalsTriangle(n: Int): Array<IntArray> =
+    Array(n) { index ->
+        var c = 1
+        IntArray(index + 1) { i ->
+            val result = c
+            c = c * (index - i) / (i + 1)
+            result
+        }
+    }
+
+/**
+ * Given f(x) = [polynomial], computes f(x+1).
+ */
+internal fun translate(
+    polynomial: DoubleArray,
+    pascalsTriangle: Array<IntArray> = generatePascalsTriangle(polynomial.size)
+): DoubleArray =
+    DoubleArray(polynomial.size) { i ->
+        var c = 0.0
+        for (j in 0..i) {
+            c += polynomial[j] * pascalsTriangle[polynomial.lastIndex - j][i - j]
+        }
+        c
+    }
+
+/**
+ * Given f(x) = [polynomial], returns the number of sign variations in the coefficients of
+ * (x+1)^n * f(1/(x+1)), where n is the degree of [polynomial].
+ */
+internal fun signVar(polynomial: DoubleArray, pascalsTriangle: Array<IntArray>): Int {
+    var signVar = 0
+    val last = polynomial.lastIndex
+    var lastSign = sign(polynomial[last] * pascalsTriangle[last][0])
+    for (i in 1..last) {
+        var c = 0.0
+        for (j in 0..i) {
+            val k = last - j
+            c += polynomial[k] * pascalsTriangle[k][i - j]
+        }
+        val sign = sign(c)
+        if (sign != lastSign) signVar++
+        lastSign = sign
+    }
+    return signVar
+}
+
+/**
+ * Returns a list of intervals that each contain a root of [polynomial] that lies in [0, 1]. Uses
+ * the Modified Uspensky algorithm described [here](https://en.wikipedia.org/wiki/Real-root_isolation#Pseudocode).
+ *
+ * @param polynomial A list of all the coefficients of the polynomial (including coefficients of 0),
+ * starting from the leading coefficient.
+ * @param pascalsTriangle A representation of Pascal's triangle generated using [generatePascalsTriangle]. It
+ * is recommended to compute this once and pass it to each consecutive function call to improve performance.
+ */
+fun isolateRoots(
+    polynomial: DoubleArray,
+    pascalsTriangle: Array<IntArray> = generatePascalsTriangle(polynomial.size)
+): List<ClosedFloatingPointRange<Double>> {
+    var n = polynomial.size
+    val l = arrayListOf(Triple(0, 0, polynomial))
+    val isol = ArrayList<Triple<Int, Int, Int>>()
+    while (l.isNotEmpty()) {
+        var (c, k, q) = l.removeAt(0)
+        if (q[q.lastIndex] == 0.0) {
+            q = q.copyOfRange(0, q.size - 2)
+            n--
+            isol += Triple(c, k, 0)
+        }
+        val v = signVar(q, pascalsTriangle)
+        if (v == 1) isol += Triple(c, k, 1)
+        if (v > 1) {
+            for (i in q.indices) {
+                q[i] *= (1 shl i).toDouble()
+            }
+            l += Triple(2 * c, k + 1, q)
+            l += Triple(2 * c + 1, k + 1, translate(q, pascalsTriangle))
+        }
+    }
+    return isol.map { (c, k, h) ->
+        val denom = (1 shl k).toDouble()
+        c / denom .. (c + h) / denom
+    }
+}
+
+/**
+ * Evaluates [polynomial] at [x].
+ */
+fun evaluatePolynomial(polynomial: DoubleArray, x: Double): Double {
+    var result = 0.0
+    for (c in polynomial) {
+        result = result * x + c
+    }
+    return result
+}
+
 fun cos(angle: Angle): Double = angle.cos()
 fun sin(angle: Angle): Double = angle.sin()
 fun tan(angle: Angle): Double = angle.tan()
 fun abs(angle: Angle): Angle = angle.abs()
-fun min(a: Angle, b: Angle): Angle = min(a.radians, b.radians).rad
-fun max(a: Angle, b: Angle): Angle = max(a.radians, b.radians).rad
-fun sign(angle: Angle): Double = sign(angle.radians)
+fun min(a: Angle, b: Angle): Angle = Angle(min(a.getValue(b.units), b.value), b.units)
+fun max(a: Angle, b: Angle): Angle = Angle(max(a.getValue(b.units), b.value), b.units)
+fun sign(angle: Angle): Double = sign(angle.value)
 
 /**
  * The accuracy with which `epsilonEquals` operates : `0.000001`.
@@ -79,6 +207,13 @@ fun Double.wrap(min: Double, max: Double): Double = wrap(this, min, max)
  */
 @JvmName("wrap1")
 @JvmSynthetic
+fun Double.wrap(bounds: Pair<Double, Double>): Double = wrap(this, bounds.first, bounds.second)
+
+/**
+ * @see wrap
+ */
+@JvmName("wrap1")
+@JvmSynthetic
 fun Int.wrap(min: Int, max: Int): Int = wrap(this, min, max)
 
 
@@ -86,21 +221,6 @@ fun Int.wrap(min: Int, max: Int): Int = wrap(this, min, max)
  * Multiplies [angle] by the provided scalar.
  */
 operator fun Double.times(angle: Angle): Angle = angle * this
-
-/**
- * Adds this double and [angle], where this double is in [Angle.defaultUnits].
- */
-operator fun Double.plus(angle: Angle): Angle = angle + this
-
-/**
- * Adds [angle] from this double, where this double is in [Angle.defaultUnits].
- */
-operator fun Double.minus(angle: Angle): Angle = Angle(this) - angle
-
-/**
- * Divides this double by [angle], where this double is in [Angle.defaultUnits].
- */
-operator fun Double.div(angle: Angle): Double = Angle(this) / angle
 
 /**
  * Creates an [Angle] from the specified value in radians.

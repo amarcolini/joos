@@ -1,25 +1,16 @@
 package com.amarcolini.joos.hardware.drive
 
 import com.amarcolini.joos.command.Component
+import com.amarcolini.joos.control.DCMotorFeedforward
+import com.amarcolini.joos.control.Feedforward
 import com.amarcolini.joos.control.PIDCoefficients
-import com.amarcolini.joos.control.PIDController
-import com.amarcolini.joos.drive.DriveSignal
-import com.amarcolini.joos.followers.HolonomicPIDVAFollower
-import com.amarcolini.joos.followers.TrajectoryFollower
+import com.amarcolini.joos.drive.AbstractDiffSwerveDrive
 import com.amarcolini.joos.geometry.Angle
-import com.amarcolini.joos.geometry.Pose2d
 import com.amarcolini.joos.hardware.Motor
 import com.amarcolini.joos.hardware.MotorGroup
 import com.amarcolini.joos.kinematics.DiffSwerveKinematics
 import com.amarcolini.joos.localization.AngleSensor
-import com.amarcolini.joos.localization.DiffSwerveLocalizer
-import com.amarcolini.joos.localization.Localizer
 import com.amarcolini.joos.trajectory.constraints.DiffSwerveConstraints
-import com.amarcolini.joos.util.deg
-import com.amarcolini.joos.util.rad
-import com.amarcolini.joos.util.wrap
-import kotlin.math.PI
-import kotlin.math.abs
 
 /**
  * A [Component] implementation of a differential swerve drive.
@@ -27,74 +18,11 @@ import kotlin.math.abs
 open class DiffSwerveDrive @JvmOverloads constructor(
     private val leftModule: Pair<Motor, Motor>,
     private val rightModule: Pair<Motor, Motor>,
-    final override val externalHeadingSensor: AngleSensor? = null,
-    constraints: DiffSwerveConstraints = DiffSwerveConstraints(
-        listOf(
-            leftModule.first,
-            leftModule.second,
-            rightModule.first,
-            rightModule.second
-        ).minOf { it.maxDistanceVelocity }, 1.0
-    ),
     moduleOrientationPID: PIDCoefficients,
-    translationalPID: PIDCoefficients = PIDCoefficients(4.0, 0.0, 0.5),
-    headingPID: PIDCoefficients = PIDCoefficients(4.0, 0.0, 0.5)
-) : DriveComponent() {
-
-    class Builder(private val leftModule: Pair<Motor, Motor>, private val rightModule: Pair<Motor, Motor>) {
-        constructor(leftModule: MotorGroup, rightModule: MotorGroup) : this(
-            leftModule[0] to leftModule[1],
-            rightModule[0] to rightModule[1]
-        )
-
-        private var leftModuleAngleSensor: AngleSensor? = null
-        private var rightModuleAngleSensor: AngleSensor? = null
-        private var externalHeadingSensor: AngleSensor? = null
-        private var localizer: Localizer? = null
-        private var modulePID: PIDCoefficients? = null
-
-        fun addModuleSensors(leftModuleAngleSensor: AngleSensor, rightModuleAngleSensor: AngleSensor): Builder {
-            this.leftModuleAngleSensor = leftModuleAngleSensor
-            this.rightModuleAngleSensor = rightModuleAngleSensor
-            return this
-        }
-
-        fun setLocalizer(localizer: Localizer): Builder {
-            this.localizer = localizer
-            return this
-        }
-
-        fun addExternalHeading(externalHeadingSensor: AngleSensor): Builder {
-            this.externalHeadingSensor = externalHeadingSensor
-            return this
-        }
-
-        fun setModuleOrientationPID(pid: PIDCoefficients): Builder {
-            this.modulePID = pid
-            return this
-        }
-
-        fun build(): DiffSwerveDrive = object : DiffSwerveDrive(
-            leftModule,
-            rightModule,
-            externalHeadingSensor,
-            moduleOrientationPID = modulePID
-                ?: throw IllegalArgumentException("You must provide module orientation PID coefficients for DiffSwerveDrive.")
-        ) {
-            private val leftModuleAngleSensor = this@Builder.leftModuleAngleSensor
-            private val rightModuleAngleSensor = this@Builder.rightModuleAngleSensor
-
-            init {
-                this@Builder.localizer?.let { this.localizer = it }
-            }
-
-            override fun getModuleOrientations(): Pair<Angle, Angle> =
-                if (leftModuleAngleSensor != null && rightModuleAngleSensor != null) {
-                    leftModuleAngleSensor.getAngle() to rightModuleAngleSensor.getAngle()
-                } else super.getModuleOrientations()
-        }
-    }
-
+    trackWidth: Double = 1.0,
+    feedforward: Feedforward = DCMotorFeedforward(1.0),
+    externalHeadingSensor: AngleSensor? = null,
+) : AbstractDiffSwerveDrive(moduleOrientationPID, trackWidth, feedforward, externalHeadingSensor), DriveComponent {
     /**
      * Constructs a differential swerve drive from two [MotorGroup]s containing the motors of each module.
      */
@@ -102,112 +30,45 @@ open class DiffSwerveDrive @JvmOverloads constructor(
     constructor(
         leftModule: MotorGroup,
         rightModule: MotorGroup,
-        externalHeadingSensor: AngleSensor? = null,
-        constraints: DiffSwerveConstraints = DiffSwerveConstraints(
-            listOf(leftModule, rightModule).minOf { it.maxDistanceVelocity }, 1.0
-        ),
         moduleOrientationPID: PIDCoefficients,
-        translationalPID: PIDCoefficients = PIDCoefficients(4.0, 0.0, 0.5),
-        headingPID: PIDCoefficients = PIDCoefficients(4.0, 0.0, 0.5)
+        trackWidth: Double = 1.0,
+        feedforward: Feedforward = DCMotorFeedforward(1.0),
+        externalHeadingSensor: AngleSensor? = null,
     ) : this(
         leftModule[0] to leftModule[1],
         rightModule[0] to rightModule[1],
-        externalHeadingSensor, constraints, moduleOrientationPID, translationalPID, headingPID
+        moduleOrientationPID, trackWidth, feedforward, externalHeadingSensor
     )
 
-    protected val gears = listOf(leftModule.first, leftModule.second, rightModule.first, rightModule.second)
+    /**
+     * Constructs a differential swerve drive using [constraints].
+     */
+    @JvmOverloads
+    constructor(
+        leftModule: MotorGroup,
+        rightModule: MotorGroup,
+        moduleOrientationPID: PIDCoefficients,
+        constraints: DiffSwerveConstraints,
+        feedforward: Feedforward = DCMotorFeedforward(1.0),
+        externalHeadingSensor: AngleSensor? = null,
+    ) : this(
+        leftModule[0] to leftModule[1],
+        rightModule[0] to rightModule[1],
+        moduleOrientationPID, constraints.trackWidth, feedforward, externalHeadingSensor
+    )
 
     /**
      * All the motors in this drive.
      */
     @JvmField
-    val motors: MotorGroup = MotorGroup(leftModule.first, leftModule.second, rightModule.first, rightModule.second)
+    protected val motors: MotorGroup = MotorGroup(leftModule.first, leftModule.second, rightModule.first, rightModule.second)
 
-    final override val constraints: DiffSwerveConstraints =
-        if (constraints.maxGearVel <= 0) constraints.copy(motors.maxDistanceVelocity)
-        else constraints
-
-    override var trajectoryFollower: TrajectoryFollower = HolonomicPIDVAFollower(
-        translationalPID, translationalPID, headingPID, Pose2d(0.5, 0.5, 5.deg), 0.5
-    )
-
-    override fun setRunMode(runMode: Motor.RunMode): Unit = gears.forEach { it.runMode = runMode }
+    override fun setRunMode(runMode: Motor.RunMode): Unit = this.motors.forEach { it.runMode = runMode }
 
     override fun setZeroPowerBehavior(zeroPowerBehavior: Motor.ZeroPowerBehavior): Unit =
-        gears.forEach { it.zeroPowerBehavior = zeroPowerBehavior }
+        motors.forEach { it.zeroPowerBehavior = zeroPowerBehavior }
 
-    override var localizer: Localizer = DiffSwerveLocalizer.withModuleSensors(
-        ::getModuleOrientations,
-        { gears.map { it.distance } },
-        { gears.map { it.distanceVelocity } },
-        constraints.trackWidth
-    ).let { if (externalHeadingSensor != null) it.addHeadingSensor(externalHeadingSensor) else it }
-
-    protected val leftModuleController = PIDController(moduleOrientationPID)
-    protected val rightModuleController = PIDController(moduleOrientationPID)
-
-    init {
-        leftModuleController.setInputBounds(-PI * 0.5, PI * 0.5)
-        rightModuleController.setInputBounds(-PI * 0.5, PI * 0.5)
-        leftModuleController.outputBounded = false
-        rightModuleController.outputBounded = false
-    }
-
-    private var targetSpeeds: List<Pair<Double, Double>> = listOf(
-        0.0 to 0.0,
-        0.0 to 0.0
-    )
-
-    override fun setDriveSignal(driveSignal: DriveSignal) {
-        targetSpeeds = DiffSwerveKinematics.robotToWheelVelocities(
-            driveSignal.vel,
-            constraints.trackWidth
-        ).zip(
-            DiffSwerveKinematics.robotToWheelAccelerations(
-                driveSignal.vel,
-                driveSignal.accel,
-                constraints.trackWidth
-            )
-        )
-        val (leftOrientation, rightOrientation) = DiffSwerveKinematics.robotToModuleOrientations(
-            driveSignal.vel,
-            constraints.trackWidth
-        )
-        leftModuleController.targetPosition = leftOrientation.radians
-        rightModuleController.targetPosition = rightOrientation.radians
-    }
-
-    override fun setDrivePower(drivePower: Pose2d) {
-        val power = drivePower.copy(heading = drivePower.heading.value.rad)
-        targetSpeeds = DiffSwerveKinematics.robotToWheelVelocities(power, 1.0).map {
-            it * constraints.maxGearVel
-        }.zip(listOf(0.0, 0.0))
-        val (leftOrientation, rightOrientation) = DiffSwerveKinematics.robotToModuleOrientations(
-            power, 1.0
-        )
-        leftModuleController.targetPosition = leftOrientation.radians
-        rightModuleController.targetPosition = rightOrientation.radians
-    }
-
-    @JvmOverloads
-    fun setWeightedDrivePower(
-        drivePower: Pose2d,
-        xWeight: Double = 1.0,
-        yWeight: Double = 1.0,
-        headingWeight: Double = 1.0
-    ) {
-        var vel = drivePower
-
-        if (abs(vel.x) + abs(vel.y) + abs(vel.heading.value) > 1) {
-            val denom =
-                xWeight * abs(vel.x) + yWeight * abs(vel.y) + headingWeight * abs(vel.heading.value)
-            vel = Pose2d(vel.x * xWeight, vel.y * yWeight, vel.heading * headingWeight) / denom
-        }
-
-        setDrivePower(vel)
-    }
-
-    protected open fun getModuleOrientations(): Pair<Angle, Angle> = Pair(
+    override fun getModuleOrientations(): Pair<Angle, Angle> = Pair(
         DiffSwerveKinematics.gearToModuleOrientation(
             leftModule.first.rotation,
             leftModule.second.rotation
@@ -218,38 +79,18 @@ open class DiffSwerveDrive @JvmOverloads constructor(
         )
     )
 
+    override fun setMotorPowers(topLeft: Double, bottomLeft: Double, topRight: Double, bottomRight: Double) {
+        motors.zip(listOf(topLeft, bottomLeft, topRight, bottomRight)).forEach { (gear, power) ->
+            gear.power = power
+        }
+    }
+
+    override fun getGearRotations(): List<Angle> = motors.map { it.rotation }
+
+    override fun getGearPositions(): List<Double> = motors.map { it.distance }
+
     override fun update() {
-        super.update()
-        val (leftOrientation, rightOrientation) = getModuleOrientations()
-
-        val (leftVel, leftAccel) = targetSpeeds[0]
-        val leftDirection =
-            if (abs((leftModuleController.targetPosition - leftOrientation.radians).wrap(-PI, PI)) <= (PI * 0.5)) 1
-            else -1
-        val leftControl = leftModuleController.update(leftOrientation.radians)
-        leftModule.first.setDistanceVelocity(
-            leftVel * leftDirection + leftControl,
-            leftAccel * leftDirection,
-        )
-        leftModule.second.setDistanceVelocity(
-            -leftVel * leftDirection + leftControl,
-            -leftAccel * leftDirection,
-        )
-
-        val (rightVel, rightAccel) = targetSpeeds[1]
-        val rightDirection =
-            if (abs((rightModuleController.targetPosition - rightOrientation.radians).wrap(-PI, PI)) <= (PI * 0.5)) 1
-            else -1
-        val rightControl = rightModuleController.update(rightOrientation.radians)
-        rightModule.first.setDistanceVelocity(
-            rightVel * rightDirection + rightControl,
-            rightAccel * rightDirection,
-        )
-        rightModule.second.setDistanceVelocity(
-            -rightVel * rightDirection + rightControl,
-            -rightAccel * rightDirection,
-        )
-
-        gears.forEach { it.update() }
+        updatePoseEstimate()
+        motors.forEach { it.update() }
     }
 }

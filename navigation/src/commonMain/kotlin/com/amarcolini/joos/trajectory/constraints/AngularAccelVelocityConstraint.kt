@@ -16,12 +16,6 @@ class AngularAccelVelocityConstraint(
     val maxAngAccel: Angle,
     val maxTranslationAccel: Double
 ) : TrajectoryVelocityConstraint {
-    /**
-     * Constructs an [AngularAccelVelocityConstraint] where [maxAngAccel] is in degrees or radians as specified by
-     * [Angle.defaultUnits].
-     */
-    constructor(maxAngAccel: Double, maxTranslationalAccel: Double) : this(Angle(maxAngAccel), maxTranslationalAccel)
-
     private val aW = maxAngAccel.radians
     private val aT = maxTranslationAccel
     override fun get(pose: Pose2d, deriv: Pose2d, lastDeriv: Pose2d, ds: Double, baseRobotVel: Pose2d): Double {

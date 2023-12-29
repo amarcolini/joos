@@ -27,7 +27,7 @@ object AngleSerializer : KSerializer<Angle> {
         val string = decoder.decodeString()
         val units = if (string.contains(degreeDescriptor)) AngleUnit.Degrees
         else if (string.contains(radianDescriptor)) AngleUnit.Radians
-        else Angle.defaultUnits
+        else AngleUnit.Radians
         return Angle(Regex("\\d+\\.?\\d*").find(string)?.value?.toDoubleOrNull() ?: 0.0, units)
     }
 }

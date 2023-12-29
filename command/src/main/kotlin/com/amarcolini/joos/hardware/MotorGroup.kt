@@ -11,7 +11,9 @@ import com.qualcomm.robotcore.hardware.HardwareMap
 /**
  * A class that runs multiple motors together as a unit.
  */
-class MotorGroup(private vararg val motors: Motor) : Component, List<Motor> by motors.toList() {
+class MotorGroup(private val motors: List<Motor>) : Component, List<Motor> by motors {
+    constructor(vararg motors: Motor) : this(motors.toList())
+
     /**
      * Constructs a motor group out of several motor groups.
      */

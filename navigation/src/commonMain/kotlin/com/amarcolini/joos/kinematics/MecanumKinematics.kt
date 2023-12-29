@@ -1,6 +1,7 @@
 package com.amarcolini.joos.kinematics
 
 import com.amarcolini.joos.geometry.Pose2d
+import com.amarcolini.joos.util.rad
 import kotlin.js.ExperimentalJsExport
 import kotlin.js.JsExport
 import kotlin.jvm.JvmOverloads
@@ -92,7 +93,7 @@ object MecanumKinematics {
         return Pose2d(
             wheelVelocities.sum(),
             (backLeft + frontRight - frontLeft - backRight) / lateralMultiplier,
-            (backRight + frontRight - frontLeft - backLeft) / k
+            ((backRight + frontRight - frontLeft - backLeft) / k).rad
         ) * 0.25
     }
 }

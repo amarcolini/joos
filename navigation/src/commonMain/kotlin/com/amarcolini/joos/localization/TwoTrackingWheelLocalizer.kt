@@ -3,8 +3,7 @@ package com.amarcolini.joos.localization
 import com.amarcolini.joos.geometry.Angle
 import com.amarcolini.joos.geometry.Pose2d
 import com.amarcolini.joos.kinematics.Kinematics
-import com.amarcolini.joos.util.Matrix
-import com.amarcolini.joos.util.MatrixSolver
+import com.amarcolini.joos.util.Matrix3x3
 import com.amarcolini.joos.util.rad
 
 /**
@@ -27,33 +26,35 @@ abstract class TwoTrackingWheelLocalizer(
     private var lastWheelPositions = emptyList<Double>()
     private var lastHeading: Angle? = null
 
-    private val forwardSolver: MatrixSolver
+    private val forwardMatrix: Matrix3x3
 
     init {
         require(wheelPoses.size == 2) { "2 wheel poses must be provided" }
 
-        val inverseMatrix = Matrix(3, 3)
-        for (i in 0..1) {
-            val orientationVector = wheelPoses[i].headingVec()
-            val positionVector = wheelPoses[i].vec()
-            inverseMatrix[i, 0] = orientationVector.x
-            inverseMatrix[i, 1] = orientationVector.y
-            inverseMatrix[i, 2] = positionVector.x * orientationVector.y - positionVector.y * orientationVector.x
+        val inverseMatrix = Matrix3x3(Array(3) {
+            if (it == 0 || it == 1) {
+                val orientationVector = wheelPoses[it].headingVec()
+                val positionVector = wheelPoses[it].vec()
+                doubleArrayOf(
+                    orientationVector.x,
+                    orientationVector.y,
+                    positionVector.x * orientationVector.y - positionVector.y * orientationVector.x
+                )
+            } else doubleArrayOf(0.0, 0.0, 1.0)
+        })
+        val forwardMatrix = inverseMatrix.getInverse()
+        require(forwardMatrix != null) {
+            "The specified configuration cannot support full localization"
         }
-        inverseMatrix[2, 2] = 1.0
-
-        forwardSolver = inverseMatrix.solver()
-
-        //TODO: make better JS implementation so this is actually possible
-//        require(forwardSolver.isNonSingular) { "The specified configuration cannot support full localization" }
+        this.forwardMatrix = forwardMatrix
     }
 
     private fun calculatePoseDelta(wheelDeltas: List<Double>, headingDelta: Angle): Pose2d {
-        val rawPoseDelta = forwardSolver.solve(Matrix.column(wheelDeltas + headingDelta.radians))
+        val rawPoseDelta = forwardMatrix * (wheelDeltas + headingDelta.radians)
         return Pose2d(
-            rawPoseDelta[0, 0],
-            rawPoseDelta[1, 0],
-            rawPoseDelta[2, 0].rad
+            rawPoseDelta[0],
+            rawPoseDelta[1],
+            rawPoseDelta[2].rad
         )
     }
 

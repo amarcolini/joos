@@ -2,6 +2,7 @@ package com.amarcolini.joos.kinematics
 
 import com.amarcolini.joos.geometry.Pose2d
 import com.amarcolini.joos.util.epsilonEquals
+import com.amarcolini.joos.util.rad
 import kotlin.js.ExperimentalJsExport
 import kotlin.js.JsExport
 import kotlin.jvm.JvmStatic
@@ -55,7 +56,7 @@ object TankKinematics {
         return Pose2d(
             (left + right) / 2.0,
             0.0,
-            (-left + right) / trackWidth
+            ((-left + right) / trackWidth).rad
         )
     }
 }

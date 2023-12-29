@@ -4,13 +4,9 @@ import com.amarcolini.joos.geometry.Angle
 import com.amarcolini.joos.geometry.Pose2d
 import com.amarcolini.joos.geometry.Vector2d
 import com.amarcolini.joos.util.DoubleProgression
-import com.amarcolini.joos.util.epsilonEquals
-import kotlin.js.ExperimentalJsExport
 import kotlin.js.JsExport
 import kotlin.js.JsName
 import kotlin.jvm.JvmOverloads
-import kotlin.math.max
-import kotlin.math.min
 import kotlin.math.roundToInt
 
 /**
@@ -126,38 +122,31 @@ class Path(val segments: List<PathSegment>) {
     }
 
     /**
+     * Projects [queryPoint] onto the current path by calling [ParametricCurve.project] on every
+     * segment and comparing the results. May be faster or slower than [fastProject] depending on the path.
+     */
+    fun compositeProject(queryPoint: Vector2d): Pair<Double, ParametricCurve> =
+        segments.map {
+            val t = it.curve.project(queryPoint)
+            t to it.curve
+        }.minBy { (it.second.internalGet(it.first) - queryPoint).squaredNorm() }
+
+    /**
      * Project [queryPoint] onto the current path using the iterative method described
      * [here](http://www.geometrie.tugraz.at/wallner/sproj.pdf).
      *
      * @param queryPoint query queryPoint
      * @param projectGuess guess for the projected queryPoint's s along the path
      */
-    fun fastProject(queryPoint: Vector2d, projectGuess: Double = length() / 2.0): Double {
-        // we use the first-order method (since we already compute the arc length param
-        var s = projectGuess
-        repeat(200) {
+    fun fastProject(queryPoint: Vector2d, projectGuess: Double = length() / 2.0, iterations: Int = 10): Double {
+        // we use the first-order method (since we already compute the arc length param)
+        return (1..iterations).fold(projectGuess) { s, _ ->
             val t = reparam(s)
             val pathPoint = get(s, t).vec()
             val deriv = deriv(s, t).vec()
-
             val ds = (queryPoint - pathPoint) dot deriv
-
-            if (ds epsilonEquals 0.0) {
-                return@repeat
-            }
-
-            s += ds
-
-            if (s <= 0.0) {
-                return@repeat
-            }
-
-            if (s >= length()) {
-                return@repeat
-            }
+            (s + ds).coerceIn(0.0, length())
         }
-
-        return max(0.0, min(s, length()))
     }
 
     /**
@@ -167,7 +156,7 @@ class Path(val segments: List<PathSegment>) {
      * @param queryPoint query queryPoint
      * @param ds spacing between guesses
      */
-    fun project(queryPoint: Vector2d, ds: Double = 0.25): Double {
+    fun project(queryPoint: Vector2d, ds: Double = 3.0): Double {
         val samples = (length() / ds).roundToInt()
 
         val guesses = DoubleProgression.fromClosedInterval(0.0, length(), samples)

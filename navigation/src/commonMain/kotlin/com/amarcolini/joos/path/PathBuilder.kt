@@ -10,7 +10,7 @@ import kotlin.js.JsName
 import kotlin.jvm.JvmOverloads
 
 /**
- * Exception thrown by [PathBuilder].
+ * Exception thrown by [PathBuilder] and [PositionPathBuilder].
  */
 abstract class PathBuilderException : RuntimeException()
 
@@ -31,6 +31,7 @@ class EmptyPathSegmentException : PathBuilderException()
  * @param startPose start pose
  * @param startDeriv start derivative
  * @param startSecondDeriv start second derivative
+ * @see PositionPathBuilder
  */
 @JsExport
 class PathBuilder(
@@ -45,7 +46,7 @@ class PathBuilder(
 
     @JsName("fromReversed")
     constructor(startPose: Pose2d, reversed: Boolean) :
-            this(startPose, (startPose.heading + Angle(if (reversed) 180.0 else 0.0)).norm())
+            this(startPose, (startPose.heading + (if (reversed) 180.deg else 0.deg)).norm())
 
     @JsName("fromPath")
     constructor(path: Path, s: Double) : this(path[s], path.deriv(s), path.secondDeriv(s))
@@ -241,7 +242,8 @@ class PathBuilder(
      * Adds a spline segment with the specified heading interpolation.
      *
      * @param endPosition end position
-     * @param endTangent end tangent (negative = default magnitude)
+     * @param endTangent end tangent
+     * @param startTangentMag the magnitude of the start tangent (negative = default magnitude)
      * @param endTangentMag the magnitude of the end tangent (negative = default magnitude)
      * @param headingInterpolation desired heading interpolation
      * @see HeadingInterpolation
@@ -279,15 +281,6 @@ class PathBuilder(
     }
 
     /**
-     * Adds a spline segment with tangent heading interpolation.
-     *
-     * @param endPosition end position
-     * @param endTangent end tangent in [Angle.defaultUnits]
-     */
-    @JsName("splineToDefault")
-    fun splineTo(endPosition: Vector2d, endTangent: Double): PathBuilder = splineTo(endPosition, Angle(endTangent))
-
-    /**
      * Adds a spline segment with constant heading interpolation.
      *
      * @param endPosition end position
@@ -295,16 +288,6 @@ class PathBuilder(
      */
     fun splineToConstantHeading(endPosition: Vector2d, endTangent: Angle): PathBuilder =
         addSegment(PathSegment(makeSpline(endPosition, endTangent), makeConstantInterpolator()))
-
-    /**
-     * Adds a spline segment with constant heading interpolation.
-     *
-     * @param endPosition end position
-     * @param endTangent end tangent in [Angle.defaultUnits]
-     */
-    @JsName("splineToConstantHeadingDefault")
-    fun splineToConstantHeading(endPosition: Vector2d, endTangent: Double): PathBuilder =
-        splineToConstantHeading(endPosition, Angle(endTangent))
 
     /**
      * Adds a spline segment with linear heading interpolation.
@@ -321,16 +304,6 @@ class PathBuilder(
         )
 
     /**
-     * Adds a spline segment with linear heading interpolation.
-     *
-     * @param endPose end pose
-     * @param endTangent end tangent in [Angle.defaultUnits]
-     */
-    @JsName("splineToLinearHeadingDefault")
-    fun splineToLinearHeading(endPose: Pose2d, endTangent: Double) =
-        splineToLinearHeading(endPose, Angle(endTangent))
-
-    /**
      * Adds a spline segment with spline heading interpolation.
      *
      * @param endPose end pose
@@ -343,16 +316,6 @@ class PathBuilder(
                 makeSplineInterpolator(endPose.heading)
             )
         )
-
-    /**
-     * Adds a spline segment with spline heading interpolation.
-     *
-     * @param endPose end pose
-     * @param endTangent end tangent in [Angle.defaultUnits]
-     */
-    @JsName("splineToSplineHeadingDefault")
-    fun splineToSplineHeading(endPose: Pose2d, endTangent: Double) =
-        splineToSplineHeading(endPose, Angle(endTangent))
 
     /**
      * Constructs the [Path] instance.

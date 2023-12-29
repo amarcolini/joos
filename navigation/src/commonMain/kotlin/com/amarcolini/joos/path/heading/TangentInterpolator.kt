@@ -1,6 +1,7 @@
 package com.amarcolini.joos.path.heading
 
 import com.amarcolini.joos.geometry.Angle
+import com.amarcolini.joos.util.rad
 import kotlin.jvm.JvmOverloads
 
 /**
@@ -9,13 +10,8 @@ import kotlin.jvm.JvmOverloads
  * @param offset tangent heading offset
  */
 class TangentInterpolator @JvmOverloads constructor(
-    val offset: Angle = Angle()
+    val offset: Angle = 0.rad
 ) : HeadingInterpolator() {
-    /**
-     * Constructs a [TangentInterpolator] where [offset] is in degrees or radians as specified by [Angle.defaultUnits].
-     */
-    constructor(offset: Double) : this(Angle(offset))
-
     override fun internalGet(s: Double, t: Double): Angle = (offset + curve.tangentAngle(s, t)).norm()
 
     override fun internalDeriv(s: Double, t: Double): Angle = curve.tangentAngleDeriv(s, t)

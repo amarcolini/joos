@@ -1,6 +1,5 @@
 package com.amarcolini.joos.geometry
 
-import com.amarcolini.joos.dashboard.Immutable
 import com.amarcolini.joos.serialization.format
 import com.amarcolini.joos.util.*
 import kotlin.js.ExperimentalJsExport
@@ -14,27 +13,14 @@ import kotlin.jvm.JvmOverloads
  */
 @JsExport
 @kotlinx.serialization.Serializable
-@Immutable
 data class Pose2d @JvmOverloads constructor(
     @JvmField val x: Double = 0.0,
     @JvmField val y: Double = 0.0,
-    @JvmField val heading: Angle = Angle()
+    @JvmField val heading: Angle = 0.rad
 ) {
-    /**
-     * Constructs a pose where [heading] is in [Angle.defaultUnits].
-     */
-    @JsName("fromDefault")
-    constructor(x: Double, y: Double, heading: Double) : this(x, y, Angle(heading))
-
     @JvmOverloads
     @JsName("fromVector")
-    constructor(pos: Vector2d, heading: Angle = Angle()) : this(pos.x, pos.y, heading)
-
-    /**
-     * Constructs a pose where [heading] is in [Angle.defaultUnits].
-     */
-    @JsName("fromVectorDefault")
-    constructor(pos: Vector2d, heading: Double) : this(pos, Angle(heading))
+    constructor(pos: Vector2d, heading: Angle = 0.rad) : this(pos.x, pos.y, heading)
 
     /**
      * Returns this pose as a vector (i.e., without heading).

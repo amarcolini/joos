@@ -58,8 +58,7 @@ abstract class CommandOpMode : LinearOpMode(), CommandInterface {
             return output ?: fallback()
         }
 
-        protected open fun fallback(): T =
-            throw IllegalStateException("Initializer delegate was accessed too early!")
+        protected open fun fallback(): T = throw IllegalStateException("Initializer delegate was accessed too early!")
     }
 
     private fun <Device : Any, T> replaceHardwareDelegate(
@@ -77,16 +76,13 @@ abstract class CommandOpMode : LinearOpMode(), CommandInterface {
     ) : InitializerDelegate<T>({
         map(hardwareMap.get(deviceType.java, deviceName))
     }) {
-        override fun fallback(): T =
-            throw IllegalStateException("Device $deviceName was accessed too early!")
+        override fun fallback(): T = throw IllegalStateException("Device $deviceName was accessed too early!")
 
-        fun init(init: Device.() -> Unit) =
-            replaceHardwareDelegate(this) {
-                map(this).also { init(this) }
-            }
+        fun init(init: Device.() -> Unit) = replaceHardwareDelegate(this) {
+            map(this).also { init(this) }
+        }
 
-        fun <R> map(newMap: Device.() -> R) =
-            replaceHardwareDelegate(this, newMap)
+        fun <R> map(newMap: Device.() -> R) = replaceHardwareDelegate(this, newMap)
     }
 
     /**
@@ -140,7 +136,16 @@ abstract class CommandOpMode : LinearOpMode(), CommandInterface {
         init {
             if (initRobot != null || resetRobot != null) throw IllegalStateException("Only one robot is allowed per CommandOpMode!")
             initRobot = {
-                bot = type.createInstance()
+                bot = try {
+                    type.createInstance()
+                } catch (e: Exception) {/*
+                    The exception thrown by createInstance() appears to run on a different
+                    thread and doesn't get caught by the robot controller, causing a silent crash.
+                    It's also a reflection exception, which isn't very useful for debugging, so we throw
+                    the exception that caused it instead.
+                     */
+                    e.cause?.let { cause -> throw cause } ?: throw e
+                }
                 robot = bot
             }
             resetRobot = {
@@ -160,12 +165,20 @@ abstract class CommandOpMode : LinearOpMode(), CommandInterface {
             if (it !is KMutableProperty1<out CommandOpMode, *>) return@forEach
             if (it.isAbstract) return@forEach
             if (it.annotations.filterIsInstance<Register>().isEmpty()) return@forEach
-            if (!it.returnType.jvmErasure.isSubclassOf(Robot::class))
-                throw IllegalStateException("The Register annotation is reserved for Robots only.")
+            if (!it.returnType.jvmErasure.isSubclassOf(Robot::class)) throw IllegalStateException("The Register annotation is reserved for Robots only.")
             if (initRobot != null || resetRobot != null) throw IllegalStateException("Only one robot is allowed per CommandOpMode!")
             it.isAccessible = true
             initRobot = {
-                val bot = it.returnType.jvmErasure.createInstance() as Robot
+                val bot = try {
+                    it.returnType.jvmErasure.createInstance() as Robot
+                } catch (e: Exception) {/*
+                The exception thrown by createInstance() appears to run on a different
+                thread and doesn't get caught by the robot controller, causing a silent crash.
+                It's also a reflection exception, which isn't very useful for debugging, so we throw
+                the exception that caused it instead.
+                */
+                    e.cause?.let { cause -> throw cause } ?: throw e
+                }
                 robot = bot
                 it.setter.call(this, bot)
             }
@@ -187,20 +200,23 @@ abstract class CommandOpMode : LinearOpMode(), CommandInterface {
     /**
      * Whether all commands scheduled in [preInit] should be cancelled before starting the OpMode. `false` by default.
      */
-    protected var cancelBeforeStart: Boolean = true
+    protected var cancelBeforeStart: Boolean = false
 
     private var hasInitialized = false
     final override fun runOpMode() {
+        CommandScheduler.reset()
         hMap = hardwareMap
 
         robot = null
         initRobot?.invoke()
+        CommandScheduler.isBusy = true
         robot?.init()
         cancelBeforeStart = false
         initLoop = isStartOverridden
         dashboard = FtcDashboard.getInstance()
         initializerDelegates.forEach { it.init() }
         preInit()
+        CommandScheduler.isBusy = false
         hasInitialized = true
 
         val finalInitLoop = initLoop
@@ -216,10 +232,12 @@ abstract class CommandOpMode : LinearOpMode(), CommandInterface {
         robot?.start()
         preStart()
         while (opModeIsActive()) CommandScheduler.update()
+        CommandScheduler.cancelAll()
         postStop()
         robot?.stop()
         robot = null
         resetRobot?.invoke()
         initializerDelegates.forEach { it.reset() }
+        CommandScheduler.reset()
     }
 }

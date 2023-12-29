@@ -74,11 +74,11 @@ interface CommandInterface {
         CommandScheduler.map(condition, *commands)
 
     /**
-     * Maps a condition to commands. If the condition returns true, the commands are scheduled.
+     * Maps a condition to a runnable. If the condition returns true, a command is scheduled.
      * A command can be mapped to multiple conditions.
      */
-    fun map(condition: BooleanSupplier, vararg runnables: Runnable) =
-        CommandScheduler.map(condition, *runnables)
+    fun map(condition: BooleanSupplier, runnable: Runnable) =
+        CommandScheduler.map(condition, runnable)
 
     /**
      * Removes commands from the list of mappings.

@@ -2,12 +2,14 @@ package com.amarcolini.joos.path
 
 import com.amarcolini.joos.geometry.Angle
 import com.amarcolini.joos.geometry.Vector2d
+import com.amarcolini.joos.util.DoubleProgression
 import com.amarcolini.joos.util.rad
 import kotlin.js.JsExport
 import kotlin.jvm.JvmName
 import kotlin.jvm.JvmOverloads
 import kotlin.math.abs
 import kotlin.math.pow
+import kotlin.math.roundToInt
 
 /**
  * Parametric curve with two components (x and y). These curves are reparameterized from an internal parameter (t) to
@@ -60,42 +62,42 @@ abstract class ParametricCurve {
     /**
      * Returns the start vector.
      */
-    fun start() = get(0.0, 0.0)
+    fun start() = get(0.0)
 
     /**
      * Returns the start vector.
      */
-    fun startDeriv() = deriv(0.0, 0.0)
+    fun startDeriv() = deriv(0.0)
 
     /**
      * Returns the start second derivative.
      */
-    fun startSecondDeriv() = secondDeriv(0.0, 0.0)
+    fun startSecondDeriv() = secondDeriv(0.0)
 
     /**
      * Returns the start third derivative.
      */
-    fun startThirdDeriv() = thirdDeriv(0.0, 0.0)
+    fun startThirdDeriv() = thirdDeriv(0.0)
 
     /**
      * Returns the end vector.
      */
-    fun end() = get(length(), 1.0)
+    fun end() = get(length())
 
     /**
      * Returns the end derivative.
      */
-    fun endDeriv() = deriv(length(), 1.0)
+    fun endDeriv() = deriv(length())
 
     /**
      * Returns the end second derivative.
      */
-    fun endSecondDeriv() = secondDeriv(length(), 1.0)
+    fun endSecondDeriv() = secondDeriv(length())
 
     /**
      * Returns the end third derivative.
      */
-    fun endThirdDeriv() = thirdDeriv(length(), 1.0)
+    fun endThirdDeriv() = thirdDeriv(length())
 
     /**
      * Returns the angle of the tangent line [s] units along the curve.
@@ -152,8 +154,19 @@ abstract class ParametricCurve {
     fun curvature(s: Double, t: Double = reparam(s)): Double = tangentAngleDeriv(s, t).radians
 
     /**
+     * Returns the nearest point on the curve in terms of the internal parameter [t].
+     */
+    open fun project(query: Vector2d): Double = reparam(PositionPath(this).fastProject(query))
+
+    /**
      * Automatically reparameterizes this curve by computing many small samples. This is computationally
      * expensive and should be avoided unless no faster way is available.
+     *
+     * @param tLo the lower bound of the internal parameter
+     * @param tHi the upper bound of the internal parameter
+     * @param maxSegmentLength the maximum distance between two samples
+     * @param maxDepth the maximum number of times the curve can be divided into samples
+     * @param maxDeltaK the maximum change in curvature between two samples
      */
     inner class ArcLengthParameterization(
         private val tLo: Double,
@@ -196,15 +209,7 @@ abstract class ParametricCurve {
         }
 
         /**
-         * Computes internal parameter vs curve length samples and estimates curve length.
-         * @param tLo the lower bound of the internal parameter
-         * @param tHi the upper bound of the internal parameter
-         * @param maxSegmentLength the maximum distance between two samples
-         * @param maxDepth the maximum number of times the curve can be divided into samples
-         * @param maxDeltaK the maximum change in curvature between two samples
-         */
-        /**
-         * Uses the samples computed by to find the value of the internal parameter `t` that
+         * Uses the samples computed to find the value of the internal parameter `t` that
          * corresponds to the given length along the curve [s].
          * @param s distance travelled along the curve
          * @return

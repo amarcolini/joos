@@ -2,6 +2,7 @@ package com.amarcolini.joos.hardware.drive
 
 import com.amarcolini.joos.command.Component
 import com.amarcolini.joos.control.PIDCoefficients
+import com.amarcolini.joos.drive.AbstractTankDrive
 import com.amarcolini.joos.drive.DriveSignal
 import com.amarcolini.joos.followers.TankPIDVAFollower
 import com.amarcolini.joos.followers.TrajectoryFollower
@@ -25,90 +26,46 @@ import kotlin.math.min
 open class TankDrive @JvmOverloads constructor(
     private val left: MotorGroup,
     private val right: MotorGroup,
-    final override val externalHeadingSensor: AngleSensor? = null,
-    constraints: TankConstraints = TankConstraints(
-        min(
-            left.maxDistanceVelocity,
-            right.maxDistanceVelocity
-        ), 1.0
-    ),
-    axialPID: PIDCoefficients = PIDCoefficients(1.0, 0.0, 0.5),
-    headingPID: PIDCoefficients = PIDCoefficients(1.0, 0.0, 0.5)
-) : DriveComponent() {
-
-    private val wheels = listOf(left, right)
+    trackWidth: Double = 1.0,
+    externalHeadingSensor: AngleSensor? = null,
+) : AbstractTankDrive(trackWidth, externalHeadingSensor), DriveComponent {
+    @JvmOverloads constructor(
+        left: MotorGroup,
+        right: MotorGroup,
+        constraints: TankConstraints,
+        externalHeadingSensor: AngleSensor? = null
+    ) : this(left, right, constraints.trackWidth, externalHeadingSensor)
 
     /**
      * All the motors in this drive.
      */
     @JvmField
-    val motors: MotorGroup = MotorGroup(left, right)
+    protected val motors: MotorGroup = MotorGroup(left, right)
 
-    final override val constraints: TankConstraints =
-        if (constraints.maxWheelVel <= 0) constraints.copy(motors.maxDistanceVelocity)
-        else constraints
+    override fun setMotorPowers(left: Double, right: Double) {
+        this.left.setPower(left)
+        this.right.setPower(right)
+    }
 
-    override var trajectoryFollower: TrajectoryFollower = TankPIDVAFollower(
-        axialPID, headingPID, Pose2d(0.5, 0.5, 5.deg), 0.5
+    override fun setWheelVelocities(velocities: List<Double>, accelerations: List<Double>) {
+        left.setDistanceVelocity(velocities[0], accelerations[0])
+        right.setDistanceVelocity(velocities[1], accelerations[1])
+    }
+
+    override fun getWheelPositions(): List<Double> = listOf(
+        left.currentPosition, right.currentPosition
     )
-    override var localizer: Localizer = TankLocalizer(
-        { listOf(left.distance, right.distance) },
-        { listOf(left.distanceVelocity, right.distanceVelocity) },
-        constraints.trackWidth,
-    ).let { if (externalHeadingSensor != null) it.addHeadingSensor(externalHeadingSensor) else it }
-
-    override fun setDriveSignal(driveSignal: DriveSignal) {
-        wheels.zip(
-            TankKinematics.robotToWheelVelocities(
-                driveSignal.vel,
-                constraints.trackWidth,
-            ).zip(
-                TankKinematics.robotToWheelAccelerations(
-                    driveSignal.accel,
-                    constraints.trackWidth,
-                )
-            )
-        ).forEach { (motor, power) ->
-            val (vel, accel) = power
-            motor.setDistanceVelocity(vel, accel)
-        }
-    }
-
-    override fun setDrivePower(drivePower: Pose2d) {
-        wheels.zip(
-            TankKinematics.robotToWheelVelocities(
-                drivePower.copy(heading = drivePower.heading.value.rad), 2.0
-            )
-        ).forEach { (motor, speed) -> motor.setPower(speed) }
-    }
-
-    @JvmOverloads
-    fun setWeightedDrivePower(
-        drivePower: Pose2d,
-        xWeight: Double = 1.0,
-        headingWeight: Double = 1.0
-    ) {
-        var vel = drivePower
-
-        if (abs(vel.x) + abs(vel.heading.value) > 1) {
-            val denom =
-                xWeight * abs(vel.x) + headingWeight * abs(vel.heading.value)
-            vel = Pose2d(vel.x * xWeight, 0.0, vel.heading * headingWeight) / denom
-        }
-
-        setDrivePower(vel)
-    }
 
     override fun setRunMode(runMode: Motor.RunMode) {
-        wheels.forEach { it.runMode = runMode }
+        motors.forEach { it.runMode = runMode }
     }
 
     override fun setZeroPowerBehavior(zeroPowerBehavior: Motor.ZeroPowerBehavior) {
-        wheels.forEach { it.zeroPowerBehavior = zeroPowerBehavior }
+        motors.forEach { it.zeroPowerBehavior = zeroPowerBehavior }
     }
 
     override fun update() {
-        super.update()
-        wheels.forEach { it.update() }
+        updatePoseEstimate()
+        motors.forEach { it.update() }
     }
 }

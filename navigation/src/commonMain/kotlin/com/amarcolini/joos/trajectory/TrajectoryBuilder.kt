@@ -63,34 +63,6 @@ open class TrajectoryBuilder protected constructor(
      * trajectories from rest.
      */
     @JvmOverloads
-    @JsName("createD")
-    constructor(
-        startPose: Pose2d = Pose2d(),
-        startTangent: Double,
-        baseVelConstraint: TrajectoryVelocityConstraint,
-        baseAccelConstraint: TrajectoryAccelerationConstraint,
-        baseAngVel: Angle,
-        baseAngAccel: Angle,
-        baseAngJerk: Angle = 0.rad,
-        resolution: Double = 0.25
-    ) : this(
-        startPose,
-        Pose2d(Angle(startTangent).vec()),
-        Pose2d(),
-        baseVelConstraint,
-        baseAccelConstraint,
-        baseAngVel,
-        baseAngAccel,
-        baseAngJerk,
-        MotionState(0.0, 0.0, 0.0),
-        resolution
-    )
-
-    /**
-     * Creates a builder from a start pose and tangent. This is the recommended constructor for creating
-     * trajectories from rest.
-     */
-    @JvmOverloads
     @JsName("fromConstraints")
     constructor(
         startPose: Pose2d = Pose2d(),
@@ -100,30 +72,6 @@ open class TrajectoryBuilder protected constructor(
     ) : this(
         startPose,
         startTangent,
-        constraints.velConstraint,
-        constraints.accelConstraint,
-        constraints.maxAngVel,
-        constraints.maxAngAccel,
-        constraints.maxAngJerk,
-        resolution
-    )
-
-    /**
-     * Creates a builder from a start pose and tangent. This is the recommended constructor for creating
-     * trajectories from rest.
-     *
-     * @param startTangent the initial tangent in [Angle.defaultUnits]
-     */
-    @JvmOverloads
-    @JsName("fromConstraintsD")
-    constructor(
-        startPose: Pose2d = Pose2d(),
-        startTangent: Double,
-        constraints: TrajectoryConstraints,
-        resolution: Double = 0.25
-    ) : this(
-        startPose,
-        Angle(startTangent),
         constraints.velConstraint,
         constraints.accelConstraint,
         constraints.maxAngVel,
@@ -600,22 +548,6 @@ open class TrajectoryBuilder protected constructor(
     )
 
     /**
-     * Adds a spline segment with tangent heading interpolation.
-     *
-     * @param endPosition end position
-     * @param endTangent end tangent in [Angle.defaultUnits]
-     * @param constraintsOverride segment-specific constraints
-     */
-    @JvmOverloads
-    @JsName("splineToCustomD")
-    fun splineTo(
-        endPosition: Vector2d,
-        endTangent: Double,
-        velConstraintOverride: TrajectoryVelocityConstraint,
-        accelConstraintOverride: TrajectoryAccelerationConstraint = baseAccelConstraint
-    ) = splineTo(endPosition, Angle(endTangent), velConstraintOverride, accelConstraintOverride)
-
-    /**
      * Adds a spline segment with constant heading interpolation.
      *
      * @param endPosition end position
@@ -632,22 +564,6 @@ open class TrajectoryBuilder protected constructor(
     ) = addSegment(
         { splineToConstantHeading(endPosition, endTangent) }, velConstraintOverride, accelConstraintOverride
     )
-
-    /**
-     * Adds a spline segment with constant heading interpolation.
-     *
-     * @param endPosition end position
-     * @param endTangent end tangent in [Angle.defaultUnits]
-     * @param constraintsOverride segment-specific constraints
-     */
-    @JvmOverloads
-    @JsName("splineToConstantHeadingCustomD")
-    fun splineToConstantHeading(
-        endPosition: Vector2d,
-        endTangent: Double,
-        velConstraintOverride: TrajectoryVelocityConstraint,
-        accelConstraintOverride: TrajectoryAccelerationConstraint = baseAccelConstraint
-    ) = splineToConstantHeading(endPosition, Angle(endTangent), velConstraintOverride, accelConstraintOverride)
 
     /**
      * Adds a spline segment with linear heading interpolation.
@@ -668,22 +584,6 @@ open class TrajectoryBuilder protected constructor(
     )
 
     /**
-     * Adds a spline segment with linear heading interpolation.
-     *
-     * @param endPose end pose
-     * @param endTangent end tangent in [Angle.defaultUnits]
-     * @param constraintsOverride segment-specific constraints
-     */
-    @JvmOverloads
-    @JsName("splineToLinearHeadingCustomD")
-    fun splineToLinearHeading(
-        endPose: Pose2d,
-        endTangent: Double,
-        velConstraintOverride: TrajectoryVelocityConstraint,
-        accelConstraintOverride: TrajectoryAccelerationConstraint = baseAccelConstraint
-    ) = splineToLinearHeading(endPose, Angle(endTangent), velConstraintOverride, accelConstraintOverride)
-
-    /**
      * Adds a spline segment with spline heading interpolation.
      *
      * @param endPose end pose
@@ -700,21 +600,6 @@ open class TrajectoryBuilder protected constructor(
     ) = addSegment(
         { splineToSplineHeading(endPose, endTangent) }, velConstraintOverride, accelConstraintOverride
     )
-
-    /**
-     * Adds a spline segment with spline heading interpolation.
-     *
-     * @param endPose end pose
-     * @param endTangent end tangent in [Angle.defaultUnits]
-     * @param constraintsOverride segment-specific constraints
-     */
-    @JsName("splineToSplineHeadingCustomD")
-    fun splineToSplineHeading(
-        endPose: Pose2d,
-        endTangent: Double,
-        velConstraintOverride: TrajectoryVelocityConstraint,
-        accelConstraintOverride: TrajectoryAccelerationConstraint = baseAccelConstraint
-    ) = splineToSplineHeading(endPose, Angle(endTangent), velConstraintOverride, accelConstraintOverride)
 
     override fun makePathSegment(path: Path): PathTrajectorySegment {
         return TrajectoryGenerator.generatePathTrajectorySegment(

@@ -11,12 +11,6 @@ import kotlin.math.max
 class AngularVelocityConstraint(
     val maxAngVel: Angle
 ) : TrajectoryVelocityConstraint {
-    /**
-     * Constructs a [TrajectoryVelocityConstraint] where [maxAngVel] is in degrees or radians as specified by
-     * [Angle.defaultUnits].
-     */
-    constructor(maxAngVel: Double) : this(Angle(maxAngVel))
-
     override fun get(pose: Pose2d, deriv: Pose2d, lastDeriv: Pose2d, ds: Double, baseRobotVel: Pose2d): Double {
         val omega0 = baseRobotVel.heading
         if (abs(omega0) >= maxAngVel) {

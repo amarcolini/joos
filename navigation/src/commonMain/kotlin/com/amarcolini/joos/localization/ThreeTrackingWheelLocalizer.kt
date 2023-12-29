@@ -2,8 +2,7 @@ package com.amarcolini.joos.localization
 
 import com.amarcolini.joos.geometry.Pose2d
 import com.amarcolini.joos.kinematics.Kinematics
-import com.amarcolini.joos.util.Matrix
-import com.amarcolini.joos.util.MatrixSolver
+import com.amarcolini.joos.util.Matrix3x3
 import com.amarcolini.joos.util.rad
 
 /**
@@ -24,12 +23,12 @@ abstract class ThreeTrackingWheelLocalizer(
     override var poseVelocity: Pose2d? = null
     private var lastWheelPositions = emptyList<Double>()
 
-    private val forwardSolver: MatrixSolver
+    private val forwardMatrix: Matrix3x3
 
     init {
         require(wheelPoses.size == 3) { "3 wheel positions must be provided" }
 
-        val inverseMatrix = Matrix(3, 3) {
+        val inverseMatrix = Matrix3x3(Array(3) {
             val orientationVector = wheelPoses[it].headingVec()
             val positionVector = wheelPoses[it].vec()
             doubleArrayOf(
@@ -37,19 +36,20 @@ abstract class ThreeTrackingWheelLocalizer(
                 orientationVector.y,
                 positionVector.x * orientationVector.y - positionVector.y * orientationVector.x
             )
+        })
+        val forwardMatrix = inverseMatrix.getInverse()
+        require(forwardMatrix != null) {
+            "The specified configuration cannot support full localization"
         }
-        forwardSolver = inverseMatrix.solver()
-
-        //TODO: make better JS implementation so this is actually possible
-//        require(forwardSolver.isNonSingular) { "The specified configuration cannot support full localization" }
+        this.forwardMatrix = forwardMatrix
     }
 
     private fun calculatePoseDelta(wheelDeltas: List<Double>): Pose2d {
-        val rawPoseDelta = forwardSolver.solve(Matrix.column(wheelDeltas))
+        val rawPoseDelta = forwardMatrix * wheelDeltas
         return Pose2d(
-            rawPoseDelta[0, 0],
-            rawPoseDelta[1, 0],
-            rawPoseDelta[2, 0].rad
+            rawPoseDelta[0],
+            rawPoseDelta[1],
+            rawPoseDelta[2].rad
         )
     }
 

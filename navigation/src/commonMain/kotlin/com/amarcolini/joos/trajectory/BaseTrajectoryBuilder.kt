@@ -79,14 +79,6 @@ abstract class BaseTrajectoryBuilder<T : BaseTrajectoryBuilder<T>> protected con
     }
 
     /**
-     * Adds a turn segment that turns the specified [angle].
-     *
-     * @param angle angle to turn in [Angle.defaultUnits]
-     */
-    @JsName("turnD")
-    fun turn(angle: Double): T = turn(Angle(angle))
-
-    /**
      * Adds a wait segment that waits [seconds].
      */
     fun wait(seconds: Double): T {
@@ -253,16 +245,6 @@ abstract class BaseTrajectoryBuilder<T : BaseTrajectoryBuilder<T>> protected con
     }
 
     /**
-     * Adds a spline segment with tangent heading interpolation.
-     *
-     * @param endPosition end position
-     * @param endTangent end tangent in [Angle.defaultUnits]
-     */
-    @JsName("splineToD")
-    fun splineTo(endPosition: Vector2d, endTangent: Double): T =
-        splineTo(endPosition, Angle(endTangent))
-
-    /**
      * Adds a spline segment with constant heading interpolation.
      *
      * @param endPosition end position
@@ -280,16 +262,6 @@ abstract class BaseTrajectoryBuilder<T : BaseTrajectoryBuilder<T>> protected con
     }
 
     /**
-     * Adds a spline segment with constant heading interpolation.
-     *
-     * @param endPosition end position
-     * @param endTangent end tangent in [Angle.defaultUnits]
-     */
-    @JsName("splineToConstantHeadingD")
-    fun splineToConstantHeading(endPosition: Vector2d, endTangent: Double): T =
-        splineToConstantHeading(endPosition, Angle(endTangent))
-
-    /**
      * Adds a spline segment with linear heading interpolation.
      *
      * @param endPose end pose
@@ -302,16 +274,6 @@ abstract class BaseTrajectoryBuilder<T : BaseTrajectoryBuilder<T>> protected con
     }
 
     /**
-     * Adds a spline segment with linear heading interpolation.
-     *
-     * @param endPose end pose
-     * @param endTangent end tangent in [Angle.defaultUnits]
-     */
-    @JsName("splineToLinearHeadingD")
-    fun splineToLinearHeading(endPose: Pose2d, endTangent: Double): T =
-        splineToLinearHeading(endPose, Angle(endTangent))
-
-    /**
      * Adds a spline segment with spline heading interpolation.
      *
      * @param endPose end pose
@@ -322,16 +284,6 @@ abstract class BaseTrajectoryBuilder<T : BaseTrajectoryBuilder<T>> protected con
 
         return this as T
     }
-
-    /**
-     * Adds a spline segment with spline heading interpolation.
-     *
-     * @param endPose end pose
-     * @param endTangent end tangent in [Angle.defaultUnits]
-     */
-    @JsName("splineToSplineHeadingD")
-    fun splineToSplineHeading(endPose: Pose2d, endTangent: Double): T =
-        splineToSplineHeading(endPose, Angle(endTangent))
 
     /**
      * Adds a marker to the trajectory at [time].

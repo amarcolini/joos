@@ -18,6 +18,9 @@ class LineSegment(private val start: Vector2d, end: Vector2d) : ParametricCurve(
         length
     }
 
+    override fun project(query: Vector2d): Double =
+        (((query - start) dot diff) / (diff dot diff)).coerceIn(0.0, 1.0)
+
     override fun internalGet(t: Double) = start + diff * t
 
     override fun internalDeriv(t: Double) = diff / length()

@@ -33,7 +33,7 @@ object Kinematics {
         ) + Pose2d(
             -fieldVel.x * sin(fieldPose.heading) + fieldVel.y * cos(fieldPose.heading),
             -fieldVel.x * cos(fieldPose.heading) - fieldVel.y * sin(fieldPose.heading),
-            0.0
+            0.rad
         ) * fieldVel.heading.radians
 
     /**

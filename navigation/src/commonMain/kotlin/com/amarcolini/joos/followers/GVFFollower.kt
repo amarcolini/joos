@@ -1,5 +1,7 @@
 package com.amarcolini.joos.followers
 
+import com.amarcolini.joos.control.PIDCoefficients
+import com.amarcolini.joos.control.PIDController
 import com.amarcolini.joos.drive.DriveSignal
 import com.amarcolini.joos.geometry.Angle
 import com.amarcolini.joos.geometry.AngleUnit
@@ -7,21 +9,25 @@ import com.amarcolini.joos.geometry.Pose2d
 import com.amarcolini.joos.kinematics.Kinematics
 import com.amarcolini.joos.path.Path
 import com.amarcolini.joos.util.*
-import kotlin.js.ExperimentalJsExport
 import kotlin.js.JsExport
 import kotlin.jvm.JvmField
 import kotlin.jvm.JvmOverloads
+import kotlin.math.PI
+import kotlin.math.absoluteValue
 import kotlin.math.atan2
 import kotlin.math.sqrt
 
 /**
- * State-of-the-art path follower based on the [GuidingVectorField].
+ * State-of-the-art path follower based on the [GuidingVectorField]. Any heading interpolation
+ * on any path is ignored.
  *
  * @param maxVel maximum velocity
  * @param maxAccel maximum acceleration
+ * @param maxDecel maximum deceleration
  * @param admissibleError admissible/satisfactory pose error at the end of each move
  * @param kN normal vector weight (see [GuidingVectorField])
- * @param kOmega proportional heading gain
+ * @param kOmega proportional heading velocity gain
+ * @param pidCoeffs heading PID coefficients
  * @param errorMapFunc error map function (see [GuidingVectorField])
  * @param clock clock
  */
@@ -29,58 +35,119 @@ import kotlin.math.sqrt
 class GVFFollower @JvmOverloads constructor(
     @JvmField var maxVel: Double,
     @JvmField var maxAccel: Double,
+    @JvmField var maxDecel: Double,
+    @JvmField var maxAngVel: Angle,
+    @JvmField var maxAngAccel: Angle,
     admissibleError: Pose2d,
     @JvmField var kN: Double,
     @JvmField var kOmega: Double,
+    @JvmField val pidCoeffs: PIDCoefficients,
+    @JvmField var correctionDistance: Double = 5.0,
+    @JvmField var useCurvatureControl: Boolean = false,
     private val errorMapFunc: (Double) -> Double = { it },
-    clock: NanoClock = NanoClock.system()
+    clock: NanoClock = NanoClock.system
 ) : PathFollower(admissibleError, clock) {
-    private lateinit var gvf: GuidingVectorField
+    private lateinit var gvf: FollowableGVF
     private var lastUpdateTimestamp: Double = 0.0
     private var lastVel: Double = 0.0
-    private var lastProjDisplacement: Double = 0.0
+    private var lastAngVel: Angle = 0.rad
 
     override var lastError: Pose2d = Pose2d()
 
     override fun followPath(path: Path) {
-        gvf = GuidingVectorField(path, kN, errorMapFunc)
-        lastUpdateTimestamp = clock.seconds()
-        lastVel = 0.0
-        lastProjDisplacement = 0.0
+        gvf = PathGVF(path, kN, errorMapFunc)
+        init()
         super.followPath(path)
     }
 
-    override fun internalUpdate(currentPose: Pose2d): DriveSignal {
-        val gvfResult = gvf.getExtended(currentPose.x, currentPose.y, lastProjDisplacement)
+    fun followGVF(gvf: FollowableGVF) {
+        gvf.reset()
+        this.gvf = gvf
+        init()
+        super.followPath(gvf.path)
+    }
 
-        val desiredHeading =
+    private fun init() {
+        lastUpdateTimestamp = clock.seconds()
+        lastVel = 0.0
+        lastAngVel = 0.rad
+        lastDesiredHeading = null
+    }
+
+    private var lastDesiredHeading: Angle? = null
+    private val headingController = PIDController(
+        pidCoeffs, clock = clock
+    ).apply {
+        setInputBounds(-PI, PI)
+    }
+
+    override fun internalUpdate(currentPose: Pose2d, currentRobotVel: Pose2d?): DriveSignal {
+        val output =
+            gvf.internalGet(GuidingVectorField.Query(currentPose.vec()))
+        val gvfResult = gvf.compute(output)
+
+        val initialDesiredHeading =
             Angle(
-                atan2(gvfResult.vector.y, gvfResult.vector.x),
+                atan2(gvfResult.y, gvfResult.x),
                 AngleUnit.Radians
             )
-        val headingError = desiredHeading - currentPose.heading
+        val initialHeadingError = (initialDesiredHeading - currentPose.heading).normDelta()
+        val atTarget = output.target epsilonEquals gvf.endPosition
+        val pathEnd = path.end()
+        val remainingDistance = (currentPose.vec() distTo pathEnd.vec())
+        val reversed =
+            (atTarget && output.error < correctionDistance && initialHeadingError.abs() > Angle.quarterCircle)
+        val desiredHeading = initialDesiredHeading + if (reversed) Angle.halfCircle else 0.rad
+        val headingError = (desiredHeading - currentPose.heading).normDelta()
+        headingController.targetPosition = desiredHeading.radians
 
-        // TODO: implement this or nah? ref eqs. (18), (23), and (24)
-        val desiredOmega = Angle()
-        val omega = desiredOmega + kOmega * headingError
-
-        // basic online motion profiling
         val timestamp = clock.seconds()
         val dt = timestamp - lastUpdateTimestamp
-        val remainingDistance = currentPose.vec() distTo path.end().vec()
-        val maxVelToStop = sqrt(2 * maxAccel * remainingDistance)
+
+        // ref eqs. (18), (23), and (24)
+        val lastDesiredHeading = lastDesiredHeading
+        val desiredOmega =
+            lastDesiredHeading?.let { (desiredHeading - it).normDelta() / dt }
+        val omega = if (desiredOmega != null) {
+            (if (remainingDistance > correctionDistance) desiredOmega * kOmega else 0.rad) +
+                    headingController.update(currentPose.heading.radians).rad
+        } else 0.rad
+        this.lastDesiredHeading = desiredHeading
+
+        // basic online motion profiling
+        val maxVelToStop = sqrt(2 * maxDecel * remainingDistance)
         val maxVelFromLast = lastVel + maxAccel * dt
-        val velocity = minOf(maxVelFromLast, maxVelToStop, maxVel)
+        val maxAngVelFromLast =
+            if (desiredOmega != null) lastAngVel + maxAngAccel * dt * sign(desiredOmega - lastAngVel)
+            else 0.rad
+        val angVel = if (maxAngVelFromLast >= 0.rad) minOf(maxAngVelFromLast, maxAngVel)
+        else maxOf(maxAngVelFromLast, -maxAngVel)
+        val maxVelForCurvature =
+            if (useCurvatureControl && output.error < correctionDistance && lastVel > 5.0 && lastDesiredHeading != null) {
+                val targetOmega = path.segment(gvf.lastProjectDisplacement).run {
+                    first.curve.tangentAngleDeriv(second)
+                }
+                if (targetOmega epsilonEquals 0.rad) Double.POSITIVE_INFINITY
+                else lastVel * (angVel / targetOmega).absoluteValue
+            } else Double.POSITIVE_INFINITY
+        val velocity = minOf(maxVelFromLast, maxVelToStop, maxVel, maxVelForCurvature).coerceAtLeast(0.0)
 
         lastUpdateTimestamp = timestamp
         lastVel = velocity
-        lastProjDisplacement = gvfResult.displacement
+        lastAngVel = angVel
 
-        val targetPose = path[gvfResult.displacement]
-
-        lastError = Kinematics.calculateRobotPoseError(targetPose, currentPose)
+        lastError = Kinematics.calculateRobotPoseError(Pose2d(output.target, output.tangent.angle()), currentPose)
 
         // TODO: GVF acceleration FF?
-        return DriveSignal(Pose2d(velocity, 0.0, omega))
+        return DriveSignal(
+            Pose2d(
+                velocity * (if (reversed) -1.0 else 1.0) * if (
+                    (remainingDistance < correctionDistance && headingError.abs() > 15.deg) ||
+                    (remainingDistance < admissibleError.vec().norm() && headingError.abs() > admissibleError.heading)
+                ) 0.0 else 1.0,
+                0.0,
+                omega
+            )
+        )
     }
 }

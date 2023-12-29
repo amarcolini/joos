@@ -6,6 +6,7 @@ import com.google.devtools.ksp.symbol.KSClassDeclaration
 import com.google.devtools.ksp.symbol.KSType
 
 const val joosConfigName: String = "com.amarcolini.joos.dashboard.JoosConfig"
+const val immutableName: String = "com.amarcolini.joos.dashboard.Immutable"
 const val mutableConfigProviderName: String = "com.amarcolini.joos.dashboard.MutableConfigProvider"
 const val immutableConfigProviderName: String = "com.amarcolini.joos.dashboard.ImmutableConfigProvider"
 const val disabledName: String = "com.qualcomm.robotcore.eventloop.opmode.Disabled"

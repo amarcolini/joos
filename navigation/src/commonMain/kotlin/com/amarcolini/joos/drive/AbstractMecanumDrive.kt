@@ -8,6 +8,7 @@ import com.amarcolini.joos.localization.Localizer
 import com.amarcolini.joos.localization.MecanumLocalizer
 import com.amarcolini.joos.util.rad
 import kotlin.jvm.JvmOverloads
+import kotlin.math.abs
 
 /**
  * This class provides the basic functionality of a mecanum drive using [MecanumKinematics].

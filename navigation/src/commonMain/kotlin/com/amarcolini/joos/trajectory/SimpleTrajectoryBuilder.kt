@@ -5,6 +5,7 @@ import com.amarcolini.joos.geometry.Pose2d
 import com.amarcolini.joos.path.Path
 import com.amarcolini.joos.profile.MotionState
 import com.amarcolini.joos.util.deg
+import com.amarcolini.joos.util.rad
 import kotlin.jvm.JvmOverloads
 
 private fun zeroPosition(state: MotionState) = MotionState(0.0, state.v, state.a, state.j)
@@ -37,39 +38,10 @@ class SimpleTrajectoryBuilder private constructor(
         maxProfileJerk: Double = 0.0,
         maxAngVel: Angle,
         maxAngAccel: Angle,
-        maxAngJerk: Angle = 0.deg
+        maxAngJerk: Angle = 0.rad
     ) : this(
         startPose,
-        Pose2d(startTangent.vec(), 0.0),
-        Pose2d(),
-        maxProfileVel,
-        maxProfileAccel,
-        maxProfileJerk,
-        maxAngVel,
-        maxAngAccel,
-        maxAngJerk,
-        MotionState(0.0, 0.0, 0.0)
-    )
-
-    /**
-     * Create a builder from a start pose and motion state. This is the recommended constructor for creating
-     * trajectories from rest.
-     *
-     * @param startTangent the initial tangent in [Angle.defaultUnits]
-     */
-    @JvmOverloads
-    constructor(
-        startPose: Pose2d = Pose2d(),
-        startTangent: Double,
-        maxProfileVel: Double,
-        maxProfileAccel: Double,
-        maxProfileJerk: Double = 0.0,
-        maxAngVel: Angle,
-        maxAngAccel: Angle,
-        maxAngJerk: Angle = 0.deg
-    ) : this(
-        startPose,
-        Pose2d(Angle(startTangent).vec(), 0.0),
+        Pose2d(startTangent.vec(), 0.rad),
         Pose2d(),
         maxProfileVel,
         maxProfileAccel,

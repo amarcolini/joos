@@ -1,7 +1,7 @@
 plugins {
     `maven-publish`
     id("com.android.library")
-    id("org.jetbrains.kotlin.android")
+    kotlin("android")
     id("org.jetbrains.dokka")
 }
 
@@ -15,6 +15,7 @@ repositories {
 }
 
 tasks.withType<Test> {
+    useJUnitPlatform()
     testLogging {
         events("passed", "skipped", "failed")
     }
@@ -54,23 +55,31 @@ tasks.clean.configure {
     }
 }
 
+kotlin {
+    sourceSets {
+        get("main").kotlin.srcDirs("src/main/kotlin")
+        get("test").kotlin.srcDirs("src/test/kotlin")
+    }
+}
+
 android {
     compileSdk = 30
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_1_8
         targetCompatibility = JavaVersion.VERSION_1_8
     }
-    sourceSets {
-        get("main").java.srcDirs("src/main/kotlin")
-        get("test").java.srcDirs("src/test/kotlin")
-    }
+//    sourceSets {
+//        get("main").java.srcDirs("src/main/kotlin")
+//        get("test").java.srcDirs("src/test/kotlin")
+//    }
     defaultConfig {
         minSdk = 24
     }
     publishing {
         singleVariant("release") {
             withSourcesJar()
-            withJavadocJar()
+            // this doesn't work for some reason
+//            withJavadocJar()
         }
     }
 }
@@ -78,7 +87,7 @@ android {
 afterEvaluate {
     publishing {
         publications {
-            create<MavenPublication>("release") {
+            register<MavenPublication>("release") {
                 from(components["release"])
                 artifactId = "command"
                 pom {

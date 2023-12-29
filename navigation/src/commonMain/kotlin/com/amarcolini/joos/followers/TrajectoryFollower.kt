@@ -22,7 +22,7 @@ import kotlin.math.abs
 abstract class TrajectoryFollower @JvmOverloads constructor(
     private val admissibleError: Pose2d = Pose2d(),
     private val timeout: Double = 0.0,
-    protected val clock: NanoClock = NanoClock.system()
+    protected val clock: NanoClock = NanoClock.system
 ) {
     private var startTimestamp: Double = 0.0
     private var admissible = false

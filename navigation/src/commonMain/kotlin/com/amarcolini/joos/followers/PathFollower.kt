@@ -17,8 +17,8 @@ import kotlin.math.abs
  */
 @JsExport
 abstract class PathFollower @JvmOverloads constructor(
-    private val admissibleError: Pose2d,
-    protected val clock: NanoClock = NanoClock.system()
+    protected val admissibleError: Pose2d,
+    protected val clock: NanoClock = NanoClock.system
 ) {
     private var startTimestamp: Double = 0.0
     private var admissible = true
@@ -57,19 +57,24 @@ abstract class PathFollower @JvmOverloads constructor(
     /**
      * Run a single iteration of the path follower.
      *
-     * @param currentPose current robot pose
+     * @param currentPose current field frame pose
+     * @param currentRobotVel current robot frame velocity
      */
-    fun update(currentPose: Pose2d): DriveSignal {
+    @JvmOverloads
+    fun update(currentPose: Pose2d, currentRobotVel: Pose2d? = null): DriveSignal {
         val pathEndError = path.end() - currentPose
         admissible = abs(pathEndError.x) < admissibleError.x &&
                 abs(pathEndError.y) < admissibleError.y &&
                 abs(pathEndError.heading.normDelta()) < admissibleError.heading
         return if (isFollowing()) {
-            internalUpdate(currentPose)
+            internalUpdate(currentPose, currentRobotVel)
         } else {
             DriveSignal()
         }
     }
 
-    protected abstract fun internalUpdate(currentPose: Pose2d): DriveSignal
+    protected abstract fun internalUpdate(
+        currentPose: Pose2d,
+        currentRobotVel: Pose2d?
+    ): DriveSignal
 }

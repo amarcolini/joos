@@ -9,6 +9,7 @@ import com.amarcolini.joos.localization.Localizer
 import com.amarcolini.joos.localization.SwerveLocalizer
 import com.amarcolini.joos.util.rad
 import kotlin.jvm.JvmOverloads
+import kotlin.math.abs
 
 /**
  * This class provides the basic functionality of a swerve drive using [SwerveKinematics].

@@ -11,44 +11,37 @@ import com.amarcolini.joos.util.deg
 /**
  * A utility class for creating 2-wheel tracking localizers with standard configurations.
  */
-class Standard2WheelLocalizer @JvmOverloads constructor(
+class Standard2WheelLocalizer(
     private val parallel: Motor.Encoder,
-    @JvmField var parallelPosition: Vector2d,
+    parallelPosition: Vector2d,
     private val perpendicular: Motor.Encoder,
-    @JvmField var perpendicularPosition: Vector2d,
+    perpendicularPosition: Vector2d,
     private val externalHeadingSensor: AngleSensor,
-    @JvmField var xMultiplier: Double = 1.0,
-    @JvmField var yMultiplier: Double = 1.0
 ) : TwoTrackingWheelLocalizer(
     listOf(
         Pose2d(parallelPosition),
         Pose2d(perpendicularPosition, 90.deg)
     )
 ) {
-    @JvmOverloads
     constructor(
         encoders: List<Motor.Encoder>,
         parallelPosition: Vector2d,
         perpendicularPosition: Vector2d,
         externalHeadingSensor: AngleSensor,
-        xMultiplier: Double = 1.0,
-        yMultiplier: Double = 1.0
     ) : this(
         encoders[0],
         parallelPosition,
         encoders[1],
         perpendicularPosition,
         externalHeadingSensor,
-        xMultiplier,
-        yMultiplier
     )
 
     override fun getWheelPositions(): List<Double> = listOf(
-        parallel.distance * xMultiplier, perpendicular.distance * yMultiplier
+        parallel.distance, perpendicular.distance
     )
 
     override fun getWheelVelocities(): List<Double> = listOf(
-        parallel.distanceVelocity * xMultiplier, perpendicular.distanceVelocity * yMultiplier
+        parallel.distanceVelocity, perpendicular.distanceVelocity
     )
 
     override fun getHeading(): Angle = externalHeadingSensor.getAngle()

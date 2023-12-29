@@ -12,23 +12,22 @@ import java.util.function.BiFunction
  */
 class TimeCommand constructor(
     private val execute: BiFunction<Double, Double, Boolean>,
-    private val clock: NanoClock = NanoClock.system()
+    private val clock: NanoClock = NanoClock.system
 ) : Command() {
-    constructor(execute: BiFunction<Double, Double, Boolean>) : this(execute, NanoClock.system())
+    constructor(execute: BiFunction<Double, Double, Boolean>) : this(execute, NanoClock.system)
 
-    private var start: Double? = null
-    private var lastUpdate: Double? = null
+    private var start: Double = 0.0
+    private var lastUpdate: Double = 0.0
 
     override fun init() {
-        start = null
-        lastUpdate = null
+        lastUpdate = clock.seconds()
+        start = clock.seconds()
     }
 
     private var isFinished = false
     override fun execute() {
-        val start = start ?: clock.seconds().also { start = it }
         val t = clock.seconds() - start
-        isFinished = execute.apply(t, t - (lastUpdate ?: t))
+        isFinished = execute.apply(t, t - lastUpdate)
         lastUpdate = t
     }
 

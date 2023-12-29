@@ -1,5 +1,5 @@
 plugins {
-    kotlin("multiplatform")
+    kotlin("jvm")
     `maven-publish`
     id("org.jetbrains.dokka")
 }
@@ -10,53 +10,39 @@ java {
 }
 
 kotlin {
-    jvm {
-        compilations.all {
-            kotlinOptions {
-                jvmTarget = "1.8"
-            }
-        }
-        withJava()
-        testRuns["test"].executionTask.configure {
-            useJUnitPlatform()
-        }
-    }
-    js(IR) {
-        browser {}
-    }
-
     sourceSets {
-        val commonMain by getting
-        val jvmMain by getting {
-            dependencies {
-                implementation("com.google.devtools.ksp:symbol-processing-api:1.8.10-1.0.9")
-                implementation("com.squareup:javapoet:1.13.0")
-                implementation("com.squareup:kotlinpoet:1.12.0")
-            }
-        }
+        get("main").kotlin.srcDirs("src/main/kotlin")
+        get("test").kotlin.srcDirs("src/test/kotlin")
     }
 }
 
 group = "$group.command"
 
 dependencies {
-    commonMainImplementation("org.jetbrains.kotlin:kotlin-stdlib:${Versions.kotlin}")
-    commonMainImplementation("org.jetbrains.kotlin:kotlin-reflect:${Versions.kotlin}")
+    implementation("org.jetbrains.kotlin:kotlin-stdlib:${Versions.kotlin}")
+    implementation("org.jetbrains.kotlin:kotlin-reflect:${Versions.kotlin}")
+    implementation("com.google.devtools.ksp:symbol-processing-api:1.9.20-1.0.14")
+    implementation("com.squareup:javapoet:1.13.0")
+    implementation("com.squareup:kotlinpoet:1.12.0")
 }
 repositories {
     mavenCentral()
 }
 
 publishing {
-    publications.filterIsInstance<MavenPublication>().forEach {
-        it.pom {
-            name.set("Joos")
-            description.set("A comprehensive kotlin library designed for FTC.")
-            url.set("https://github.com/amarcolini/joos")
-            developers {
-                developer {
-                    id.set("amarcolini")
-                    name.set("Alessandro Marcolini")
+    publications {
+        create<MavenPublication>("release") {
+            from(components["java"])
+            artifactId = "annotation"
+            pom {
+                name.set("Joos")
+                description.set("A comprehensive kotlin library designed for FTC.")
+                url.set("https://github.com/amarcolini/joos")
+                developers {
+                    developer {
+                        id.set("amarcolini")
+                        name.set("Alessandro Marcolini")
+                    }
                 }
             }
         }

@@ -1,156 +1,89 @@
 package com.amarcolini.joos.hardware.drive
 
 import com.amarcolini.joos.command.Component
-import com.amarcolini.joos.control.PIDCoefficients
-import com.amarcolini.joos.drive.DriveSignal
-import com.amarcolini.joos.followers.HolonomicPIDVAFollower
-import com.amarcolini.joos.followers.TrajectoryFollower
+import com.amarcolini.joos.drive.AbstractSwerveDrive
 import com.amarcolini.joos.geometry.Angle
-import com.amarcolini.joos.geometry.Pose2d
 import com.amarcolini.joos.hardware.Motor
 import com.amarcolini.joos.hardware.MotorGroup
 import com.amarcolini.joos.hardware.Servo
-import com.amarcolini.joos.kinematics.SwerveKinematics
 import com.amarcolini.joos.localization.AngleSensor
-import com.amarcolini.joos.localization.Localizer
-import com.amarcolini.joos.localization.SwerveLocalizer
 import com.amarcolini.joos.trajectory.constraints.SwerveConstraints
-import com.amarcolini.joos.util.deg
-import com.amarcolini.joos.util.rad
-import kotlin.math.abs
 
 /**
  * A [Component] implementation of a swerve drive.
  */
 open class SwerveDrive @JvmOverloads constructor(
-    private val frontLeft: Pair<Motor, Servo>,
-    private val backLeft: Pair<Motor, Servo>,
-    private val backRight: Pair<Motor, Servo>,
-    private val frontRight: Pair<Motor, Servo>,
-    final override val externalHeadingSensor: AngleSensor? = null,
-    constraints: SwerveConstraints = SwerveConstraints(
-        listOf(
-            frontLeft,
-            backLeft,
-            backRight,
-            frontRight
-        ).minOf { it.first.maxDistanceVelocity }, 1.0, 1.0
-    ),
-    translationalPID: PIDCoefficients = PIDCoefficients(1.0, 0.0, 0.5),
-    headingPID: PIDCoefficients = PIDCoefficients(1.0, 0.0, 0.5)
-) : DriveComponent() {
-    private val wheels =
-        listOf(frontLeft.first, backLeft.first, backRight.first, frontRight.first)
-    private val servos =
-        listOf(frontLeft.second, frontRight.second, backRight.second, frontRight.second)
+    frontLeft: Pair<Motor, Servo>,
+    backLeft: Pair<Motor, Servo>,
+    backRight: Pair<Motor, Servo>,
+    frontRight: Pair<Motor, Servo>,
+    trackWidth: Double = 1.0,
+    wheelBase: Double = 1.0,
+    externalHeadingSensor: AngleSensor? = null,
+) : AbstractSwerveDrive(trackWidth, wheelBase, externalHeadingSensor), DriveComponent {
+    @JvmOverloads
+    constructor(
+        frontLeft: Pair<Motor, Servo>,
+        backLeft: Pair<Motor, Servo>,
+        backRight: Pair<Motor, Servo>,
+        frontRight: Pair<Motor, Servo>,
+        constraints: SwerveConstraints,
+        externalHeadingSensor: AngleSensor? = null,
+    ) : this(
+        frontLeft,
+        backLeft,
+        backRight,
+        frontRight,
+        constraints.trackWidth,
+        constraints.wheelBase,
+        externalHeadingSensor
+    )
 
     /**
      * All the motors in this drive.
      */
     @JvmField
-    val motors: MotorGroup = MotorGroup(frontLeft.first, backLeft.first, backRight.first, frontRight.first)
-
-    final override val constraints: SwerveConstraints =
-        if (constraints.maxWheelVel <= 0) constraints.copy(motors.maxDistanceVelocity)
-        else constraints
-
-    override var trajectoryFollower: TrajectoryFollower = HolonomicPIDVAFollower(
-        translationalPID, translationalPID,
-        headingPID,
-        Pose2d(0.5, 0.5, 5.deg),
-        0.5
-    )
-    override var localizer: Localizer = SwerveLocalizer(
-        ::getWheelPositions,
-        ::getWheelVelocities,
-        ::getModuleOrientations,
-        constraints.trackWidth, constraints.wheelBase,
-    ).let { if (externalHeadingSensor != null) it.addHeadingSensor(externalHeadingSensor) else it }
-
-    override fun setDriveSignal(driveSignal: DriveSignal) {
-        wheels.zip(
-            SwerveKinematics.robotToWheelVelocities(
-                driveSignal.vel,
-                constraints.trackWidth,
-                constraints.wheelBase,
-            ).zip(
-                SwerveKinematics.robotToWheelAccelerations(
-                    driveSignal.vel,
-                    driveSignal.accel,
-                    constraints.trackWidth,
-                    constraints.wheelBase,
-                )
-            )
-        ).forEach { (motor, power) ->
-            val (vel, accel) = power
-            motor.setDistanceVelocity(vel, accel)
-        }
-        servos.zip(
-            SwerveKinematics.robotToModuleOrientations(
-                driveSignal.vel,
-                constraints.trackWidth,
-                constraints.wheelBase
-            )
-        ).forEach { (servo, orientation) ->
-            servo.angle = orientation
-        }
-    }
-
-    override fun setDrivePower(drivePower: Pose2d) {
-        val power = drivePower.copy(heading = drivePower.heading.value.rad)
-        val avg = (constraints.trackWidth + constraints.wheelBase) / 2.0
-        wheels.zip(
-            SwerveKinematics.robotToWheelVelocities(
-                power,
-                constraints.trackWidth / avg,
-                constraints.wheelBase / avg,
-            )
-        ).forEach { (motor, speed) -> motor.power = speed }
-        servos.zip(
-            SwerveKinematics.robotToModuleOrientations(
-                power,
-                constraints.trackWidth / avg,
-                constraints.wheelBase / avg
-            )
-        ).forEach { (servo, orientation) ->
-            servo.angle = orientation
-        }
-    }
-
-    @JvmOverloads
-    fun setWeightedDrivePower(
-        drivePower: Pose2d,
-        xWeight: Double = 1.0,
-        yWeight: Double = 1.0,
-        headingWeight: Double = 1.0
-    ) {
-        var vel = drivePower
-
-        if (abs(vel.x) + abs(vel.y) + abs(vel.heading.value) > 1) {
-            val denom =
-                xWeight * abs(vel.x) + yWeight * abs(vel.y) + headingWeight * abs(vel.heading.value)
-            vel = Pose2d(vel.x * xWeight, vel.y * yWeight, vel.heading * headingWeight) / denom
-        }
-
-        setDrivePower(vel)
-    }
+    protected val motors =
+        MotorGroup(frontLeft.first, backLeft.first, backRight.first, frontRight.first)
+    @JvmField
+    protected val servos =
+        listOf(frontLeft.second, backLeft.second, backRight.second, frontRight.second)
 
     override fun setRunMode(runMode: Motor.RunMode) {
-        wheels.forEach { it.runMode = runMode }
+        motors.forEach { it.runMode = runMode }
     }
 
     override fun setZeroPowerBehavior(zeroPowerBehavior: Motor.ZeroPowerBehavior) {
-        wheels.forEach { it.zeroPowerBehavior = zeroPowerBehavior }
+        motors.forEach { it.zeroPowerBehavior = zeroPowerBehavior }
     }
 
-    private fun getWheelPositions(): List<Double> = wheels.map { it.distance }
+    override fun setMotorPowers(frontLeft: Double, backLeft: Double, backRight: Double, frontRight: Double) {
+        motors.zip(listOf(frontLeft, backLeft, backRight, frontRight)).forEach { (motor, power) ->
+            motor.power = power
+        }
+    }
 
-    private fun getWheelVelocities(): List<Double> = wheels.map { it.distanceVelocity }
+    override fun setWheelVelocities(velocities: List<Double>, accelerations: List<Double>) {
+        motors.zip(velocities.zip(accelerations))
+            .forEach { (motor, power) ->
+                motor.setDistanceVelocity(power.first, power.second)
+            }
+    }
 
-    private fun getModuleOrientations(): List<Angle> = servos.map { it.angle }
+    override fun setModuleOrientations(frontLeft: Angle, backLeft: Angle, backRight: Angle, frontRight: Angle) {
+        servos.zip(listOf(frontLeft, backLeft, backRight, frontRight)).forEach { (servo, angle) ->
+            servo.angle = angle
+        }
+    }
+
+    override fun getWheelPositions(): List<Double> = this.motors.map { it.distance }
+
+    override fun getWheelVelocities(): List<Double> = this.motors.map { it.distanceVelocity }
+
+    override fun getModuleOrientations(): List<Angle> = servos.map { it.angle }
 
     override fun update() {
-        super.update()
-        wheels.forEach { it.update() }
+        updatePoseEstimate()
+        this.motors.forEach { it.update() }
     }
 }

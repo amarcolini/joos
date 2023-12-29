@@ -5,6 +5,9 @@ import com.amarcolini.joos.geometry.Pose2d
 import com.amarcolini.joos.localization.Localizer
 import kotlin.js.ExperimentalJsExport
 import kotlin.js.JsExport
+import kotlin.jvm.JvmField
+import kotlin.jvm.JvmOverloads
+import kotlin.math.abs
 
 /**
  * Abstraction for generic robot drive motion and localization. Robot poses are specified in a coordinate system with
@@ -52,7 +55,23 @@ abstract class Drive {
     abstract fun setDrivePower(drivePower: Pose2d)
 
     /**
-     * The heading velocity used to determine pose velocity in some cases
+     * Scales [drivePower] so that the commanded powers are all within `[-1.0, 1.0]`.
      */
-    open fun getExternalHeadingVelocity(): Angle? = null
+    @JvmOverloads
+    fun setWeightedDrivePower(
+        drivePower: Pose2d,
+        xWeight: Double = 1.0,
+        yWeight: Double = 1.0,
+        headingWeight: Double = 1.0
+    ) {
+        var vel = drivePower
+
+        if (abs(vel.x) + abs(vel.y) + abs(vel.heading.value) > 1) {
+            val denom =
+                xWeight * abs(vel.x) + yWeight * abs(vel.y) + headingWeight * abs(vel.heading.value)
+            vel = Pose2d(vel.x * xWeight, vel.y * yWeight, vel.heading * headingWeight) / denom
+        }
+
+        setDrivePower(vel)
+    }
 }

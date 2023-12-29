@@ -32,7 +32,7 @@ class ProfileTest {
     @Test
     fun testCompleteProfile() {
         val path = PathBuilder(Pose2d())
-            .splineTo(Vector2d(24.0, 24.0), 0.0)
+            .splineTo(Vector2d(24.0, 24.0), 0.deg)
             .build()
         val velConstraint = MinVelocityConstraint(
             MecanumVelocityConstraint(312.0 * 60 * (4 * PI * 0.94), 12.05, 12.05, 1.11),

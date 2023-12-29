@@ -7,6 +7,8 @@ import com.amarcolini.joos.localization.AngleSensor
 import com.amarcolini.joos.localization.Localizer
 import com.amarcolini.joos.localization.TankLocalizer
 import com.amarcolini.joos.util.rad
+import kotlin.jvm.JvmOverloads
+import kotlin.math.abs
 
 /**
  * This class provides the basic functionality of a tank/differential drive using [TankKinematics].

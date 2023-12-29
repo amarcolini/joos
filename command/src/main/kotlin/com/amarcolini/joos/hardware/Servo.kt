@@ -4,9 +4,6 @@ import com.amarcolini.joos.command.Command
 import com.amarcolini.joos.command.Component
 import com.amarcolini.joos.command.TimeCommand
 import com.amarcolini.joos.geometry.Angle
-import com.amarcolini.joos.profile.MotionProfile
-import com.amarcolini.joos.profile.MotionProfileGenerator
-import com.amarcolini.joos.profile.MotionState
 import com.amarcolini.joos.util.*
 import com.qualcomm.robotcore.hardware.HardwareMap
 import com.qualcomm.robotcore.hardware.Servo
@@ -25,15 +22,8 @@ class Servo @JvmOverloads constructor(
     servo: Servo,
     @JvmField
     val range: Angle = 300.deg,
-    private val clock: NanoClock = NanoClock.system()
+    private val clock: NanoClock = NanoClock.system
 ) : Component {
-    /**
-     * @param servo the servo for this wrapper to use
-     * @param range the range of the servo in [Angle.defaultUnits]
-     */
-    @JvmOverloads
-    constructor(servo: Servo, range: Double, clock: NanoClock = NanoClock.system()) : this(servo, Angle(range), clock)
-
     /**
      * @param hMap the hardware map from the OpMode
      * @param id the device id from the RC config
@@ -44,22 +34,7 @@ class Servo @JvmOverloads constructor(
         hMap: HardwareMap,
         id: String,
         range: Angle = 180.deg,
-        clock: NanoClock = NanoClock.system()
-    ) : this(
-        hMap.get(Servo::class.java, id),
-        range, clock
-    )
-
-    /**
-     * @param hMap the hardware map from the OpMode
-     * @param id the device id from the RC config
-     * @param range the range of the servo in [Angle.defaultUnits]
-     */
-    constructor(
-        hMap: HardwareMap,
-        id: String,
-        range: Double,
-        clock: NanoClock = NanoClock.system()
+        clock: NanoClock = NanoClock.system
     ) : this(
         hMap.get(Servo::class.java, id),
         range, clock
@@ -175,8 +150,11 @@ class Servo @JvmOverloads constructor(
     var position: Double = 0.0
         set(value) {
             field = value.coerceIn(0.0, 1.0)
-            internal.position = field * (currentRange.second - currentRange.first) + currentRange.first
+            internal.position = scalePosition(field)
         }
+
+    private fun scalePosition(position: Double) =
+        position * (currentRange.second - currentRange.first) + currentRange.first
 
     /**
      * Returns a command that uses [range] and [speed] (specified in units per second) to go to the specified position
@@ -187,11 +165,22 @@ class Servo @JvmOverloads constructor(
         val actualSpeed = speed / range
         val distance = abs(position - this.position)
         val duration = actualSpeed / distance
-        return TimeCommand { t, dt ->
-            this.position = t * actualSpeed * sign(position - this.position) + this.position
+        return TimeCommand { t, _ ->
+            this.position += t * actualSpeed * sign(position - this.position)
             t >= duration || this.position == position
         }
             .onEnd { this.position = position }
+            .requires(this)
+    }
+
+    /**
+     * Returns a command that uses [range] and [speed] (specified in units per second) to estimate
+     * when the servo will reach the specified position, and waits until that point.
+     */
+    fun waitForPosition(position: Double, speed: Angle): Command {
+        val correctedPos = position.coerceIn(0.0, 1.0)
+        return Command.of { this.position = correctedPos }
+            .wait(abs(this.angle - range * scalePosition(correctedPos)) / speed)
             .requires(this)
     }
 

@@ -1,6 +1,9 @@
 package com.amarcolini.joos.path
 
-import kotlin.math.pow
+import com.amarcolini.joos.util.EPSILON
+import com.amarcolini.joos.util.evaluatePolynomial
+import com.amarcolini.joos.util.generatePascalsTriangle
+import com.amarcolini.joos.util.isolateRoots
 
 /**
  * Quintic Bezier Polynomial
@@ -22,23 +25,39 @@ class QuinticPolynomial(
 
     val controlPoints: DoubleArray = doubleArrayOf(p0, p1, p2, p3, p4, p5)
 
+    val coeffs = doubleArrayOf(
+        (p5 - 5 * p4 + 10 * p3 - 10 * p2 + 5 * p1 - p0),
+        5 * (p4 - 4 * p3 + 6 * p2 - 4 * p1 + p0),
+        10 * (p3 - 3 * p2 + 3 * p1 - p0),
+        10 * (p2 - 2 * p1 + p0),
+        (5 * p1 - 5 * p0),
+        p0
+    )
+
     /**
      * Returns the value of the polynomial at `t`.
      */
-    operator fun get(t: Double): Double = (p5 - 5 * p4 + 10 * p3 - 10 * p2 + 5 * p1 - p0) * t * t * t * t * t +
-            5 * (p4 - 4 * p3 + 6 * p2 - 4 * p1 + p0) * t * t * t * t +
-            10 * (p3 - 3 * p2 + 3 * p1 - p0) * t * t * t +
-            10 * (p2 - 2 * p1 + p0) * t * t +
-            (5 * p1 - 5 * p0) * t + p0
+    operator fun get(t: Double): Double = coeffs[0] * t * t * t * t * t +
+            coeffs[1] * t * t * t * t +
+            coeffs[2] * t * t * t +
+            coeffs[3] * t * t +
+            coeffs[4] * t + coeffs[5]
+
+    val dcoeffs = doubleArrayOf(
+        5 * (p5 - 5 * p4 + 10 * p3 - 10 * p2 + 5 * p1 - p0),
+        5 * (4 * p4 - 16 * p3 + 24 * p2 - 16 * p1 + 4 * p0),
+        5 * (6 * p3 - 18 * p2 + 18 * p1 - 6 * p0),
+        5 * (4 * p2 - 8 * p1 + 4 * p0),
+        5 * (p1 - p0)
+    )
 
     /**
      * Returns the derivative of the polynomial at `t`.
      */
-    fun deriv(t: Double): Double = 5 * ((p5 - 5 * p4 + 10 * p3 - 10 * p2 + 5 * p1 - p0) * t * t * t * t +
-            (4 * p4 - 16 * p3 + 24 * p2 - 16 * p1 + 4 * p0) * t * t * t +
-            (6 * p3 - 18 * p2 + 18 * p1 - 6 * p0) * t * t +
-            (4 * p2 - 8 * p1 + 4 * p0) * t +
-            p1 - p0)
+    fun deriv(t: Double): Double = dcoeffs[0] * t * t * t * t +
+            dcoeffs[1] * t * t * t +
+            dcoeffs[2] * t * t +
+            dcoeffs[3] * t + dcoeffs[4]
 
     /**
      * Returns the second derivative of the polynomial at `t`.

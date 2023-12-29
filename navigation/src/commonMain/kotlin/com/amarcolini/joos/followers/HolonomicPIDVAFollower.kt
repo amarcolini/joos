@@ -7,6 +7,7 @@ import com.amarcolini.joos.geometry.Pose2d
 import com.amarcolini.joos.kinematics.Kinematics
 import com.amarcolini.joos.trajectory.Trajectory
 import com.amarcolini.joos.util.NanoClock
+import com.amarcolini.joos.util.rad
 import kotlin.js.JsExport
 import kotlin.jvm.JvmOverloads
 import kotlin.math.PI
@@ -30,7 +31,7 @@ class HolonomicPIDVAFollower @JvmOverloads constructor(
     headingCoeffs: PIDCoefficients,
     admissibleError: Pose2d = Pose2d(),
     timeout: Double = 0.0,
-    clock: NanoClock = NanoClock.system()
+    clock: NanoClock = NanoClock.system
 ) : TrajectoryFollower(admissibleError, timeout, clock) {
     private val axialController = PIDController(axialCoeffs)
     private val lateralController = PIDController(lateralCoeffs)
@@ -79,7 +80,7 @@ class HolonomicPIDVAFollower @JvmOverloads constructor(
         val correctedVelocity = targetRobotVel + Pose2d(
             axialCorrection,
             lateralCorrection,
-            headingCorrection
+            headingCorrection.rad
         )
 
         lastError = poseError
