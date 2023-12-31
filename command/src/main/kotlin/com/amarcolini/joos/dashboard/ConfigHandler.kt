@@ -247,7 +247,7 @@ object ConfigHandler {
             if (providedConfig != null) return providedConfig
 
             //Deal with immutable types without providers (just data classes rn)
-            if (type.jvmErasure.isData && type.jvmErasure.hasAnnotation<Immutable>()) {
+            if (type.jvmErasure.isData) {
                 val variable = CustomVariable()
                 val params = type.jvmErasure.primaryConstructor?.parameters ?: return null
                 val dataClass = (type.classifier as KClass<Any>)
@@ -374,7 +374,7 @@ object ConfigHandler {
         return parse(
             property.returnType,
             property.getter,
-            if (property is KMutableProperty0<Any?>) property.setter else null
+            if (property is KMutableProperty0<Any?> && (property.returnType.jvmErasure.hasAnnotation<Immutable>() || property.hasAnnotation<Immutable>())) property.setter else null
         )
     }
 

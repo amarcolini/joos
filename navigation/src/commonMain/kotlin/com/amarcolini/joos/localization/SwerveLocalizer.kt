@@ -5,6 +5,7 @@ import com.amarcolini.joos.geometry.Angle
 import com.amarcolini.joos.geometry.Pose2d
 import com.amarcolini.joos.kinematics.Kinematics
 import com.amarcolini.joos.kinematics.SwerveKinematics
+import kotlin.jvm.JvmField
 import kotlin.jvm.JvmOverloads
 
 /**
@@ -17,8 +18,8 @@ import kotlin.jvm.JvmOverloads
  * @param wheelBase distance between pairs of wheels on the same side of the robot
  */
 class SwerveLocalizer @JvmOverloads constructor(
-    private val wheelPositions: () -> List<Double>,
-    private val wheelVelocities: () -> List<Double>? = { null },
+    @JvmField val wheelPositions: () -> List<Double>,
+    @JvmField val wheelVelocities: () -> List<Double>? = { null },
     private val moduleOrientations: () -> List<Angle>,
     private val trackWidth: Double,
     private val wheelBase: Double = trackWidth,

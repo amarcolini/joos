@@ -8,18 +8,18 @@ abstract class Toggleable {
     abstract val lastState: Boolean
     open val isActive get() = state
     open val isNotActive get() = !state
-    open val justActivated @get:JvmName("justActivated") get() = state && !lastState
-    open val justDeactivated @get:JvmName("justDeactivated") get() = !state && lastState
-    open val justChanged @get:JvmName("justChanged") get() = state != lastState
+    open val isJustActivated get() = state && !lastState
+    open val isJustDeactivated get() = !state && lastState
+    open val isJustChanged get() = state != lastState
 
-    private fun combine(other: Toggleable, operator: (Boolean, Boolean) -> Boolean) = object : Toggleable() {
+    fun combine(other: Toggleable, operator: (Boolean, Boolean) -> Boolean) = object : Toggleable() {
         override val state: Boolean get() = operator(this@Toggleable.state, other.state)
         override val lastState: Boolean get() = operator(this@Toggleable.state, other.state)
         override val isActive: Boolean get() = operator(this@Toggleable.isActive, other.isActive)
         override val isNotActive: Boolean get() = operator(this@Toggleable.isNotActive, other.isNotActive)
-        override val justActivated: Boolean get() = operator(this@Toggleable.justActivated, other.justActivated)
-        override val justDeactivated: Boolean get() = operator(this@Toggleable.justDeactivated, other.justDeactivated)
-        override val justChanged: Boolean get() = operator(this@Toggleable.justChanged, other.justChanged)
+        override val isJustActivated: Boolean get() = operator(this@Toggleable.isJustActivated, other.isJustActivated)
+        override val isJustDeactivated: Boolean get() = operator(this@Toggleable.isJustDeactivated, other.isJustDeactivated)
+        override val isJustChanged: Boolean get() = operator(this@Toggleable.isJustChanged, other.isJustChanged)
     }
 
     infix fun or(other: Toggleable) = combine(other) { a, b -> a || b }

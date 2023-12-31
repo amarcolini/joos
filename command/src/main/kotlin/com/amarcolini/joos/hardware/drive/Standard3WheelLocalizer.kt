@@ -14,14 +14,20 @@ class Standard3WheelLocalizer(
     encoderPositions: List<Pose2d>
 ) : ThreeTrackingWheelLocalizer(encoderPositions) {
     constructor(
-        encoders: List<Motor.Encoder>,
+        left: Motor.Encoder,
+        right: Motor.Encoder,
+        perpendicular: Motor.Encoder,
         lateralDistance: Double,
         forwardOffset: Double
-    ) : this(encoders, listOf(
-        Pose2d(0.0, lateralDistance / 2, 0.rad),
-        Pose2d(0.0, -lateralDistance / 2, 0.rad),
-        Pose2d(forwardOffset, 0.0, 90.deg)
-    ))
+    ) : this(
+        listOf(
+            left, right, perpendicular
+        ), listOf(
+            Pose2d(0.0, lateralDistance / 2, 0.rad),
+            Pose2d(0.0, -lateralDistance / 2, 0.rad),
+            Pose2d(forwardOffset, 0.0, 90.deg)
+        )
+    )
 
     override fun getWheelPositions(): List<Double> = encoders.map { it.distance }
 

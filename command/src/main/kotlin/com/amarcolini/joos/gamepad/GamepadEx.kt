@@ -4,6 +4,7 @@ import com.amarcolini.joos.command.Component
 import com.amarcolini.joos.geometry.Vector2d
 import com.qualcomm.robotcore.hardware.Gamepad
 import java.util.function.BooleanSupplier
+import java.util.function.Function
 import kotlin.reflect.KProperty0
 
 /**
@@ -94,6 +95,31 @@ class GamepadEx(gamepad: Gamepad) : Component {
     @JvmField
     val y: Button = Button()
 
+    /**
+     * Controller-independent A. Equivalent to A (Xbox/Logitech) or Cross (PS4/5).
+     */
+    @JvmField
+    val a0: Toggleable = a or cross
+
+    /**
+     * Controller-independent B. Equivalent to B (Xbox/Logitech) or Square (PS4/5).
+     */
+    @JvmField
+    val b0: Toggleable = b or square
+
+    /**
+     * Controller-independent X. Equivalent to X (Xbox/Logitech) or Triangle (PS4/5).
+     */
+    @JvmField
+    val x0: Toggleable = x or triangle
+
+    /**
+     * Controller-independent Y. Equivalent to Y (Xbox/Logitech) or Circle (PS4/5).
+     */
+    @JvmField
+    val y0: Toggleable = y or circle
+
+
     private var leftStick = getLeftStick()
     private var rightStick = getRightStick()
     var leftStickChanged: Boolean = false
@@ -169,12 +195,13 @@ class GamepadEx(gamepad: Gamepad) : Component {
 
     fun isActive(button: GamepadButton) = getButton(button).isActive
 
-    fun justActivated(button: GamepadButton) = getButton(button).justActivated
+    fun isJustActivated(button: GamepadButton) = getButton(button).isJustActivated
 
-    fun justDeactivated(button: GamepadButton) = getButton(button).justDeactivated
+    fun isJustDeactivated(button: GamepadButton) = getButton(button).isJustDeactivated
 
-    fun justChanged(button: GamepadButton) = getButton(button).justChanged
+    fun isJustChanged(button: GamepadButton) = getButton(button).isJustChanged
 
+    @JvmSynthetic
     operator fun invoke(buttons: GamepadEx.() -> KProperty0<Boolean>): BooleanSupplier =
         object : BooleanSupplier {
             private val supplier = buttons(this@GamepadEx)
@@ -182,15 +209,26 @@ class GamepadEx(gamepad: Gamepad) : Component {
             override fun getAsBoolean(): Boolean = supplier.get()
         }
 
+    @JvmSynthetic
+    operator fun invoke(buttons: GamepadEx.() -> Toggleable): Toggleable = buttons(this)
+
+    fun <T> get(buttons: Function<GamepadEx, T>): T = buttons.apply(this@GamepadEx)
+
     fun getLeftStick() = Vector2d(
         internal.left_stick_x.toDouble(),
         internal.left_stick_y.toDouble()
     )
+    
+    val left_stick_x @JvmName("left_stick_x") get() = internal.left_stick_x.toDouble()
+    val left_stick_y @JvmName("left_stick_y") get() = internal.left_stick_y.toDouble()
 
     fun getRightStick() = Vector2d(
         internal.right_stick_x.toDouble(),
         internal.right_stick_y.toDouble()
     )
+
+    val right_stick_x @JvmName("right_stick_x") get() = internal.right_stick_x.toDouble()
+    val right_stick_y @JvmName("right_stick_y") get() = internal.right_stick_y.toDouble()
 
     fun getTouchpadFinger1() = Vector2d(
         internal.touchpad_finger_1_x.toDouble(),

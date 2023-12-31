@@ -37,12 +37,17 @@ data class Angle @JvmOverloads constructor(
     @JvmField val units: AngleUnit
 ) : Comparable<Angle> {
 
-    companion object Static {
+    companion object {
         private const val deg2Rad = PI / 180.0
         private const val rad2Deg = 180.0 / PI
 
+        @JvmField
         val circle = (2 * PI).rad.apply { degrees }
+
+        @JvmField
         val halfCircle = PI.rad.apply { degrees }
+
+        @JvmField
         val quarterCircle = (PI / 2).rad.apply { degrees }
 
         /**

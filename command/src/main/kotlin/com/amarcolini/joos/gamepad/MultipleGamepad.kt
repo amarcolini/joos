@@ -2,6 +2,7 @@ package com.amarcolini.joos.gamepad
 
 import com.amarcolini.joos.command.Component
 import com.qualcomm.robotcore.hardware.Gamepad
+import java.util.function.BiFunction
 import java.util.function.BooleanSupplier
 import kotlin.reflect.KProperty0
 
@@ -21,10 +22,17 @@ class MultipleGamepad(
         p2.update()
     }
 
+    @JvmSynthetic
     operator fun invoke(buttons: MultipleGamepad.() -> KProperty0<Boolean>): BooleanSupplier =
         object : BooleanSupplier {
             private val supplier = buttons(this@MultipleGamepad)
 
             override fun getAsBoolean(): Boolean = supplier.get()
         }
+
+    @JvmSynthetic
+    operator fun invoke(buttons: MultipleGamepad.() -> Toggleable): Toggleable = buttons(this)
+
+    fun <T> get(buttons: BiFunction<GamepadEx, GamepadEx, T>): T =
+        buttons.apply(p1, p2)
 }

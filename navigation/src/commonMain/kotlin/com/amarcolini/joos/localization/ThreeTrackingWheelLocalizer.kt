@@ -4,6 +4,7 @@ import com.amarcolini.joos.geometry.Pose2d
 import com.amarcolini.joos.kinematics.Kinematics
 import com.amarcolini.joos.util.Matrix3x3
 import com.amarcolini.joos.util.rad
+import kotlin.jvm.JvmField
 
 /**
  * Localizer based on three unpowered tracking omni wheels.
@@ -11,7 +12,7 @@ import com.amarcolini.joos.util.rad
  * @param wheelPoses wheel poses relative to the center of the robot (positive X points forward on the robot)
  */
 abstract class ThreeTrackingWheelLocalizer(
-    wheelPoses: List<Pose2d>
+    @JvmField val wheelPoses: List<Pose2d>
 ) : Localizer {
     private var _poseEstimate = Pose2d()
     override var poseEstimate: Pose2d

@@ -2,10 +2,14 @@ package com.amarcolini.joos.command
 
 import com.acmerobotics.dashboard.FtcDashboard
 import com.amarcolini.joos.dashboard.SuperTelemetry
+import com.amarcolini.joos.gamepad.GamepadEx
 import com.amarcolini.joos.gamepad.MultipleGamepad
+import com.amarcolini.joos.gamepad.Toggleable
 import com.qualcomm.robotcore.eventloop.opmode.Autonomous
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp
+import java.util.function.BiFunction
+import java.util.function.BooleanSupplier
 import kotlin.reflect.KClass
 import kotlin.reflect.KMutableProperty1
 import kotlin.reflect.KProperty
@@ -113,6 +117,8 @@ abstract class CommandOpMode : LinearOpMode(), CommandInterface {
      * A handy [MultipleGamepad].
      */
     protected val gamepad: MultipleGamepad @JvmName("gamepad") get() = CommandScheduler.gamepad!!
+
+    fun <T> gamepad(buttons: BiFunction<GamepadEx, GamepadEx, T>): T = gamepad.get(buttons)
 
     protected inline fun <reified Device : Any> getHardware(deviceName: String) =
         HardwareDelegate(Device::class, deviceName) { this }

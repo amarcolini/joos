@@ -7,6 +7,7 @@ import com.amarcolini.joos.kinematics.Kinematics
 import com.amarcolini.joos.kinematics.TankKinematics
 import kotlin.js.ExperimentalJsExport
 import kotlin.js.JsExport
+import kotlin.jvm.JvmField
 import kotlin.jvm.JvmOverloads
 
 /**
@@ -17,8 +18,8 @@ import kotlin.jvm.JvmOverloads
  * @param trackWidth lateral distance between pairs of wheels on different sides of the robot
  */
 class TankLocalizer @JvmOverloads constructor(
-    private val wheelPositions: () -> List<Double>,
-    private val wheelVelocities: () -> List<Double>? = { null },
+    @JvmField val wheelPositions: () -> List<Double>,
+    @JvmField val wheelVelocities: () -> List<Double>? = { null },
     private val trackWidth: Double,
 ) : DeadReckoningLocalizer {
     private var _poseEstimate = Pose2d()

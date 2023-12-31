@@ -133,10 +133,10 @@ class ConfigSymbolProcessor(
                 }
             }
             logger.info("Property isn't an immutable primitive.")
-            if (property.type.annotations.any {
+            if ((property.type.annotations + property.annotations).any {
                     it.annotationType.resolve().declaration.qualifiedName?.asString() == immutableName
                 } && (!property.isMutable || property.modifiers.contains(Modifier.FINAL))) {
-                logger.info("Property type has Immutable annotation but isn't mutable (fail).")
+                logger.info("Property or property type has Immutable annotation but isn't mutable (fail).")
                 return
             }
             val closestClass = property.closestClassDeclaration()

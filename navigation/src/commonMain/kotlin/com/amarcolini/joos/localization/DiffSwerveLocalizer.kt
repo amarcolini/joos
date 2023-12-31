@@ -4,6 +4,7 @@ import com.amarcolini.joos.geometry.Angle
 import com.amarcolini.joos.geometry.Pose2d
 import com.amarcolini.joos.kinematics.DiffSwerveKinematics
 import com.amarcolini.joos.kinematics.Kinematics
+import kotlin.jvm.JvmField
 import kotlin.jvm.JvmOverloads
 import kotlin.jvm.JvmStatic
 
@@ -16,9 +17,9 @@ import kotlin.jvm.JvmStatic
  * @param trackWidth lateral distance between pairs of wheels on different sides of the robot
  */
 class DiffSwerveLocalizer @JvmOverloads constructor(
-    private val gearRotations: () -> List<Angle>,
-    private val gearPositions: () -> List<Double>,
-    private val gearVelocities: () -> List<Double>? = { null },
+    @JvmField val gearRotations: () -> List<Angle>,
+    @JvmField val gearPositions: () -> List<Double>,
+    @JvmField val gearVelocities: () -> List<Double>? = { null },
     private val trackWidth: Double,
 ) : DeadReckoningLocalizer {
     companion object {

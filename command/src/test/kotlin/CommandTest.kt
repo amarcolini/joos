@@ -9,7 +9,6 @@ import org.junit.Test
 import org.junit.runner.RunWith
 import kotlin.math.abs
 import org.robolectric.RobolectricTestRunner
-import org.robolectric.RuntimeEnvironment
 import org.robolectric.annotation.Config
 
 private const val logOutput: Boolean = true
@@ -74,7 +73,7 @@ class CommandTest {
             val commands = List(10000) { Command.of {} }.toTypedArray()
             scheduler.schedule(*commands)
 
-            val clock = NanoClock.system()
+            val clock = NanoClock.system
             val now = clock.seconds()
             repeat(3) { scheduler.update() }
             println("performance: ${clock.seconds() - now}")
@@ -241,7 +240,7 @@ class CommandTest {
     fun testWaitCommands() {
         if (logOutput) println("   **testWaitCommands**")
         val cmd = WaitCommand(1.0)
-        val clock = NanoClock.system()
+        val clock = NanoClock.system
         val start = clock.seconds()
         cmd.runBlocking()
         //Accurate to a thousandth of a second
@@ -298,7 +297,7 @@ class CommandTest {
         var runCount = 0
         val cmd = InstantCommand { runCount++ }
 
-        scheduler.map(btn1::justActivated, cmd)
+        scheduler.map(btn1::isJustActivated, cmd)
         scheduler.map(btn2::isActive, cmd)
 
         repeat(10) {
@@ -357,7 +356,7 @@ class CommandTest {
         scheduler.schedule(TimeCommand({ t, dt ->
             compounded += dt
             t > 3
-        }, object : NanoClock() {
+        }, object : NanoClock {
             override fun seconds() = time
         }))
         repeat(40) {
