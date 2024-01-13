@@ -64,7 +64,7 @@ class ConfigProcessor : AbstractProcessor() {
                     ).nextControlFlow("catch (\$T e)", Exception::class.java)
                     .addStatement("return \$T.emptyList()", Collections::class.java).endControlFlow().build()
             ).addMethod(
-                MethodSpec.methodBuilder("getMutableConfigProviders").addModifiers(Modifier.PUBLIC, Modifier.STATIC)
+                MethodSpec.methodBuilder("getImmutableConfigProviders").addModifiers(Modifier.PUBLIC, Modifier.STATIC)
                     .returns(List::class.java).beginControlFlow("try").addStatement(
                         "return \$T.asList(${
                             immutableConfigProviders.joinToString()

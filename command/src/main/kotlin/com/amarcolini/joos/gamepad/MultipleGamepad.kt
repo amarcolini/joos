@@ -30,9 +30,6 @@ class MultipleGamepad(
             override fun getAsBoolean(): Boolean = supplier.get()
         }
 
-    @JvmSynthetic
-    operator fun invoke(buttons: MultipleGamepad.() -> Toggleable): Toggleable = buttons(this)
-
     fun <T> get(buttons: BiFunction<GamepadEx, GamepadEx, T>): T =
         buttons.apply(p1, p2)
 }

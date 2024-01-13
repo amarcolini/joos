@@ -3,10 +3,12 @@ package com.amarcolini.joos.command
 /**
  * A command that runs commands in parallel until they all finish.
  */
-class ParallelCommand @JvmOverloads constructor(
+class ParallelCommand(
     isInterruptable: Boolean = true,
     vararg commands: Command
 ) : CommandGroup(true, commands, isInterruptable) {
+    constructor(vararg commands: Command) : this(!commands.any { !it.isInterruptable }, *commands)
+
     private val commands = LinkedHashMap<Command, Boolean>()
     override fun add(command: Command) {
         commands += command to false
@@ -20,8 +22,10 @@ class ParallelCommand @JvmOverloads constructor(
     }
 
     override fun init() {
-        commands.mapValues { false }
-        commands.forEach { it.key.init() }
+        for (command in commands) {
+            command.setValue(false)
+            command.key.init()
+        }
     }
 
     override fun execute() {

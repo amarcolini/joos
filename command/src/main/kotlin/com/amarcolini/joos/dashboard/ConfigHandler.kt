@@ -15,10 +15,9 @@ import com.qualcomm.ftccommon.FtcEventLoop
 import org.firstinspires.ftc.ftccommon.external.OnCreateEventLoop
 import java.lang.reflect.Field
 import java.lang.reflect.Method
-import java.util.*
+import java.lang.reflect.Modifier
 import kotlin.reflect.*
 import kotlin.reflect.full.*
-import kotlin.reflect.jvm.javaType
 import kotlin.reflect.jvm.jvmErasure
 import kotlin.reflect.jvm.kotlinProperty
 
@@ -32,7 +31,7 @@ object ConfigHandler {
     private val initTasks = ArrayList<() -> Unit>()
 
     private val javaResults: List<Pair<String, Field>>?
-    private val kotlinResults: List<Pair<String, KProperty0<Any>>>?
+    private val kotlinResults: List<Pair<String, KProperty0<Any?>>>?
 
     private data class MutableProviderData<T>(
         val function: (T) -> ConfigVariable<*>, val priority: Int, val isType: (KType) -> Boolean
@@ -45,8 +44,10 @@ object ConfigHandler {
     private val mutableConfigProviders: List<MutableProviderData<Any?>>
     private val immutableConfigProviders: List<ImmutableProviderData<Any?>>
 
+    val logs = ArrayList<String>()
+
     init {
-        var kotlin: List<Pair<String, KProperty0<Any>>>? = null
+        var kotlin: List<Pair<String, KProperty0<Any?>>>? = null
         var java: List<Pair<String, Field>>? = null
 
         val mutableProviders: MutableList<MutableProviderData<Any?>> = mutableListOf()
@@ -67,7 +68,7 @@ object ConfigHandler {
             val isKotlin = resultClass.getDeclaredField("isKotlin").get(null) as Boolean
             val resultList = resultClass.getDeclaredMethod("getResults").invoke(null)
             if (isKotlin) {
-                kotlin = resultList as List<Pair<String, KProperty0<Any>>>
+                kotlin = resultList as List<Pair<String, KProperty0<Any?>>>
                 mutableProviders += (resultClass.getDeclaredMethod("getMutableConfigProviders")
                     .invoke(null) as List<KFunction1<*, ConfigVariable<Any>>>).map {
                     MutableProviderData(
@@ -89,8 +90,9 @@ object ConfigHandler {
                     )
                 }
             } else {
+                logs += "we got some java here"
                 java = resultList as List<Pair<String, Field>>
-                mutableProviders += (resultClass.getDeclaredMethod("getConfigProviders")
+                mutableProviders += (resultClass.getDeclaredMethod("getMutableConfigProviders")
                     .invoke(null) as List<Method>).map { method ->
                     MutableProviderData(
                         method::invoke as KFunction1<Any?, ConfigVariable<*>>,
@@ -110,6 +112,7 @@ object ConfigHandler {
                             ),
                     ) { method.returnType.isAssignableFrom(it.jvmErasure.java) }
                 }
+                logs += "we made it bois"
             }
         } catch (_: Exception) {
         }
@@ -125,7 +128,9 @@ object ConfigHandler {
         try {
             javaResults?.forEach { (group, field) ->
                 try {
+                    logs += "we parsing ${field.name} in $group"
                     addVariableToDashboard(parseField(field), group, field.name)
+                    logs += "no errors!"
                 } catch (_: Exception) {
                 }
             }
@@ -328,13 +333,10 @@ object ConfigHandler {
             null -> null
             is Double, is Int, is Boolean, is String, is Enum<*> -> null
             else -> {
-                //If the setter isn't null we already checked for this earlier
-                if (setter == null) {
-                    val providedConfig = mutableConfigProviders.filter {
-                        it.isType(value::class.starProjectedType)
-                    }.maxByOrNull { it.priority }?.function?.invoke(value)
-                    if (providedConfig != null) return providedConfig
-                }
+                val providedConfig = mutableConfigProviders.filter {
+                    it.isType(value::class.starProjectedType)
+                }.maxByOrNull { it.priority }?.function?.invoke(value)
+                if (providedConfig != null) return providedConfig
                 val customVariable = CustomVariable()
                 if (value is Array<*>) {
                     for (i in 0 until value.size) {
@@ -366,15 +368,31 @@ object ConfigHandler {
         }
     }
 
-    fun parseField(field: Field) =
-        parseProperty(field.kotlinProperty as KProperty0<Any?>)
+    fun parseField(field: Field): ConfigVariable<out Any>? {
+        (field.kotlinProperty as? KProperty0<Any?>)?.let { return parseProperty(it) }
+        if (!Modifier.isPublic(field.modifiers)) return null
+        logs += "bare minimum"
+        return parse(
+            field.type.kotlin.starProjectedType,
+            { field.get(null) },
+            if (!Modifier.isFinal(field.modifiers)
+//                && (field.type.kotlin.hasAnnotation<Immutable>() || field.annotations.any { it.annotationClass.hasAnnotation<Immutable>() })
+                )
+                { value ->
+                    field.set(null, value)
+                } else null
+        )
+    }
 
     fun parseProperty(property: KProperty0<Any?>): ConfigVariable<out Any>? {
         if (property.visibility != KVisibility.PUBLIC) return null
+        logs += "bare minimum"
         return parse(
             property.returnType,
             property.getter,
-            if (property is KMutableProperty0<Any?> && (property.returnType.jvmErasure.hasAnnotation<Immutable>() || property.hasAnnotation<Immutable>())) property.setter else null
+            if (property is KMutableProperty0<Any?>
+//                && (property.returnType.jvmErasure.hasAnnotation<Immutable>() || property.hasAnnotation<Immutable>())
+                ) property.setter else null
         )
     }
 

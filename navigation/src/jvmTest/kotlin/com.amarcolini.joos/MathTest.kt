@@ -2,6 +2,7 @@ package com.amarcolini.joos
 
 import com.amarcolini.joos.geometry.Pose2d
 import com.amarcolini.joos.geometry.Vector2d
+import com.amarcolini.joos.kinematics.SwerveKinematics
 import com.amarcolini.joos.path.*
 import com.amarcolini.joos.serialization.format
 import com.amarcolini.joos.util.*
@@ -9,6 +10,7 @@ import org.apache.commons.math3.util.FastMath
 import org.junit.jupiter.api.Test
 import utils.benchmark.benchmark
 import utils.benchmark.logBenchmark
+import kotlin.math.PI
 import kotlin.math.abs
 import kotlin.math.absoluteValue
 import kotlin.math.sin
@@ -161,5 +163,70 @@ class MathTest {
                 val (t, s) = path.compositeProject(vec)
             }
         )
+    }
+
+    @Test
+    fun benchmarkSwerveKinematics() {
+        val trackWidth = 5.0
+        val wheelBase = 10.0
+        val wheelPositions = listOf(
+            Vector2d(wheelBase / 2, -trackWidth / 2),
+            Vector2d(-wheelBase / 2, -trackWidth / 2),
+            Vector2d(-wheelBase / 2, trackWidth / 2),
+            Vector2d(wheelBase / 2, trackWidth / 2)
+        )
+        var error = Pose2d()
+        logBenchmark(
+            times = 50_000,
+            warmup = 500,
+            "old" to {
+                SwerveKinematics.wheelToRobotVelocities(
+                    List(4) { (Math.random() - 0.5) * 20.0 },
+                    List(4) { (Math.random() - 0.5) * PI.rad },
+                    trackWidth, wheelBase
+                )
+            },
+            "new" to {
+                val wheelVelocities = List(4) { (Math.random() - 0.5) * 20.0 }
+                val moduleOrientations = List(4) { (Math.random() - 0.5) * PI.rad }
+//                val robotVel = Pose2d(
+//                    (Math.random() - 0.5) * 20.0,(Math.random() - 0.5) * 20.0,
+//                        (Math.random() - 0.5) * PI.rad * 2.0
+//                )
+//                val wheelVelocities = SwerveKinematics.robotToWheelVelocities(
+//                    robotVel, trackWidth, wheelBase
+//                )
+//                val moduleOrientations = SwerveKinematics.robotToModuleOrientations(
+//                    robotVel, trackWidth, wheelBase
+//                )
+                val mine = SwerveKinematics.wheelToRobotVelocities2(
+                    wheelVelocities,
+                    moduleOrientations,
+                    wheelPositions,
+                )
+                val old = SwerveKinematics.wheelToRobotVelocities(
+                    wheelVelocities,
+                    moduleOrientations,
+                    trackWidth, wheelBase
+                )
+                val rawError = (mine - old)
+                error += Pose2d(rawError.x.absoluteValue, rawError.y.absoluteValue, rawError.heading.normDelta().abs())
+            },
+            "quail" to {
+                SwerveKinematics.wheelToRobotVelocities3(
+                    List(4) { (Math.random() - 0.5) * 20.0 },
+                    List(4) { (Math.random() - 0.5) * PI.rad },
+                    wheelPositions,
+                )
+            },
+            "quail fast" to {
+                SwerveKinematics.wheelToRobotVelocities4(
+                    List(4) { (Math.random() - 0.5) * 20.0 },
+                    List(4) { (Math.random() - 0.5) * PI.rad },
+                    wheelPositions,
+                )
+            }
+        )
+        println("error: ${error / 50_500.0}")
     }
 }

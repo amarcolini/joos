@@ -3,10 +3,12 @@ package com.amarcolini.joos.command
 /**
  * A command that runs commands in sequence.
  */
-class SequentialCommand @JvmOverloads constructor(
+class SequentialCommand(
     isInterruptable: Boolean = true,
     vararg commands: Command
 ) : CommandGroup(false, commands, isInterruptable) {
+    constructor(vararg commands: Command): this(!commands.any { !it.isInterruptable }, *commands)
+
     private val commands = commands.toMutableList()
     override fun add(command: Command) {
         commands += command

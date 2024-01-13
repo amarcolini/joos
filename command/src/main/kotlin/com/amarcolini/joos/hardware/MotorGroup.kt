@@ -149,7 +149,7 @@ class MotorGroup(private val motors: List<Motor>) : Component, List<Motor> by mo
         /**
          * Sets whether the direction of the motor group is reversed.
          */
-        @JvmName("setReversed")
+        @JvmSynthetic
         set(value) {
             motors.forEach {
                 it.reversed = value != (states[it] == true)
@@ -158,6 +158,11 @@ class MotorGroup(private val motors: List<Motor>) : Component, List<Motor> by mo
         }
         @JvmName("isReversed")
         get
+
+    fun setReversed(reversed: Boolean): MotorGroup {
+        this.reversed = reversed
+        return this
+    }
 
     /**
      * Reverses the direction of the motor group.

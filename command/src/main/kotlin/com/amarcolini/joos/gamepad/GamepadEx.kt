@@ -102,22 +102,22 @@ class GamepadEx(gamepad: Gamepad) : Component {
     val a0: Toggleable = a or cross
 
     /**
-     * Controller-independent B. Equivalent to B (Xbox/Logitech) or Square (PS4/5).
+     * Controller-independent B. Equivalent to B (Xbox/Logitech) or Circle (PS4/5).
      */
     @JvmField
-    val b0: Toggleable = b or square
+    val b0: Toggleable = b or circle
 
     /**
-     * Controller-independent X. Equivalent to X (Xbox/Logitech) or Triangle (PS4/5).
+     * Controller-independent X. Equivalent to X (Xbox/Logitech) or Square (PS4/5).
      */
     @JvmField
-    val x0: Toggleable = x or triangle
+    val x0: Toggleable = x or square
 
     /**
-     * Controller-independent Y. Equivalent to Y (Xbox/Logitech) or Circle (PS4/5).
+     * Controller-independent Y. Equivalent to Y (Xbox/Logitech) or Triangle (PS4/5).
      */
     @JvmField
-    val y0: Toggleable = y or circle
+    val y0: Toggleable = y or triangle
 
 
     private var leftStick = getLeftStick()
@@ -208,9 +208,6 @@ class GamepadEx(gamepad: Gamepad) : Component {
 
             override fun getAsBoolean(): Boolean = supplier.get()
         }
-
-    @JvmSynthetic
-    operator fun invoke(buttons: GamepadEx.() -> Toggleable): Toggleable = buttons(this)
 
     fun <T> get(buttons: Function<GamepadEx, T>): T = buttons.apply(this@GamepadEx)
 

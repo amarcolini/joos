@@ -10,6 +10,7 @@ import kotlin.jvm.JvmOverloads
 import kotlin.jvm.JvmStatic
 import kotlin.math.acos
 import kotlin.math.atan2
+import kotlin.math.hypot
 import kotlin.math.sqrt
 
 /**
@@ -33,7 +34,7 @@ data class Vector2d @JvmOverloads constructor(
     /**
      * Returns the magnitude of this vector.
      */
-    fun norm(): Double = sqrt(squaredNorm())
+    fun norm(): Double = hypot(x, y)
 
     /**
      * Returns the squared magnitude of this vector.

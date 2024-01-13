@@ -33,12 +33,17 @@ class CRServo constructor(
         /**
          * Sets whether the direction of the servo is reversed.
          */
-        @JvmName("setReversed") set(value) {
+        @JvmSynthetic set(value) {
             servo.direction = if (value) DcMotorSimple.Direction.REVERSE
             else DcMotorSimple.Direction.FORWARD
             field = value
         }
         @JvmName("isReversed") get() = servo.direction == DcMotorSimple.Direction.REVERSE
+
+    fun setReversed(reversed: Boolean): com.amarcolini.joos.hardware.CRServo {
+        this.reversed = reversed
+        return this
+    }
 
     /**
      * Reverses the direction of the servo.

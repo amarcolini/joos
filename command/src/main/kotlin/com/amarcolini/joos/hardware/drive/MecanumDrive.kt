@@ -60,12 +60,6 @@ open class MecanumDrive @JvmOverloads constructor(
         externalHeadingSensor,
     )
 
-    override var localizer: Localizer = MecanumLocalizer(
-        ::getWheelPositions,
-        ::getWheelVelocities,
-        trackWidth, wheelBase, lateralMultiplier,
-    ).let { if (externalHeadingSensor != null) it.addHeadingSensor(externalHeadingSensor) else it }
-
     override fun getWheelPositions() = motors.map { it.distance }
 
     override fun getWheelVelocities() = motors.map { it.distanceVelocity }

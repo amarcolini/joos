@@ -211,6 +211,7 @@ abstract class CommandOpMode : LinearOpMode(), CommandInterface {
     private var hasInitialized = false
     final override fun runOpMode() {
         CommandScheduler.reset()
+        CommandScheduler.telem.register(telemetry)
         hMap = hardwareMap
 
         robot = null

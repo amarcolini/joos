@@ -183,6 +183,11 @@ class Motor @JvmOverloads constructor(
         @JvmField
         var reversed: Boolean = false
 
+        fun setReversed(reversed: Boolean): Encoder {
+            this.reversed = reversed
+            return this
+        }
+
         /**
          * Reverses the encoder.
          */
@@ -306,7 +311,7 @@ class Motor @JvmOverloads constructor(
         /**
          * Sets whether the direction of the motor is reversed.
          */
-        @JvmName("setReversed")
+        @JvmSynthetic
         set(value) {
             encoder.reversed = value
             field = value
@@ -322,6 +327,11 @@ class Motor @JvmOverloads constructor(
      */
     fun reversed(): Motor {
         reversed = !reversed
+        return this
+    }
+
+    fun setReversed(reversed: Boolean): Motor {
+        this.reversed = reversed
         return this
     }
 

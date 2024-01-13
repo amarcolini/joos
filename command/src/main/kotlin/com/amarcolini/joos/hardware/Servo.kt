@@ -47,13 +47,18 @@ class Servo @JvmOverloads constructor(
      * Whether this servo is reversed.
      */
     var reversed: Boolean = false
-        @JvmName("setReversed")
+        @JvmSynthetic
         set(value) {
             internal.direction =
                 if (value) Servo.Direction.REVERSE else Servo.Direction.FORWARD
             field = value
         }
         @JvmName("isReversed") get
+
+    fun setReversed(reversed: Boolean): com.amarcolini.joos.hardware.Servo {
+        this.reversed = reversed
+        return this
+    }
 
     /**
      * Angular representation of the servo's position in the range `[0.0, `[range]`]`.
@@ -161,35 +166,23 @@ class Servo @JvmOverloads constructor(
      * at the desired speed by slowly incrementing the position. Note that since there is no feedback from the servo, it may or may not
      * actually achieve the desired speed.
      */
-    fun goToPosition(position: Double, speed: Angle): Command {
-        val actualSpeed = speed / range
+    fun goToPosition(position: Double, speed: Angle) = goToPosition(position, speed / range)
+
+    /**
+     * Returns a command that goes to the specified position at the desired speed. 
+     * Note that since there is no feedback from the servo, it may or may not
+     * actually achieve the desired speed.
+     */
+    fun goToPosition(position: Double, speed: Double): Command = Command.select {
         val distance = abs(position - this.position)
-        val duration = actualSpeed / distance
-        return TimeCommand { t, _ ->
-            this.position += t * actualSpeed * sign(position - this.position)
+        val duration = speed / distance
+        TimeCommand { t, _ ->
+            this.position += t * speed * sign(position - this.position)
             t >= duration || this.position == position
         }
             .onEnd { this.position = position }
             .requires(this)
     }
-
-    /**
-     * Returns a command that uses [range] and [speed] (specified in units per second) to estimate
-     * when the servo will reach the specified position, and waits until that point.
-     */
-    fun waitForPosition(position: Double, speed: Angle): Command {
-        val correctedPos = position.coerceIn(0.0, 1.0)
-        return Command.of { this.position = correctedPos }
-            .wait(abs(this.angle - range * scalePosition(correctedPos)) / speed)
-            .requires(this)
-    }
-
-    /**
-     * Returns a command that uses [range] and [RPM] to go to the specified position
-     * at the desired speed. Note that since there is no feedback from the servo, it may or may not
-     * actually achieve the desired speed.
-     */
-    fun goToPosition(position: Double, RPM: Double): Command = goToPosition(position, RPM / 60 * 360.deg)
 
     /**
      * Returns a command that uses [range] and [speed] (specified in units per second) to go to the specified angle
@@ -199,9 +192,42 @@ class Servo @JvmOverloads constructor(
     fun goToAngle(angle: Angle, speed: Angle): Command = goToPosition(angle / range, speed)
 
     /**
-     * Returns a command that uses [range] and [RPM] to go to the specified angle
-     * at the desired speed. Note that since there is no feedback from the servo, it may or may not
+     * Returns a command that goes to the specified angle at the desired speed. 
+     * Note that since there is no feedback from the servo, it may or may not
      * actually achieve the desired speed.
      */
-    fun goToAngle(angle: Angle, RPM: Double): Command = goToPosition(angle / range, RPM / 60 * 360.deg)
+    fun goToAngle(angle: Angle, speed: Double): Command = goToPosition(angle / range, speed)
+
+    /**
+     * Returns a command that uses [range] and [speed] (specified in units per second) to estimate
+     * when the servo will reach the specified position, and waits until that point.
+     */
+    fun waitForPosition(position: Double, speed: Angle): Command =
+        waitForPosition(position, speed / range)
+
+    /**
+     * Returns a command that uses [speed] to estimate when the servo will reach
+     * the specified position, and waits until that point.
+     */
+    fun waitForPosition(position: Double, speed: Double): Command = Command.select {
+        val correctedPos = position.coerceIn(0.0, 1.0)
+        val currentPosition = this.position
+        Command.of { this.position = scalePosition(correctedPos) }
+            .wait(abs(currentPosition - scalePosition(correctedPos)) / speed)
+            .requires(this)
+    }
+
+    /**
+     * Returns a command that uses [range] and [speed] (specified in units per second) to estimate
+     * when the servo will reach the specified angle, and waits until that point.
+     */
+    fun waitForAngle(angle: Angle, speed: Angle): Command =
+        waitForPosition(angle / range, speed)
+
+    /**
+     * Returns a command that uses [speed] to estimate when the servo will reach
+     * the specified angle, and waits until that point.
+     */
+    fun waitForAngle(angle: Angle, speed: Double): Command =
+        waitForPosition(angle / range, speed)
 }

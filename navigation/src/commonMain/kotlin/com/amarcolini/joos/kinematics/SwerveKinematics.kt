@@ -3,10 +3,13 @@ package com.amarcolini.joos.kinematics
 import com.amarcolini.joos.geometry.Angle
 import com.amarcolini.joos.geometry.Pose2d
 import com.amarcolini.joos.geometry.Vector2d
+import com.amarcolini.joos.util.doLinearRegression
 import com.amarcolini.joos.util.rad
 import kotlin.js.JsExport
 import kotlin.jvm.JvmOverloads
 import kotlin.jvm.JvmStatic
+import kotlin.math.PI
+
 
 /**
  * Swerve drive kinematic equations. All wheel positions and velocities are given starting with front left and
@@ -212,7 +215,127 @@ object SwerveKinematics {
                 y * (backRight.x + frontRight.x - frontLeft.x - backLeft.x) +
                         x * (frontLeft.y + frontRight.y - backLeft.y - backRight.y)
                 ) / (4 * (x * x + y * y))).rad
-
         return Pose2d(vx, vy, omega)
+    }
+
+    fun wheelToRobotVelocities2(
+        wheelVelocities: List<Double>,
+        moduleOrientations: List<Angle>,
+        wheelPositions: List<Vector2d>
+    ): Pose2d {
+        val vectors = wheelVelocities
+            .zip(moduleOrientations)
+            .map { (vel, orientation) ->
+                Vector2d.polar(vel, orientation)
+            }
+        val x = vectors.map { it.x }
+        val y = vectors.map { it.y }
+        val px = wheelPositions.map { it.x }
+        val py = wheelPositions.map { it.y }
+        val (omega1, vx) = doLinearRegression(py, x)
+        val (omega2, vy) = doLinearRegression(px, y)
+        return Pose2d(vx, vy, ((omega2 + omega1) / 2).rad)
+    }
+
+    fun <T> getPairs(inputArray: Array<T>): List<List<T>> {
+        val pairs: MutableList<List<T>> = ArrayList()
+        for (i in inputArray.indices) {
+            for (j in i + 1 until inputArray.size) {
+                val pair: MutableList<T> = ArrayList()
+                pair.add(inputArray[i])
+                pair.add(inputArray[j])
+                pairs.add(pair)
+            }
+        }
+        return pairs
+    }
+
+    fun wheelToRobotVelocities3(
+        wheelVelocities: List<Double>,
+        moduleOrientations: List<Angle>,
+        wheelPositions: List<Vector2d>
+    ): Pose2d {
+        val modules = wheelVelocities
+            .zip(moduleOrientations)
+            .map { (vel, orientation) ->
+                Vector2d.polar(vel, orientation)
+            }
+        // to account for errors, we will take the average of all the module pairs
+        val modulePairs: List<List<Vector2d>> = getPairs(modules.toTypedArray())
+
+        // lists to be averaged over
+        val rotationValues: MutableList<Double> = ArrayList()
+        val movementVectors: MutableList<Vector2d> = ArrayList()
+
+        // for each pair of modules, calculate the movement vector and rotation speed
+        for (pair in modulePairs) {
+            // make it easier to access modules
+            val module1: Vector2d = pair[0]
+            val module2: Vector2d = pair[1]
+            // also calculate the rotation vectors (needed for calculations)
+            val module1RotationVector: Vector2d =
+                wheelPositions[modules.indexOf(module1)].rotated(-Angle.quarterCircle)
+            val module2RotationVector: Vector2d =
+                wheelPositions[modules.indexOf(module2)].rotated((-PI / 2).rad)
+
+            // calculate the difference between the module vectors
+            val moduleDifference: Vector2d = module1 - module2
+            // calculate the difference between the rotation vectors
+            val rotationDifference: Vector2d = module1RotationVector - module2RotationVector
+
+            // calculate the rotation speed
+            val rotationSpeed: Double = moduleDifference.x / rotationDifference.x
+            rotationValues.add(rotationSpeed)
+            // calculate the movement vector using substitution
+            movementVectors.add(module1 - module1RotationVector * rotationSpeed)
+        }
+
+        // average the rotation values
+        val rotation: Double = rotationValues.average()
+
+        // calculate the sum of the movement vectors
+        var translation: Vector2d = Vector2d(0.0, 0.0)
+        for (movementVector in movementVectors) {
+            translation += movementVector
+        }
+
+        // average the movement vectors
+        translation *= (1.0 / movementVectors.size)
+        return Pose2d(translation, rotation.rad)
+    }
+    
+    fun wheelToRobotVelocities4(
+        wheelVelocities: List<Double>,
+        moduleOrientations: List<Angle>,
+        wheelPositions: List<Vector2d>
+    ): Pose2d {
+        val modules = wheelVelocities
+            .zip(moduleOrientations)
+            .map { (vel, orientation) ->
+                Vector2d.polar(vel, orientation)
+            }
+
+        // take average of all modules (this is the robot's movement vector)
+        var averageModulePosition: Vector2d = Vector2d(0.0, 0.0)
+        for (module in modules) {
+            averageModulePosition += module
+        }
+        averageModulePosition *= (1.0 / modules.size)
+
+
+        // calculate the rotation speed
+        var rotation = 0.0
+        for (i in modules.indices) {
+            val module: Vector2d = modules[i]
+            val moduleVector: Vector2d = wheelPositions[i]
+            // inverse of inverse (forwards) kinematics: undo the addition of rotation + movement
+            val scaledRotationVector: Vector2d = module - (averageModulePosition)
+            // add the scalar value
+            rotation += scaledRotationVector.x / moduleVector.x
+        }
+
+        // average the rotation speed
+        rotation /= modules.size
+        return Pose2d(averageModulePosition, rotation.rad)
     }
 }
