@@ -6,8 +6,6 @@ import com.amarcolini.joos.geometry.Vector2d
 import com.amarcolini.joos.util.cos
 import com.amarcolini.joos.util.rad
 import com.amarcolini.joos.util.sin
-import kotlin.js.ExperimentalJsExport
-import kotlin.js.JsExport
 import kotlin.jvm.JvmStatic
 
 /**
@@ -18,162 +16,6 @@ import kotlin.jvm.JvmStatic
  * (assuming all gears are the same size).
  */
 object DiffSwerveKinematics {
-
-    /**
-     * Computes the wheel velocity vectors corresponding to [robotVel] given the provided [trackWidth].
-     *
-     * @param robotVel velocity of the robot in its reference frame
-     * @param trackWidth lateral distance between pairs of wheels on different sides of the robot
-     */
-    @JvmStatic
-    fun robotToModuleVelocityVectors(
-        robotVel: Pose2d,
-        trackWidth: Double,
-    ): List<Vector2d> {
-        val y = trackWidth / 2
-
-        val vx = robotVel.x
-        val vy = robotVel.y
-        val omega = robotVel.heading.radians
-
-        return listOf(
-            Vector2d(vx - omega * y, vy),
-            Vector2d(vx + omega * y, vy),
-        )
-    }
-
-    /**
-     * Computes the wheel velocities corresponding to [robotVel] given the provided [trackWidth].
-     *
-     * @param robotVel velocity of the robot in its reference frame
-     * @param trackWidth lateral distance between pairs of wheels on different sides of the robot
-     */
-    @JvmStatic
-    fun robotToWheelVelocities(
-        robotVel: Pose2d,
-        trackWidth: Double
-    ): List<Double> =
-        robotToModuleVelocityVectors(
-            robotVel,
-            trackWidth
-        ).map(Vector2d::norm)
-
-    /**
-     * Computes the module orientations corresponding to [robotVel] given the provided [trackWidth].
-     *
-     * @param robotVel velocity of the robot in its reference frame
-     * @param trackWidth lateral distance between pairs of wheels on different sides of the robot
-     */
-    @JvmStatic
-    fun robotToModuleOrientations(
-        robotVel: Pose2d,
-        trackWidth: Double,
-    ): List<Angle> =
-        robotToModuleVelocityVectors(
-            robotVel,
-            trackWidth
-        ).map(Vector2d::angle)
-
-    /**
-     * Computes the acceleration vectors corresponding to [robotAccel] given the provided [trackWidth].
-     *
-     * @param robotAccel velocity of the robot in its reference frame
-     * @param trackWidth lateral distance between pairs of wheels on different sides of the robot
-     */
-    @JvmStatic
-    fun robotToModuleAccelerationVectors(
-        robotAccel: Pose2d,
-        trackWidth: Double,
-    ): List<Vector2d> {
-        val y = trackWidth / 2
-
-        val ax = robotAccel.x
-        val ay = robotAccel.y
-        val alpha = robotAccel.heading.radians
-
-        return listOf(
-            Vector2d(ax - alpha * y, ay),
-            Vector2d(ax + alpha * y, ay)
-        )
-    }
-
-    /**
-     * Computes the wheel accelerations corresponding to [robotAccel] given the provided [trackWidth].
-     *
-     * @param robotAccel velocity of the robot in its reference frame
-     * @param trackWidth lateral distance between pairs of wheels on different sides of the robot
-     */
-    @JvmStatic
-    fun robotToWheelAccelerations(
-        robotVel: Pose2d,
-        robotAccel: Pose2d,
-        trackWidth: Double,
-    ): List<Double> =
-        robotToModuleVelocityVectors(
-            robotVel,
-            trackWidth
-        ).zip(
-            robotToModuleAccelerationVectors(
-                robotAccel,
-                trackWidth
-            )
-        ).map { (vel, accel) ->
-            (vel.x * accel.x + vel.y * accel.y) / vel.norm()
-        }
-
-    /**
-     * Computes the module angular velocities corresponding to [robotAccel] given the provided [trackWidth].
-     *
-     * @param robotAccel velocity of the robot in its reference frame
-     * @param trackWidth lateral distance between pairs of wheels on different sides of the robot
-     */
-    @JvmStatic
-    fun robotToModuleAngularVelocities(
-        robotVel: Pose2d,
-        robotAccel: Pose2d,
-        trackWidth: Double
-    ): List<Angle> =
-        robotToModuleVelocityVectors(
-            robotVel,
-            trackWidth
-        ).zip(
-            robotToModuleAccelerationVectors(
-                robotAccel,
-                trackWidth
-            )
-        ).map { (vel, accel) ->
-            ((vel.x * accel.y - vel.y * accel.x) / (vel.x * vel.x + vel.y * vel.y)).rad
-        }
-
-    /**
-     * Computes the robot velocities corresponding to [wheelVelocities], [moduleOrientations], and [trackWidth].
-     *
-     * @param wheelVelocities wheel velocities (or wheel position deltas)
-     * @param moduleOrientations wheel orientations
-     * @param trackWidth lateral distance between pairs of wheels on different sides of the robot
-     */
-    @JvmStatic
-    fun wheelToRobotVelocities(
-        wheelVelocities: List<Double>,
-        moduleOrientations: List<Angle>,
-        trackWidth: Double
-    ): Pose2d {
-        val vectors = wheelVelocities
-            .zip(moduleOrientations)
-            .map { (vel, orientation) ->
-                Vector2d(
-                    vel * cos(orientation),
-                    vel * sin(orientation)
-                )
-            }
-
-        val (left, right) = vectors
-        val vel = (left + right) * 0.5
-        val omega = ((right.x - left.x) / trackWidth).rad
-
-        return Pose2d(vel.x, vel.y, omega)
-    }
-
     /**
      * Computes a module's orientation using the total rotation of the top and bottom gears.
      */
@@ -215,10 +57,10 @@ object DiffSwerveKinematics {
         val rightOrientation = gearToModuleOrientation(gearRotations[2], gearRotations[3])
         val leftVel = gearToWheelVelocities(gearVelocities[0], gearVelocities[1])
         val rightVel = gearToWheelVelocities(gearVelocities[2], gearVelocities[3])
-        return wheelToRobotVelocities(
+        return SwerveKinematics.moduleToRobotVelocities(
             listOf(leftVel, rightVel),
             listOf(leftOrientation, rightOrientation),
-            trackWidth
+            listOf(Vector2d(0.0, -trackWidth / 2), Vector2d(0.0, trackWidth / 2))
         )
     }
 }

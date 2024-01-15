@@ -1,12 +1,11 @@
 package com.amarcolini.joos.trajectory.constraints
 
 import com.amarcolini.joos.geometry.Angle
+import com.amarcolini.joos.kinematics.SwerveKinematics
 import com.amarcolini.joos.util.deg
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.Transient
-import kotlin.js.ExperimentalJsExport
 import kotlin.js.JsExport
-import kotlin.js.JsName
 import kotlin.jvm.JvmField
 import kotlin.jvm.JvmOverloads
 
@@ -42,7 +41,7 @@ data class MecanumConstraints @JvmOverloads constructor(
     @Transient
     override val velConstraint = MinVelocityConstraint(
         listOf(
-            MecanumVelocityConstraint(maxWheelVel, trackWidth, wheelBase, lateralMultiplier),
+            DriveVelocityConstraint.forMecanum(maxWheelVel, trackWidth, wheelBase, lateralMultiplier),
             AngularVelocityConstraint(maxAngVel),
             TranslationalVelocityConstraint(maxVel),
             AngularAccelVelocityConstraint(maxAngAccel, maxAccel)
@@ -98,7 +97,7 @@ data class TankConstraints @JvmOverloads constructor(
     @Transient
     override val velConstraint = MinVelocityConstraint(
         listOf(
-            TankVelocityConstraint(maxWheelVel, trackWidth),
+            DriveVelocityConstraint.forTank(maxWheelVel, trackWidth),
             AngularVelocityConstraint(maxAngVel),
             TranslationalVelocityConstraint(maxVel),
             AngularAccelVelocityConstraint(maxAngAccel, maxAccel)
@@ -128,7 +127,7 @@ data class SwerveConstraints @JvmOverloads constructor(
     @Transient
     override val velConstraint = MinVelocityConstraint(
         listOf(
-            SwerveVelocityConstraint(maxWheelVel, trackWidth, wheelBase),
+            DriveVelocityConstraint.forSwerve(maxWheelVel, SwerveKinematics.getModulePositions(trackWidth, wheelBase)),
             AngularVelocityConstraint(maxAngVel),
             TranslationalVelocityConstraint(maxVel),
             AngularAccelVelocityConstraint(maxAngAccel, maxAccel)
@@ -156,7 +155,7 @@ data class DiffSwerveConstraints @JvmOverloads constructor(
 
     override val velConstraint: TrajectoryVelocityConstraint = MinVelocityConstraint(
         listOf(
-            DiffSwerveVelocityConstraint(maxGearVel, trackWidth),
+            DriveVelocityConstraint.forSwerve(maxGearVel, SwerveKinematics.getModulePositions(trackWidth)),
             AngularVelocityConstraint(maxAngVel),
             TranslationalVelocityConstraint(maxVel),
             AngularAccelVelocityConstraint(maxAngAccel, maxAccel)

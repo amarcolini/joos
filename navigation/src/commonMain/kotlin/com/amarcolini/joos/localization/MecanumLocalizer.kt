@@ -1,26 +1,23 @@
 package com.amarcolini.joos.localization
 
-import com.amarcolini.joos.drive.Drive
-import com.amarcolini.joos.geometry.Angle
 import com.amarcolini.joos.geometry.Pose2d
 import com.amarcolini.joos.kinematics.Kinematics
 import com.amarcolini.joos.kinematics.MecanumKinematics
-import com.amarcolini.joos.util.*
 import kotlin.jvm.JvmField
 import kotlin.jvm.JvmOverloads
 
 /**
  * Default localizer for mecanum drives based on the drive encoders.
  *
- * @param wheelPositions wheel positions in linear distance units
- * @param wheelVelocities wheel velocities in linear distance units
- * @param trackWidth lateral distance between pairs of wheels on different sides of the robot
+ * @param getWheelPositions wheel positions in linear distance units
+ * @param getWheelVelocities wheel velocities in linear distance units
+ * @param getWheelVelocities lateral distance between pairs of wheels on different sides of the robot
  * @param wheelBase distance between pairs of wheels on the same side of the robot
  * @param lateralMultiplier lateral multiplier
  */
 class MecanumLocalizer @JvmOverloads constructor(
-    @JvmField val wheelPositions: () -> List<Double>,
-    @JvmField val wheelVelocities: () -> List<Double>? = { null },
+    @JvmField val getWheelPositions: () -> List<Double>,
+    @JvmField val getWheelVelocities: () -> List<Double>? = { null },
     private val trackWidth: Double,
     private val wheelBase: Double = trackWidth,
     private val lateralMultiplier: Double = 1.0,
@@ -39,7 +36,7 @@ class MecanumLocalizer @JvmOverloads constructor(
         private set
 
     override fun update() {
-        val wheelPositions = wheelPositions()
+        val wheelPositions = getWheelPositions()
         if (lastWheelPositions.isNotEmpty()) {
             val wheelDeltas = wheelPositions
                 .zip(lastWheelPositions)
@@ -57,7 +54,7 @@ class MecanumLocalizer @JvmOverloads constructor(
             lastRobotPoseDelta = robotPoseDelta
         }
 
-        val wheelVelocities = wheelVelocities()
+        val wheelVelocities = getWheelVelocities()
         poseVelocity =
             if (wheelVelocities != null)
                 MecanumKinematics.wheelToRobotVelocities(
