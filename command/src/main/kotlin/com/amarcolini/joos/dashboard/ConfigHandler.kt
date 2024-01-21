@@ -160,7 +160,7 @@ object ConfigHandler {
         }
     }
 
-    private fun createVariableFromArray(
+    fun createVariableFromArray(
         array: () -> Array<*>,
         arrayType: KClass<*>,
         parent: Any,
