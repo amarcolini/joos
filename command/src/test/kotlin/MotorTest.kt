@@ -62,7 +62,7 @@ class MotorTest {
 
     @Test
     fun testPID() {
-        val clock = object : NanoClock() {
+        val clock = object : NanoClock {
             private var seconds: Double = 0.0
             override fun seconds() = seconds
             fun increment(dt: Double) {

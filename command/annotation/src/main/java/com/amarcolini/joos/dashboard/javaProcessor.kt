@@ -56,7 +56,7 @@ class ConfigProcessor : AbstractProcessor() {
                     results.joinToString { (group, field) -> "new kotlin.Pair<>(\"$group\", ${field.first}.class.getField(\"${field.second}\"))" }
                 })", Arrays::class.java).nextControlFlow("catch (\$T e)", Exception::class.java)
                 .addStatement("return \$T.emptyList()", Collections::class.java).endControlFlow().build()).addMethod(
-                MethodSpec.methodBuilder("getMutableConfigProviders").addModifiers(Modifier.PUBLIC, Modifier.STATIC)
+                MethodSpec.methodBuilder("getMutableProviders").addModifiers(Modifier.PUBLIC, Modifier.STATIC)
                     .returns(List::class.java).beginControlFlow("try").addStatement(
                         "return \$T.asList(${
                             mutableConfigProviders.joinToString()
@@ -64,7 +64,7 @@ class ConfigProcessor : AbstractProcessor() {
                     ).nextControlFlow("catch (\$T e)", Exception::class.java)
                     .addStatement("return \$T.emptyList()", Collections::class.java).endControlFlow().build()
             ).addMethod(
-                MethodSpec.methodBuilder("getImmutableConfigProviders").addModifiers(Modifier.PUBLIC, Modifier.STATIC)
+                MethodSpec.methodBuilder("getImmutableProviders").addModifiers(Modifier.PUBLIC, Modifier.STATIC)
                     .returns(List::class.java).beginControlFlow("try").addStatement(
                         "return \$T.asList(${
                             immutableConfigProviders.joinToString()

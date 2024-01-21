@@ -44,7 +44,9 @@ object ConfigHandler {
     private val mutableConfigProviders: List<MutableProviderData<Any?>>
     private val immutableConfigProviders: List<ImmutableProviderData<Any?>>
 
-    val logs = ArrayList<String>()
+    private var logs = listOf<String>()
+    fun getLogs(): List<String> = logs
+    internal val internalModel = CustomVariable()
 
     init {
         var kotlin: List<Pair<String, KProperty0<Any?>>>? = null
@@ -67,9 +69,11 @@ object ConfigHandler {
             val resultClass = Class.forName("com.amarcolini.joos.dashboard.ConfigResults")
             val isKotlin = resultClass.getDeclaredField("isKotlin").get(null) as Boolean
             val resultList = resultClass.getDeclaredMethod("getResults").invoke(null)
+            logs += "successfully retrieved class data!"
             if (isKotlin) {
+                logs += "Using KSP"
                 kotlin = resultList as List<Pair<String, KProperty0<Any?>>>
-                mutableProviders += (resultClass.getDeclaredMethod("getMutableConfigProviders")
+                mutableProviders += (resultClass.getDeclaredMethod("getMutableProviders")
                     .invoke(null) as List<KFunction1<*, ConfigVariable<Any>>>).map {
                     MutableProviderData(
                         it as KFunction1<Any?, ConfigVariable<*>>,
@@ -79,7 +83,8 @@ object ConfigHandler {
                         it.returnType::isSupertypeOf
                     )
                 }
-                immutableProviders += (resultClass.getDeclaredMethod("getImmutableConfigProviders")
+                logs += "successfully retrieved mutable config providers!"
+                immutableProviders += (resultClass.getDeclaredMethod("getImmutableProviders")
                     .invoke(null) as List<KFunction1<*, ConfigVariable<Any>>>).map {
                     ImmutableProviderData(
                         it as (() -> Any?, (Any?) -> Unit) -> ConfigVariable<*>,
@@ -89,10 +94,11 @@ object ConfigHandler {
                         it.returnType::isSupertypeOf
                     )
                 }
+                logs += "successfully retrieved immutable config providers!"
             } else {
-                logs += "we got some java here"
+                logs += "Using Java"
                 java = resultList as List<Pair<String, Field>>
-                mutableProviders += (resultClass.getDeclaredMethod("getMutableConfigProviders")
+                mutableProviders += (resultClass.getDeclaredMethod("getMutableProviders")
                     .invoke(null) as List<Method>).map { method ->
                     MutableProviderData(
                         method::invoke as KFunction1<Any?, ConfigVariable<*>>,
@@ -102,7 +108,8 @@ object ConfigHandler {
                             )
                     ) { method.returnType.isAssignableFrom(it.jvmErasure.java) }
                 }
-                immutableProviders += (resultClass.getDeclaredMethod("getImmutableConfigProviders")
+                logs += "successfully retrieved mutable config providers!"
+                immutableProviders += (resultClass.getDeclaredMethod("getImmutableProviders")
                     .invoke(null) as List<Method>).map { method ->
                     ImmutableProviderData(
                         method::invoke as (() -> Any?, (Any?) -> Unit) -> ConfigVariable<*>,
@@ -112,9 +119,10 @@ object ConfigHandler {
                             ),
                     ) { method.returnType.isAssignableFrom(it.jvmErasure.java) }
                 }
-                logs += "we made it bois"
+                logs += "successfully retrieved immutable config providers!"
             }
         } catch (_: Exception) {
+            logs += "Failed to initialize."
         }
         javaResults = java
         kotlinResults = kotlin
@@ -124,21 +132,23 @@ object ConfigHandler {
 
     @OnCreateEventLoop
     @JvmStatic
-    fun init(context: Context, eventLoop: FtcEventLoop) {
+    fun init(context: Context?, eventLoop: FtcEventLoop?) {
         try {
             javaResults?.forEach { (group, field) ->
+                logs += "parsing field ${field.name}"
                 try {
-                    logs += "we parsing ${field.name} in $group"
                     addVariableToDashboard(parseField(field), group, field.name)
-                    logs += "no errors!"
                 } catch (_: Exception) {
+                    logs += "Failed to parse field ${field.name}."
                 }
             }
 
             kotlinResults?.forEach { (group, property) ->
+                logs += "parsing property ${property.name}"
                 try {
                     addVariableToDashboard(parseProperty(property), group, property.name)
                 } catch (_: Exception) {
+                    logs += "Failed to parse property ${property.name}."
                 }
             }
 
@@ -228,19 +238,19 @@ object ConfigHandler {
             if (variableType != VariableType.CUSTOM) {
                 return ConfigUtils.createVariable(getter, setter)
             } else when (type) {
-                Long::class.createType() -> ConfigUtils.createVariable(
+                Long::class.createType() -> return ConfigUtils.createVariable(
                     { (getter() as Long).toDouble() },
                     { setter(it.toLong()) })
 
-                Float::class.createType() -> ConfigUtils.createVariable(
+                Float::class.createType() -> return ConfigUtils.createVariable(
                     { (getter() as Float).toDouble() },
                     { setter(it.toFloat()) })
 
-                Short::class.createType() -> ConfigUtils.createVariable(
+                Short::class.createType() -> return ConfigUtils.createVariable(
                     { (getter() as Short).toInt() },
                     { setter(it.toShort()) })
 
-                Byte::class.createType() -> ConfigUtils.createVariable(
+                Byte::class.createType() -> return ConfigUtils.createVariable(
                     { (getter() as Byte).toInt() },
                     { setter(it.toByte()) })
             }
@@ -270,16 +280,13 @@ object ConfigHandler {
                         }, setter = { value ->
                             val function = dataClass.declaredFunctions.find { it.name == "copy" }
                             val parameter = function?.parameters?.find { it.name == param.name }
-                            println("parameters" + function?.parameters?.map { it.name })
-                            if (parameter != null) setter(
-                                function.callBy(
-                                    mapOf(
-                                        parameter to postprocess(
-                                            value
-                                        )
-                                    )
-                                )
-                            )
+                            val instanceParameter = function?.instanceParameter
+                            val parameterMap = mutableMapOf<KParameter, Any?>()
+                            if (parameter != null) {
+                                parameterMap[parameter] = postprocess(value)
+                                instanceParameter?.let { parameterMap[instanceParameter] = getter() }
+                                setter(function.callBy(parameterMap))
+                            }
                         }))
                     }
                     when (param.type) {
@@ -339,6 +346,7 @@ object ConfigHandler {
                 if (providedConfig != null) return providedConfig
                 val customVariable = CustomVariable()
                 if (value is Array<*>) {
+                    logs += "yo we got an array"
                     for (i in 0 until value.size) {
                         customVariable.putVariable(
                             i.toString(),
@@ -350,8 +358,7 @@ object ConfigHandler {
                             )
                         )
                     }
-                }
-                for (memberProperty in value::class.declaredMemberProperties) {
+                } else for (memberProperty in value::class.declaredMemberProperties) {
                     if (memberProperty.visibility != KVisibility.PUBLIC) continue
                     val name = memberProperty.name
                     try {
@@ -371,13 +378,12 @@ object ConfigHandler {
     fun parseField(field: Field): ConfigVariable<out Any>? {
         (field.kotlinProperty as? KProperty0<Any?>)?.let { return parseProperty(it) }
         if (!Modifier.isPublic(field.modifiers)) return null
-        logs += "bare minimum"
         return parse(
             field.type.kotlin.starProjectedType,
             { field.get(null) },
             if (!Modifier.isFinal(field.modifiers)
 //                && (field.type.kotlin.hasAnnotation<Immutable>() || field.annotations.any { it.annotationClass.hasAnnotation<Immutable>() })
-                )
+            )
                 { value ->
                     field.set(null, value)
                 } else null
@@ -386,18 +392,17 @@ object ConfigHandler {
 
     fun parseProperty(property: KProperty0<Any?>): ConfigVariable<out Any>? {
         if (property.visibility != KVisibility.PUBLIC) return null
-        logs += "bare minimum"
         return parse(
             property.returnType,
             property.getter,
             if (property is KMutableProperty0<Any?>
 //                && (property.returnType.jvmErasure.hasAnnotation<Immutable>() || property.hasAnnotation<Immutable>())
-                ) property.setter else null
+            ) property.setter else null
         )
     }
 
     fun addVariableToDashboard(variable: ConfigVariable<out Any>?, group: String, name: String) {
-        FtcDashboard.getInstance()?.withConfigRoot { configRoot ->
+        val func = { configRoot: CustomVariable ->
             val rootVariable = configRoot.getVariable(group) as? CustomVariable ?: CustomVariable().also {
                 configRoot.putVariable(group, it)
             }
@@ -405,6 +410,8 @@ object ConfigHandler {
                 rootVariable.putVariable(name, variable)
             }
         }
+        FtcDashboard.getInstance()?.withConfigRoot(func)
+        internalModel.apply(func)
     }
 
     /**

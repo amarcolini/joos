@@ -72,7 +72,9 @@ class ConfigSymbolProcessor(
             PropertySpec.builder(
                 "immutableProviders", List::class.asTypeName().parameterizedBy(
                     ClassName("kotlin.reflect", "KFunction2").parameterizedBy(
-                        ClassName("kotlin.reflect", "KFunction0").parameterizedBy(STAR), ClassName("kotlin.reflect", "KFunction1").parameterizedBy(STAR, UNIT), ClassName.bestGuess(
+                        ClassName("kotlin.reflect", "KFunction0").parameterizedBy(STAR),
+                        ClassName("kotlin.reflect", "KFunction1").parameterizedBy(STAR, UNIT),
+                        ClassName.bestGuess(
                             configVariableName
                         ).parameterizedBy(STAR)
                     )
@@ -108,6 +110,7 @@ class ConfigSymbolProcessor(
                         it.accept(this, data)
                     }
                 }
+
                 ClassKind.CLASS -> {
                     logger.info("Class is normal + usable.")
                     classDeclaration.declarations.forEach {
@@ -128,7 +131,15 @@ class ConfigSymbolProcessor(
             val enum = data.getClassDeclarationByName("kotlin.Enum")?.asStarProjectedType()
                 ?.let { data.createKSTypeReferenceFromKSType(it) }
             when (property.type.resolve()) {
-                data.builtIns.doubleType, data.builtIns.booleanType, data.builtIns.intType, data.builtIns.stringType, enum -> {
+                data.builtIns.doubleType,
+                data.builtIns.booleanType,
+                data.builtIns.intType,
+                data.builtIns.stringType,
+                data.builtIns.byteType,
+                data.builtIns.shortType,
+                data.builtIns.floatType,
+                data.builtIns.longType,
+                enum -> {
                     if (!property.isMutable || property.modifiers.contains(Modifier.FINAL)) return
                 }
             }

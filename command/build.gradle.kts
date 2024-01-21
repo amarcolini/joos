@@ -15,7 +15,7 @@ repositories {
 }
 
 tasks.withType<Test> {
-    useJUnitPlatform()
+//    useJUnitPlatform()
     testLogging {
         events("passed", "skipped", "failed")
     }
@@ -30,7 +30,6 @@ dependencies {
     api("org.jetbrains.kotlin:kotlin-stdlib:${Versions.kotlin}")
     implementation("org.jetbrains.kotlin:kotlin-reflect:${Versions.kotlin}")
 
-    implementation("org.apache.commons:commons-math3:3.6.1")
     compileOnly("org.firstinspires.ftc:RobotCore:${Versions.ftc}")
     compileOnly("org.firstinspires.ftc:Hardware:${Versions.ftc}")
     compileOnly("org.firstinspires.ftc:FtcCommon:${Versions.ftc}")
