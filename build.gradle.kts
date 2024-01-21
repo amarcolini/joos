@@ -1,7 +1,7 @@
 import org.jetbrains.dokka.gradle.AbstractDokkaLeafTask
 
 plugins {
-    kotlin("jvm") version Versions.kotlin apply false
+//    kotlin("jvm") version Versions.kotlin apply false
     id("com.android.library") version Versions.android apply false
     id("org.jetbrains.kotlin.android") version Versions.kotlin apply false
     id("org.jetbrains.dokka") version Versions.dokka
@@ -61,7 +61,7 @@ subprojects.forEach {
             suppressInheritedMembers.set(true)
             dokkaSourceSets {
                 configureEach {
-                    if (name == "main") {
+                    if (name in listOf("main", "commonMain", "jvmMain")) {
                         includes.from("module.md")
                         reportUndocumented.set(true)
                         documentedVisibilities.set(
