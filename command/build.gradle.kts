@@ -33,7 +33,7 @@ dependencies {
     compileOnly("org.firstinspires.ftc:RobotCore:${Versions.ftc}")
     compileOnly("org.firstinspires.ftc:Hardware:${Versions.ftc}")
     compileOnly("org.firstinspires.ftc:FtcCommon:${Versions.ftc}")
-    api("com.acmerobotics.dashboard:dashboard:0.4.14") {
+    api("com.acmerobotics.dashboard:dashboard:0.4.15") {
         exclude(group = "org.firstinspires.ftc")
     }
     api(project(":navigation"))

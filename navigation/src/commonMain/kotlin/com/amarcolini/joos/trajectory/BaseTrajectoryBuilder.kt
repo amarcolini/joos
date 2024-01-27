@@ -6,8 +6,7 @@ import com.amarcolini.joos.geometry.Vector2d
 import com.amarcolini.joos.path.Path
 import com.amarcolini.joos.path.PathBuilder
 import com.amarcolini.joos.path.PathContinuityViolationException
-import com.amarcolini.joos.path.heading.HeadingInterpolation
-import com.amarcolini.joos.path.heading.TangentHeading
+import com.amarcolini.joos.path.heading.*
 import kotlin.js.JsExport
 import kotlin.js.JsName
 import kotlin.jvm.JvmOverloads
@@ -103,102 +102,27 @@ abstract class BaseTrajectoryBuilder<T : BaseTrajectoryBuilder<T>> protected con
         return this as T
     }
 
-    /**
-     * Adds a line segment with tangent heading interpolation.
-     *
-     * @param endPosition end position
-     */
-    fun lineTo(endPosition: Vector2d): T {
-        addPathSegment { pathBuilder.lineTo(endPosition) }
-
-        return this as T
-    }
-
-    /**
-     * Adds a line segment with constant heading interpolation.
-     *
-     * @param endPosition end position
-     */
-    fun lineToConstantHeading(endPosition: Vector2d): T {
-        addPathSegment { pathBuilder.lineToConstantHeading(endPosition) }
-
-        return this as T
-    }
-
-    /**
-     * Adds a line segment with linear heading interpolation.
-     *
-     * @param endPose end pose
-     */
-    fun lineToLinearHeading(endPose: Pose2d): T {
-        addPathSegment { pathBuilder.lineToLinearHeading(endPose) }
-
-        return this as T
-    }
-
-    /**
-     * Adds a line segment with spline heading interpolation.
-     *
-     * @param endPose end pose
-     */
-    fun lineToSplineHeading(endPose: Pose2d): T {
-        addPathSegment { pathBuilder.lineToSplineHeading(endPose) }
-
-        return this as T
-    }
-
-    /**
-     * Adds a strafe path segment.
-     *
-     * @param endPosition end position
-     */
-    fun strafeTo(endPosition: Vector2d): T {
-        addPathSegment { pathBuilder.strafeTo(endPosition) }
-
-        return this as T
-    }
-
-    /**
-     * Adds a line straight forward.
-     *
-     * @param distance distance to travel forward
-     */
+    fun lineTo(endPosition: Vector2d) = addLine(endPosition)
+    fun lineToConstantHeading(endPosition: Vector2d) = addLine(endPosition, ConstantHeading)
+    fun lineToLinearHeading(endPose: Pose2d) = addLine(endPose.vec(), LinearHeading(endPose.heading))
+    fun lineToSplineHeading(endPose: Pose2d) = addLine(endPose.vec(), SplineHeading(endPose.heading))
     fun forward(distance: Double): T {
         addPathSegment { pathBuilder.forward(distance) }
-
         return this as T
     }
 
-    /**
-     * Adds a line straight backward.
-     *
-     * @param distance distance to travel backward
-     */
     fun back(distance: Double): T {
         addPathSegment { pathBuilder.back(distance) }
-
         return this as T
     }
 
-    /**
-     * Adds a segment that strafes left in the robot reference frame.
-     *
-     * @param distance distance to strafe left
-     */
     fun strafeLeft(distance: Double): T {
         addPathSegment { pathBuilder.strafeLeft(distance) }
-
         return this as T
     }
 
-    /**
-     * Adds a segment that strafes right in the robot reference frame.
-     *
-     * @param distance distance to strafe right
-     */
     fun strafeRight(distance: Double): T {
         addPathSegment { pathBuilder.strafeRight(distance) }
-
         return this as T
     }
 
@@ -215,75 +139,30 @@ abstract class BaseTrajectoryBuilder<T : BaseTrajectoryBuilder<T>> protected con
     fun addSpline(
         endPosition: Vector2d,
         endTangent: Angle,
+        headingInterpolation: HeadingInterpolation = TangentHeading,
         startTangentMag: Double = -1.0,
         endTangentMag: Double = -1.0,
-        headingInterpolation: HeadingInterpolation = TangentHeading
     ): T {
         addPathSegment {
             pathBuilder.addSpline(
                 endPosition,
                 endTangent,
+                headingInterpolation,
                 startTangentMag,
                 endTangentMag,
-                headingInterpolation
             )
         }
 
         return this as T
     }
 
-    /**
-     * Adds a spline segment with tangent heading interpolation.
-     *
-     * @param endPosition end position
-     * @param endTangent end tangent
-     */
-    fun splineTo(endPosition: Vector2d, endTangent: Angle): T {
-        addPathSegment { pathBuilder.splineTo(endPosition, endTangent) }
-
-        return this as T
-    }
-
-    /**
-     * Adds a spline segment with constant heading interpolation.
-     *
-     * @param endPosition end position
-     * @param endTangent end tangent
-     */
-    fun splineToConstantHeading(endPosition: Vector2d, endTangent: Angle): T {
-        addPathSegment {
-            pathBuilder.splineToConstantHeading(
-                endPosition,
-                endTangent
-            )
-        }
-
-        return this as T
-    }
-
-    /**
-     * Adds a spline segment with linear heading interpolation.
-     *
-     * @param endPose end pose
-     * @param endTangent end tangent
-     */
-    fun splineToLinearHeading(endPose: Pose2d, endTangent: Angle): T {
-        addPathSegment { pathBuilder.splineToLinearHeading(endPose, endTangent) }
-
-        return this as T
-    }
-
-    /**
-     * Adds a spline segment with spline heading interpolation.
-     *
-     * @param endPose end pose
-     * @param endTangent end tangent
-     */
-    fun splineToSplineHeading(endPose: Pose2d, endTangent: Angle): T {
-        addPathSegment { pathBuilder.splineToSplineHeading(endPose, endTangent) }
-
-        return this as T
-    }
+    fun splineTo(endPosition: Vector2d, endTangent: Angle) = addSpline(endPosition, endTangent)
+    fun splineToConstantHeading(endPosition: Vector2d, endTangent: Angle) =
+        addSpline(endPosition, endTangent, ConstantHeading)
+    fun splineToLinearHeading(endPose: Pose2d, endTangent: Angle) =
+        addSpline(endPose.vec(), endTangent, LinearHeading(endPose.heading))
+    fun splineToSplineHeading(endPose: Pose2d, endTangent: Angle) =
+        addSpline(endPose.vec(), endTangent, SplineHeading(endPose.heading))
 
     /**
      * Adds a marker to the trajectory at [time].

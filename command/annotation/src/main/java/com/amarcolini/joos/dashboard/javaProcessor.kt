@@ -1,6 +1,5 @@
 package com.amarcolini.joos.dashboard
 
-import com.amarcolini.joos.dashboard.*
 import com.squareup.javapoet.*
 import java.util.*
 import javax.annotation.processing.*

@@ -2,9 +2,11 @@ package com.amarcolini.joos.path.heading
 
 import com.amarcolini.joos.geometry.Angle
 import com.amarcolini.joos.path.ParametricCurve
+import com.amarcolini.joos.util.deg
 import kotlinx.serialization.SerialName
 import kotlin.js.JsExport
 import kotlin.jvm.JvmOverloads
+import kotlin.jvm.JvmStatic
 
 /**
  * Interpolator for specifying the heading for holonomic paths.
@@ -88,13 +90,11 @@ sealed interface ValueHeading {
 
 @kotlinx.serialization.Serializable
 @SerialName("tangent")
-object TangentHeading : HeadingInterpolation {
-    override fun toString(): String = "TangentHeading"
-}
+data object TangentHeading : HeadingInterpolation
 
 @kotlinx.serialization.Serializable
 @SerialName("constant")
-object ConstantHeading : HeadingInterpolation
+data object ConstantHeading : HeadingInterpolation
 
 @kotlinx.serialization.Serializable
 @SerialName("linear")

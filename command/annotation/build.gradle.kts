@@ -20,7 +20,6 @@ group = "$group.command"
 
 dependencies {
     implementation("org.jetbrains.kotlin:kotlin-stdlib:${Versions.kotlin}")
-    implementation("org.jetbrains.kotlin:kotlin-reflect:${Versions.kotlin}")
     implementation("com.google.devtools.ksp:symbol-processing-api:1.9.20-1.0.14")
     implementation("com.squareup:javapoet:1.13.0")
     implementation("com.squareup:kotlinpoet:1.12.0")

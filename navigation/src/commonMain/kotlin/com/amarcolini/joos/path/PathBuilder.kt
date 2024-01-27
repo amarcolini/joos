@@ -5,7 +5,6 @@ import com.amarcolini.joos.geometry.Pose2d
 import com.amarcolini.joos.geometry.Vector2d
 import com.amarcolini.joos.path.heading.*
 import com.amarcolini.joos.util.deg
-import kotlin.js.JsExport
 import kotlin.js.JsName
 import kotlin.jvm.JvmOverloads
 
@@ -33,7 +32,6 @@ class EmptyPathSegmentException : PathBuilderException()
  * @param startSecondDeriv start second derivative
  * @see PositionPathBuilder
  */
-@JsExport
 class PathBuilder(
     startPose: Pose2d,
     startDeriv: Pose2d,
@@ -170,73 +168,18 @@ class PathBuilder(
         return addSegment(PathSegment(line, interpolator))
     }
 
-    /**
-     * Adds a line segment with tangent heading interpolation.
-     *
-     * @param endPosition end position
-     */
-    fun lineTo(endPosition: Vector2d): PathBuilder = addLine(endPosition, TangentHeading)
-
-    /**
-     * Adds a line segment with constant heading interpolation.
-     *
-     * @param endPosition end position
-     */
-    fun lineToConstantHeading(endPosition: Vector2d): PathBuilder =
-        addSegment(PathSegment(makeLine(endPosition), makeConstantInterpolator()))
-
-    /**
-     * Adds a strafe segment (i.e., a line segment with constant heading interpolation).
-     *
-     * @param endPosition end position
-     */
-    fun strafeTo(endPosition: Vector2d): PathBuilder = lineToConstantHeading(endPosition)
-
-    /**
-     * Adds a line segment with linear heading interpolation.
-     *
-     * @param endPose end pose
-     */
-    fun lineToLinearHeading(endPose: Pose2d): PathBuilder =
-        addSegment(PathSegment(makeLine(endPose.vec()), makeLinearInterpolator(endPose.heading)))
-
-    /**
-     * Adds a line segment with spline heading interpolation.
-     *
-     * @param endPose end pose
-     */
-    fun lineToSplineHeading(endPose: Pose2d): PathBuilder =
-        addSegment(PathSegment(makeLine(endPose.vec()), makeSplineInterpolator(endPose.heading)))
-
-    /**
-     * Adds a line straight forward.
-     *
-     * @param distance distance to travel forward
-     */
-    fun forward(distance: Double): PathBuilder =
+    fun lineTo(endPosition: Vector2d) = addLine(endPosition, TangentHeading)
+    fun lineToConstantHeading(endPosition: Vector2d) = addLine(endPosition, ConstantHeading)
+    fun lineToLinearHeading(endPose: Pose2d) = addLine(endPose.vec(), LinearHeading(endPose.heading))
+    fun lineToSplineHeading(endPose: Pose2d) = addLine(endPose.vec(), SplineHeading(endPose.heading))
+    fun forward(distance: Double) =
         lineTo(currentPose.vec() + Vector2d.polar(distance, currentDeriv.vec().angle()))
 
-    /**
-     * Adds a line straight backward.
-     *
-     * @param distance distance to travel backward
-     */
-    fun back(distance: Double): PathBuilder = forward(-distance)
+    fun back(distance: Double) = forward(-distance)
+    fun strafeLeft(distance: Double) =
+        lineToConstantHeading(currentPose.vec() + Vector2d.polar(distance, currentPose.heading + 90.deg))
 
-    /**
-     * Adds a segment that strafes left in the robot reference frame.
-     *
-     * @param distance distance to strafe left
-     */
-    fun strafeLeft(distance: Double): PathBuilder =
-        strafeTo(currentPose.vec() + Vector2d.polar(distance, currentPose.heading + 90.deg))
-
-    /**
-     * Adds a segment that strafes right in the robot reference frame.
-     *
-     * @param distance distance to strafe right
-     */
-    fun strafeRight(distance: Double): PathBuilder = strafeLeft(-distance)
+    fun strafeRight(distance: Double) = strafeLeft(-distance)
 
     /**
      * Adds a spline segment with the specified heading interpolation.
@@ -252,9 +195,9 @@ class PathBuilder(
     fun addSpline(
         endPosition: Vector2d,
         endTangent: Angle,
+        headingInterpolation: HeadingInterpolation = TangentHeading,
         startTangentMag: Double = -1.0,
         endTangentMag: Double = -1.0,
-        headingInterpolation: HeadingInterpolation = TangentHeading
     ): PathBuilder {
         val spline = makeSpline(endPosition, endTangent, startTangentMag, endTangentMag)
         val interpolator = when (headingInterpolation) {
@@ -267,55 +210,13 @@ class PathBuilder(
         return addSegment(PathSegment(spline, interpolator))
     }
 
-    /**
-     * Adds a spline segment with tangent heading interpolation.
-     *
-     * @param endPosition end position
-     * @param endTangent end tangent
-     */
-    fun splineTo(endPosition: Vector2d, endTangent: Angle): PathBuilder {
-        val spline = makeSpline(endPosition, endTangent)
-        val interpolator = makeTangentInterpolator(spline)
-
-        return addSegment(PathSegment(spline, interpolator))
-    }
-
-    /**
-     * Adds a spline segment with constant heading interpolation.
-     *
-     * @param endPosition end position
-     * @param endTangent end tangent
-     */
+    fun splineTo(endPosition: Vector2d, endTangent: Angle): PathBuilder = addSpline(endPosition, endTangent)
     fun splineToConstantHeading(endPosition: Vector2d, endTangent: Angle): PathBuilder =
-        addSegment(PathSegment(makeSpline(endPosition, endTangent), makeConstantInterpolator()))
-
-    /**
-     * Adds a spline segment with linear heading interpolation.
-     *
-     * @param endPose end pose
-     * @param endTangent end tangent
-     */
+        addSpline(endPosition, endTangent, ConstantHeading)
     fun splineToLinearHeading(endPose: Pose2d, endTangent: Angle) =
-        addSegment(
-            PathSegment(
-                makeSpline(endPose.vec(), endTangent),
-                makeLinearInterpolator(endPose.heading)
-            )
-        )
-
-    /**
-     * Adds a spline segment with spline heading interpolation.
-     *
-     * @param endPose end pose
-     * @param endTangent end tangent
-     */
+        addSpline(endPose.vec(), endTangent, LinearHeading(endPose.heading))
     fun splineToSplineHeading(endPose: Pose2d, endTangent: Angle) =
-        addSegment(
-            PathSegment(
-                makeSpline(endPose.vec(), endTangent),
-                makeSplineInterpolator(endPose.heading)
-            )
-        )
+        addSpline(endPose.vec(), endTangent, SplineHeading(endPose.heading))
 
     /**
      * Constructs the [Path] instance.

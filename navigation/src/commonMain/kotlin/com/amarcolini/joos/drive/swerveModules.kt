@@ -48,7 +48,6 @@ abstract class SwerveModule {
 abstract class PIDSwerveModule(
     protected val pidCoefficients: PIDCoefficients
 ) : SwerveModule() {
-    private var targetOrientation: Angle = 0.rad
     private var targetSpeed: (Double) -> Unit = { mult: Double ->
         setDrivePower(0.0)
     }
@@ -59,7 +58,7 @@ abstract class PIDSwerveModule(
     }
 
     final override fun setModuleOrientation(angle: Angle) {
-        targetOrientation = angle
+        pidController.targetPosition = angle.radians
     }
 
     final override fun setWheelVelocity(velocity: Double, acceleration: Double) {

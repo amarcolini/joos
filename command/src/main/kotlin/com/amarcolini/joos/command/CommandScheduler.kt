@@ -218,7 +218,7 @@ object CommandScheduler : OpModeManagerNotifier.Notifications {
         //Schedules default commands, if possible
         for (component in components) {
             if (!requirements.containsKey(component)) {
-                schedule(component.getDefaultCommand() ?: continue)
+                schedule(component.defaultCommand ?: continue)
             }
         }
 

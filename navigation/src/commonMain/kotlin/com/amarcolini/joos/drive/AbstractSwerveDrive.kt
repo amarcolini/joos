@@ -1,5 +1,6 @@
 package com.amarcolini.joos.drive
 
+import com.amarcolini.joos.geometry.Angle
 import com.amarcolini.joos.geometry.Pose2d
 import com.amarcolini.joos.geometry.Vector2d
 import com.amarcolini.joos.kinematics.SwerveKinematics
@@ -82,9 +83,15 @@ abstract class AbstractSwerveDrive @JvmOverloads constructor(
         val avg = sqrt(modulePositions.maxOf { it.squaredNorm() })
         val vectors =
             SwerveKinematics.robotToModuleVelocityVectors(actualDrivePower, modulePositions.map { it / avg })
-        modules.zip(vectors).forEach { (module, vector) ->
+        modules.zip(vectors) { module, vector ->
             module.setModuleOrientation(vector.angle())
             module.setDrivePower(vector.norm())
+        }
+    }
+
+    fun setModuleOrientations(orientations: List<Angle>) {
+        modules.zip(orientations) { module, orientation ->
+            module.setModuleOrientation(orientation)
         }
     }
 }

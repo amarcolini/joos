@@ -25,7 +25,7 @@ interface Component {
         fun of(defaultCommandSupplier: () -> Command? = { null }, runnable: () -> Unit): Component =
             object : Component {
                 override fun update() = runnable()
-                override fun getDefaultCommand() = defaultCommandSupplier()
+                override val defaultCommand get() = defaultCommandSupplier()
             }
 
         /**
@@ -35,7 +35,7 @@ interface Component {
         fun of(defaultCommand: Command, runnable: () -> Unit): Component =
             object : Component {
                 override fun update() = runnable()
-                override fun getDefaultCommand() = defaultCommand
+                override val defaultCommand = defaultCommand
             }
 
         /**
@@ -45,7 +45,7 @@ interface Component {
         fun of(runnable: Runnable, defaultCommandSupplier: Supplier<Command?>): Component =
             object : Component {
                 override fun update() = runnable.run()
-                override fun getDefaultCommand() = defaultCommandSupplier.get()
+                override val defaultCommand get() = defaultCommandSupplier.get()
             }
 
         /**
@@ -55,14 +55,14 @@ interface Component {
         fun of(runnable: Runnable, defaultCommand: Command): Component =
             object : Component {
                 override fun update() = runnable.run()
-                override fun getDefaultCommand() = defaultCommand
+                override val defaultCommand = defaultCommand
             }
     }
 
     /**
      * Returns the default [Command] that will be automatically scheduled when no other [Command] is using this component.
      */
-    fun getDefaultCommand(): Command? = null
+    val defaultCommand: Command? get() = null
 
     /**
      * This method is called repeatedly by the [CommandScheduler].
