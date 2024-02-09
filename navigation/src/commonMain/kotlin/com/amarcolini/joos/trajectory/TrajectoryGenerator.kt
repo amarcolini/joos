@@ -70,6 +70,7 @@ object TrajectoryGenerator {
     }
 
     // note: this assumes that the profile position is monotonic increasing
+    // (which isn't true if the profile rewinds for some reason)
     fun displacementToTime(trajectory: Trajectory, s: Double): Double {
         var tLo = 0.0
         var tHi = trajectory.duration()

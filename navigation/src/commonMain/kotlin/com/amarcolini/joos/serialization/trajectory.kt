@@ -95,7 +95,7 @@ data class SerializableTrajectory(
                 when (it) {
                     is LinePiece -> builder.addLine(it.end, it.heading)
                     is SplinePiece -> builder.addSpline(
-                        it.end, it.tangent, it.startTangentMag, it.endTangentMag, it.heading
+                        it.end, it.tangent, it.heading, it.startTangentMag, it.endTangentMag
                     )
                     is TurnPiece -> builder.turn(it.angle)
                     is WaitPiece -> builder.wait(it.duration)
@@ -140,7 +140,7 @@ data class SerializableTrajectory(
             when (piece) {
                 is LinePiece -> builder.addLine(piece.end, piece.heading)
                 is SplinePiece -> builder.addSpline(
-                    piece.end, piece.tangent, piece.startTangentMag, piece.endTangentMag, piece.heading
+                    piece.end, piece.tangent, piece.heading, piece.startTangentMag, piece.endTangentMag
                 )
                 is TurnPiece -> splitCurrentPath(newHeading = { it + piece.angle })
                 is WaitPiece -> splitCurrentPath()

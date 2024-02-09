@@ -35,7 +35,7 @@ class ProfileTest {
             .splineTo(Vector2d(24.0, 24.0), 0.deg)
             .build()
         val velConstraint = MinVelocityConstraint(
-            MecanumVelocityConstraint(312.0 * 60 * (4 * PI * 0.94), 12.05, 12.05, 1.11),
+            DriveVelocityConstraint.forMecanum(312.0 * 60 * (4 * PI * 0.94), 12.05, 12.05, 1.11),
             TranslationalVelocityConstraint(45.0),
             AngularVelocityConstraint(260.deg),
             AngularAccelVelocityConstraint(360.deg, 30.0)

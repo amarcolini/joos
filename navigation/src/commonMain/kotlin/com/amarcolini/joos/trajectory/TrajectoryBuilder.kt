@@ -434,20 +434,6 @@ open class TrajectoryBuilder protected constructor(
     ) = addSegment({ lineToSplineHeading(endPose) }, velConstraintOverride, accelConstraintOverride)
 
     /**
-     * Adds a strafe path segment.
-     *
-     * @param endPosition end position
-     * @param constraintsOverride segment-specific constraints
-     */
-    @JvmOverloads
-    @JsName("strafeToCustom")
-    fun strafeTo(
-        endPosition: Vector2d,
-        velConstraintOverride: TrajectoryVelocityConstraint,
-        accelConstraintOverride: TrajectoryAccelerationConstraint = baseAccelConstraint
-    ) = addSegment({ strafeTo(endPosition) }, velConstraintOverride, accelConstraintOverride)
-
-    /**
      * Adds a line straight forward.
      *
      * @param distance distance to travel forward
@@ -518,13 +504,13 @@ open class TrajectoryBuilder protected constructor(
     fun addSpline(
         endPosition: Vector2d,
         endTangent: Angle,
+        headingInterpolation: HeadingInterpolation = TangentHeading,
         startTangentMag: Double = -1.0,
         endTangentMag: Double = -1.0,
-        headingInterpolation: HeadingInterpolation = TangentHeading,
         velConstraintOverride: TrajectoryVelocityConstraint,
         accelConstraintOverride: TrajectoryAccelerationConstraint = baseAccelConstraint
     ) = addSegment(
-        { addSpline(endPosition, endTangent, startTangentMag, endTangentMag, headingInterpolation) },
+        { addSpline(endPosition, endTangent, headingInterpolation, startTangentMag, endTangentMag) },
         velConstraintOverride,
         accelConstraintOverride
     )

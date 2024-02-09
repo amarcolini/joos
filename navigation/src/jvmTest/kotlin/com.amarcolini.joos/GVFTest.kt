@@ -26,7 +26,7 @@ class GVFTest {
     @Test
     fun testPathGVF() {
         val path = PathBuilder(Pose2d())
-            .splineToSplineHeading(Pose2d(20.0, 10.0, 90.deg), 0.rad)
+            .splineToSplineHeading(Pose2d(20.0, 20.0, 0.deg), 0.rad)
             .build()
         val gvf = PathGVF(path, 1.0) { it }
 
@@ -35,7 +35,7 @@ class GVFTest {
             arrayListOf(),
             arrayListOf()
         )
-        var currentPose = Pose2d(5.0, 12.0, 45.deg)
+        var currentPose = Pose2d(5.0, 6.0, (-45).deg)
         val deltaTime = 0.01
         var seconds = 0.0
         val clock = object : NanoClock {
@@ -43,7 +43,7 @@ class GVFTest {
         }
         val follower = GVFFollower(
             50.0, 40.0, 30.0, 180.deg, 180.deg, Pose2d(0.5, 0.5, 5.deg),
-            0.3, 10.0, PIDCoefficients(4.0), clock = clock,
+            0.5, 2.0, PIDCoefficients(4.0), clock = clock,
         )
         follower.followGVF(gvf)
         var currentStep = 1
@@ -58,16 +58,17 @@ class GVFTest {
             currentStep++
         }
 
-        val fig = plotVectorField(gvf, Vector2d(), Vector2d(20.0, 15.0), 1.0) +
+        val fig = plotVectorField(gvf, Vector2d(-2.0, -2.0), Vector2d(25.0, 25.0), 1.0) +
+                createPathLayer(path) +
                 geomPath(
                     data = mapOf(
                         "x" to simulationData[0],
                         "y" to simulationData[1],
-                        "color" to simulationData[2]
+                        "magnitude" to simulationData[2]
                     ),
                     color = "red",
                     size = 1.0
-                ) { x = "x"; y = "y"; color = "color" }
+                ) { x = "x"; y = "y"; color = "magnitude" }
         ggsave(fig, "path.png")
     }
 

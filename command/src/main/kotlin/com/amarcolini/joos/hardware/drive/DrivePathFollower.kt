@@ -35,7 +35,7 @@ interface DrivePathFollower : DriveComponent {
     /**
      * Returns a [Command] that follows the provided path.
      */
-    fun followerPath(path: Path): Command {
+    fun followPath(path: Path): Command {
         return if (!pathFollower.isFollowing()) {
             FunctionalCommand(
                 init = { pathFollower.followPath(path) },

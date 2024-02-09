@@ -175,12 +175,11 @@ class MathTest {
             Vector2d(-wheelBase / 2, trackWidth / 2),
             Vector2d(wheelBase / 2, trackWidth / 2)
         )
-        var error = Pose2d()
         logBenchmark(
             times = 50_000,
             warmup = 500,
             "old" to {
-                SwerveKinematics.wheelToRobotVelocities(
+                SwerveKinematics.moduleToRobotVelocities(
                     List(4) { (Math.random() - 0.5) * 20.0 },
                     List(4) { (Math.random() - 0.5) * PI.rad },
                     trackWidth, wheelBase
@@ -199,34 +198,17 @@ class MathTest {
 //                val moduleOrientations = SwerveKinematics.robotToModuleOrientations(
 //                    robotVel, trackWidth, wheelBase
 //                )
-                val mine = SwerveKinematics.wheelToRobotVelocities2(
+                val new = SwerveKinematics.moduleToRobotVelocities(
                     wheelVelocities,
                     moduleOrientations,
                     wheelPositions,
                 )
-                val old = SwerveKinematics.wheelToRobotVelocities(
+                val old = SwerveKinematics.moduleToRobotVelocities(
                     wheelVelocities,
                     moduleOrientations,
                     trackWidth, wheelBase
                 )
-                val rawError = (mine - old)
-                error += Pose2d(rawError.x.absoluteValue, rawError.y.absoluteValue, rawError.heading.normDelta().abs())
-            },
-            "quail" to {
-                SwerveKinematics.wheelToRobotVelocities3(
-                    List(4) { (Math.random() - 0.5) * 20.0 },
-                    List(4) { (Math.random() - 0.5) * PI.rad },
-                    wheelPositions,
-                )
-            },
-            "quail fast" to {
-                SwerveKinematics.wheelToRobotVelocities4(
-                    List(4) { (Math.random() - 0.5) * 20.0 },
-                    List(4) { (Math.random() - 0.5) * PI.rad },
-                    wheelPositions,
-                )
             }
         )
-        println("error: ${error / 50_500.0}")
     }
 }
