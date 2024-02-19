@@ -1,8 +1,6 @@
-import com.amarcolini.joos.util.addOne
+//import io.nacular.doodle.application.Modules.Companion.AccessibilityModule
 import io.nacular.doodle.animation.Animator
 import io.nacular.doodle.animation.AnimatorImpl
-import io.nacular.doodle.application.Application
-//import io.nacular.doodle.application.Modules.Companion.AccessibilityModule
 import io.nacular.doodle.application.Modules.Companion.FocusModule
 import io.nacular.doodle.application.Modules.Companion.ImageModule
 import io.nacular.doodle.application.Modules.Companion.MenuFactoryModule
@@ -12,7 +10,9 @@ import io.nacular.doodle.application.Modules.Companion.PopupModule
 import io.nacular.doodle.application.application
 import io.nacular.doodle.theme.basic.BasicTheme
 import io.nacular.doodle.theme.native.NativeTheme
-import org.kodein.di.*
+import org.kodein.di.DI
+import org.kodein.di.bindProvider
+import org.kodein.di.instance
 
 
 fun main() {

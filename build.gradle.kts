@@ -95,13 +95,7 @@ allprojects {
     tasks.withType<org.jetbrains.kotlin.gradle.tasks.KotlinCompile>().configureEach {
         kotlinOptions {
             freeCompilerArgs = listOf("-Xjvm-default=all") //all or all-compatibility
-            jvmTarget = "1.8"
         }
-    }
-
-    tasks.withType<JavaCompile>().configureEach {
-        targetCompatibility = JavaVersion.VERSION_1_8.toString()
-        sourceCompatibility = JavaVersion.VERSION_1_8.toString()
     }
 
     rootProject.plugins.withType(org.jetbrains.kotlin.gradle.targets.js.nodejs.NodeJsRootPlugin::class.java) {

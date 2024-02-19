@@ -1,5 +1,3 @@
-import org.jetbrains.kotlin.gradle.dsl.JvmTarget
-
 plugins {
     kotlin("multiplatform")
 //    application
@@ -21,7 +19,7 @@ kotlin {
     jvm {
         withJava()
         compilations.all {
-            kotlinOptions.jvmTarget = JavaVersion.VERSION_11.toString()
+            kotlinOptions.jvmTarget = JavaVersion.VERSION_1_8.toString()
         }
     }
 
@@ -74,4 +72,8 @@ kotlin {
             }
         }
     }
+}
+
+java {
+    targetCompatibility = JavaVersion.VERSION_1_8
 }
