@@ -2,6 +2,7 @@ package field
 
 import com.amarcolini.joos.geometry.Pose2d
 import com.amarcolini.joos.path.PathBuilder
+import com.amarcolini.joos.path.heading.TangentHeading
 import io.nacular.doodle.drawing.Color
 import io.nacular.doodle.drawing.LinearGradientPaint
 import io.nacular.doodle.drawing.Stroke
@@ -21,7 +22,7 @@ object DraggablePath : EntityGroup() {
 
     private val path = PathEntity(
         PathBuilder(Pose2d(start.position.toVector2d(), start.tangent))
-            .addSpline(end.position.toVector2d(), end.tangent, start.endTangentMag, end.startTangentMag)
+            .addSpline(end.position.toVector2d(), end.tangent, TangentHeading, start.endTangentMag, end.startTangentMag)
             .preBuild(),
         Stroke(LinearGradientPaint(Color.Red, Color.Green, start.position, end.position))
     )
@@ -29,7 +30,7 @@ object DraggablePath : EntityGroup() {
     init {
         val update = {
             path.path = PathBuilder(Pose2d(start.position.toVector2d(), start.tangent))
-                .addSpline(end.position.toVector2d(), end.tangent, start.endTangentMag, end.startTangentMag)
+                .addSpline(end.position.toVector2d(), end.tangent, TangentHeading, start.endTangentMag, end.startTangentMag)
                 .preBuild()
             path.stroke = Stroke(LinearGradientPaint(Color.Red, Color.Green, start.position, end.position))
         }

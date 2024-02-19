@@ -11,7 +11,6 @@ import io.nacular.doodle.utils.autoCanceling
 import io.nacular.doodle.utils.observable
 import io.nacular.measured.units.Time.Companion.seconds
 import io.nacular.measured.units.times
-import kotlinx.browser.window
 
 object TimeManager {
     private val listeners_ = SetPool<(Double, Double) -> Unit>()
@@ -53,9 +52,5 @@ object TimeManager {
 
     fun stop() {
         animation = null
-    }
-
-    init {
-        window.asDynamic()["play"] = TimeManager::play
     }
 }

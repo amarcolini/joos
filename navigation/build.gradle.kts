@@ -7,11 +7,6 @@ plugins {
 
 extra["dokkaName"] = "Navigation"
 
-java {
-    sourceCompatibility = JavaVersion.VERSION_1_8
-    targetCompatibility = JavaVersion.VERSION_1_8
-}
-
 kotlin {
     jvm {
         compilations.all {
@@ -20,7 +15,7 @@ kotlin {
 //                apiVersion = "1.8.20"
             }
         }
-        withJava()
+//        withJava()
         testRuns["test"].executionTask.configure {
             useJUnitPlatform()
         }

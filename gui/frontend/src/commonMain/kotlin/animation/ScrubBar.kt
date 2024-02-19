@@ -11,7 +11,6 @@ import io.nacular.doodle.geometry.Point
 import io.nacular.doodle.geometry.Rectangle
 import io.nacular.doodle.geometry.Size
 import io.nacular.doodle.system.SystemPointerEvent
-import kotlinx.browser.window
 import kotlin.math.min
 
 object ScrubBar : View() {
@@ -27,10 +26,6 @@ object ScrubBar : View() {
         }
         Field.boundsChanged += { _, _, new ->
             renderWidth = min(new.width, new.height)
-        }
-        window.asDynamic()["hmm"] = {
-            val percent = TimeManager.time / TimeManager.duration
-            "time: ${TimeManager.time}, percent: $percent, pose: ${DraggableTrajectory.currentPath[percent * DraggableTrajectory.currentPath.length()]}"
         }
 
         pointerMotionChanged += PointerMotionListener.dragged {

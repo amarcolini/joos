@@ -29,7 +29,6 @@ import io.nacular.doodle.layout.Insets
 import io.nacular.doodle.layout.constraints.constrain
 import io.nacular.doodle.text.StyledText
 import io.nacular.doodle.utils.VerticalAlignment
-import kotlinx.browser.window
 import kotlinx.coroutines.launch
 import util.BetterViewBuilder.Companion.padding
 import util.BetterViewBuilder.Companion.viewBuilder
@@ -43,9 +42,10 @@ object Settings : View() {
         idealSize = size
         pressedChanged += { _, _, new ->
             if (new) {
-                val url = window.prompt("Enter image URL:", "https://")
+//                val url = window.prompt("Enter image URL:", "https://")
+                val url: String? = null
                 if (url != null) {
-                    window.localStorage.setItem(GUIApp.fieldImageKey, url)
+                    Storage.setItem(GUIApp.fieldImageKey, url)
                     appScope.launch {
                         imageLoader.load(GUIApp.parseURL(url))?.let {
                             Field.backgrounds["Generic"] = it
@@ -64,8 +64,8 @@ object Settings : View() {
         pressedChanged += { _, _, new ->
             if (new) {
                 val json = DraggableTrajectory.toJSON()
-                window.localStorage.setItem(GUIApp.trajectoryKey, json)
-                window.alert(json)
+                Storage.setItem(GUIApp.trajectoryKey, json)
+//                window.alert(json)
             }
         }
     }
@@ -115,10 +115,10 @@ object Settings : View() {
                         DraggableTrajectory.disableEditing()
                         val trajectory: Trajectory? = DraggableTrajectory.currentTrajectory
                         if (trajectory == null) {
-                            window.alert("Failed to create Trajectory!")
+//                            window.alert("Failed to create Trajectory!")
                         } else {
                             val json = DraggableTrajectory.toJSON()
-                            window.localStorage.setItem(GUIApp.trajectoryKey, json)
+                            Storage.setItem(GUIApp.trajectoryKey, json)
                             TimeManager.listeners += trajectoryListener
                             TimeManager.duration = trajectory.duration()
                             Robot.pose = trajectory.start()
@@ -196,7 +196,7 @@ object Settings : View() {
         fun updateTrajectory() {
             DraggableTrajectory.recomputeTrajectory()
             val trajectory = DraggableTrajectory.currentTrajectory ?: run {
-                window.alert("Failed to satisfy constraints!")
+//                window.alert("Failed to satisfy constraints!")
                 return
             }
             TimeManager.duration = trajectory.duration()

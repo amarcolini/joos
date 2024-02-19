@@ -3,17 +3,9 @@ import field.Field
 import io.nacular.doodle.animation.Animator
 import io.nacular.doodle.animation.AnimatorImpl
 import io.nacular.doodle.application.Application
-import io.nacular.doodle.application.Modules.Companion.AccessibilityModule
-import io.nacular.doodle.application.Modules.Companion.FocusModule
-import io.nacular.doodle.application.Modules.Companion.ImageModule
-import io.nacular.doodle.application.Modules.Companion.ModalModule
-import io.nacular.doodle.application.Modules.Companion.PointerModule
-import io.nacular.doodle.application.Modules.Companion.PopupModule
-import io.nacular.doodle.application.application
 import io.nacular.doodle.controls.PopupManager
 import io.nacular.doodle.controls.modal.ModalManager
 import io.nacular.doodle.controls.popupmenu.MenuFactory
-import io.nacular.doodle.controls.popupmenu.MenuFactoryImpl
 import io.nacular.doodle.core.Display
 import io.nacular.doodle.core.Layout.Companion.simpleLayout
 import io.nacular.doodle.core.View
@@ -21,23 +13,17 @@ import io.nacular.doodle.drawing.TextMetrics
 import io.nacular.doodle.focus.FocusManager
 import io.nacular.doodle.geometry.PathMetrics
 import io.nacular.doodle.geometry.Point
-import io.nacular.doodle.geometry.Size
-import io.nacular.doodle.geometry.impl.PathMetricsImpl
-import io.nacular.doodle.image.Image
 import io.nacular.doodle.image.ImageLoader
 import io.nacular.doodle.scheduler.Scheduler
 import io.nacular.doodle.theme.Theme
 import io.nacular.doodle.theme.ThemeManager
 import io.nacular.doodle.theme.basic.BasicTheme
-import io.nacular.doodle.theme.native.NativeTheme
 import io.nacular.doodle.theme.plus
-import io.nacular.doodle.utils.fastSetOf
-import kotlinx.browser.window
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.MainScope
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.launch
-import org.kodein.di.*
+//import org.kodein.di.*
 import settings.Settings
 import style.DefaultTheme
 import util.BetterViewBuilder.Companion.viewBuilder
@@ -52,12 +38,13 @@ class GUIApp(
     scheduler: Scheduler,
     animator: Animator,
     textMetrics: TextMetrics,
-    pathMetrics: PathMetrics,
+//    pathMetrics: PathMetrics,
     popupManager: PopupManager,
     modalManager: ModalManager,
     themeManager: ThemeManager,
+    menuFactory: MenuFactory,
     basicTheme: BasicTheme,
-    nativeTheme: NativeTheme,
+    initialTheme: Theme? = null,
 ) : Application {
     companion object {
         lateinit var focusManager: FocusManager
@@ -87,7 +74,7 @@ class GUIApp(
         const val trajectoryKey = "currentTrajectory"
 
         fun fakeTheme(view: View) {
-            themeManager.selected?.install(display, sequenceOf(view))
+            themeManager.selected?.install(view)
         }
 
         fun parseURL(url: String) = when (url.lowercase()) {
@@ -104,17 +91,19 @@ class GUIApp(
         Companion.modalManager = modalManager
         Companion.animate = animator
         Companion.textMetrics = textMetrics
-        Companion.pathMetrics = pathMetrics
-        Companion.menus = MenuFactoryImpl(popupManager, scheduler, focusManager)
+//        Companion.pathMetrics = pathMetrics
+        Companion.menus = menuFactory
         Companion.themeManager = themeManager
         Companion.display = display
         Companion.imageLoader = imageLoader
-        themeManager.selected = nativeTheme + basicTheme + DefaultTheme(basicTheme.config)
+        if (initialTheme != null) {
+            themeManager.selected = initialTheme + basicTheme + DefaultTheme(basicTheme.config)
+        } else themeManager.selected = basicTheme + DefaultTheme(basicTheme.config)
 
         appScope.launch {
             val fallback = "./background/generic.png"
             val url =
-                window.localStorage.getItem(fieldImageKey)?.let { parseURL(it) } ?: fallback
+                Storage.getItem(fieldImageKey)?.let { parseURL(it) } ?: fallback
             Field.backgrounds["Generic"] = imageLoader.load(url) ?: imageLoader.load(fallback) ?: run {
                 println("Unable to load default image!")
                 null
@@ -142,49 +131,7 @@ class GUIApp(
         appScope.cancel()
     }
 }
-
-val AnimationModule = DI.Module(name = "AnimationModule") {
-    bindProvider<Animator> { AnimatorImpl(timer = instance(), animationScheduler = instance()) }
-}
-
-fun main() {
-    application(
-        modules = listOf(
-            ImageModule,
-            PointerModule,
-            FocusModule,
-            AccessibilityModule,
-            PopupModule,
-            AnimationModule,
-            ModalModule,
-            BasicTheme.BasicTheme,
-            BasicTheme.basicButtonBehavior(),
-            BasicTheme.basicDropdownBehavior(),
-            BasicTheme.basicLabelBehavior(),
-            BasicTheme.basicMenuBehavior(),
-            NativeTheme.NativeTheme,
-            NativeTheme.nativeTextFieldBehavior(),
-            DI.Module("pathmetrics") {
-                bind<PathMetrics>() with singleton {
-                    PathMetricsImpl(instance())
-                }
-            }
-//            KeyboardModule,
-        )
-    ) {
-        GUIApp(
-            instance(),
-            instance(),
-            instance(),
-            instance(),
-            instance(),
-            instance(),
-            instance(),
-            instance(),
-            instance(),
-            instance(),
-            instance(),
-            instance()
-        )
-    }
-}
+//
+//val AnimationModule = DI.Module(name = "AnimationModule") {
+//    bindProvider<Animator> { AnimatorImpl(timer = instance(), animationScheduler = instance()) }
+//}

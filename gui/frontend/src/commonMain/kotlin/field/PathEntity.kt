@@ -10,7 +10,6 @@ import io.nacular.doodle.geometry.Circle
 import io.nacular.doodle.geometry.Point
 import io.nacular.doodle.geometry.Rectangle
 import io.nacular.doodle.geometry.path
-import kotlinx.browser.window
 
 class PathEntity(path: Path, stroke: Stroke) : FieldEntity() {
     var path by renderProperty(path)
@@ -19,7 +18,6 @@ class PathEntity(path: Path, stroke: Stroke) : FieldEntity() {
     init {
         bounds = Rectangle(10, 10)
         clipCanvasToBounds = false
-        window.asDynamic()["derivMult"] = 0.0
     }
 
     override fun render(canvas: Canvas) {

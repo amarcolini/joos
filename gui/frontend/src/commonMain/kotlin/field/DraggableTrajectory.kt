@@ -5,6 +5,7 @@ import GUIApp.Companion.focusManager
 import GUIApp.Companion.menus
 import GUIApp.Companion.modalManager
 import GUIApp.Companion.popupManager
+import Storage
 import com.amarcolini.joos.geometry.Angle
 import com.amarcolini.joos.geometry.Pose2d
 import com.amarcolini.joos.geometry.Vector2d
@@ -24,7 +25,6 @@ import io.nacular.doodle.event.PointerListener
 import io.nacular.doodle.layout.constraints.Strength.Companion.Strong
 import io.nacular.doodle.system.SystemPointerEvent
 import io.nacular.doodle.utils.addOrAppend
-import kotlinx.browser.window
 import kotlinx.coroutines.launch
 import kotlinx.serialization.Transient
 import settings.KnotMenu
@@ -53,7 +53,7 @@ object DraggableTrajectory : EntityGroup() {
     }
 
     private var trajectory: TrajectoryMetadata = TrajectoryMetadata.fromTrajectory(
-        window.localStorage.getItem(GUIApp.trajectoryKey)?.let {
+        Storage.getItem(GUIApp.trajectoryKey)?.let {
             try {
                 SerializableTrajectory.fromJSON(it)
             } catch (_: Exception) {

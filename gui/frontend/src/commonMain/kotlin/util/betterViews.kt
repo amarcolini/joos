@@ -9,9 +9,9 @@ import io.nacular.doodle.geometry.Size
 import io.nacular.doodle.layout.Insets
 import io.nacular.doodle.layout.constraints.Bounds
 import io.nacular.doodle.layout.constraints.ConstraintDslContext
-import io.nacular.doodle.layout.constraints.ConstraintLayout
 import io.nacular.doodle.layout.constraints.constrain
 import io.nacular.doodle.utils.ObservableList
+import kotlin.js.JsName
 
 open class BetterViewBuilder protected constructor() : View() {
     companion object {
@@ -85,21 +85,21 @@ open class BetterViewBuilder protected constructor() : View() {
             super.isFocusCycleRoot = value
         }
 
-    @JsName("addedToDisplayLambda")
+    @JsName("setAddedToDisplay")
     var addedToDisplay = {}
 
     override fun addedToDisplay() {
         addedToDisplay.invoke()
     }
 
-    @JsName("removedFromDisplayLambda")
+    @JsName("setRemovedFromDisplay")
     var removedFromDisplay = {}
 
     override fun removedFromDisplay() {
         removedFromDisplay.invoke()
     }
 
-    @JsName("shouldYieldFocusLambda")
+    @JsName("setShouldYieldFocus")
     var shouldYieldFocus = { true }
 
     override fun shouldYieldFocus(): Boolean = shouldYieldFocus.invoke()

@@ -12,6 +12,8 @@ import kotlin.jvm.JvmName
 import kotlin.jvm.JvmSynthetic
 import kotlin.math.*
 
+inline fun <reified T> addOne(num: () -> Double) = T::class.simpleName + (num() + 1.0)
+
 /**
  * Returns the real solutions to the quadratic \(ax^2 + bx + c\).
  *
