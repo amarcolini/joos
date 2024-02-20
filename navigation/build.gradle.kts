@@ -45,13 +45,11 @@ kotlin {
                 implementation("org.apache.commons:commons-math3:3.6.1")
                 implementation("org.ejml:ejml-core:0.41")
                 implementation("org.ejml:ejml-ddense:0.41")
-                implementation("space.kscience:kmath-core:0.3.0")
             }
         }
         val jsTest by getting {
             dependencies {
                 implementation(kotlin("test-js"))
-                implementation("space.kscience:kmath-core:0.3.0")
             }
         }
         all {

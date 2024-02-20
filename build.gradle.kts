@@ -83,11 +83,6 @@ subprojects.forEach {
 }
 
 allprojects {
-    repositories {
-        mavenCentral()
-        maven("https://maven.pkg.jetbrains.space/spc/p/sci/maven")
-    }
-
     group = "com.amarcolini.joos"
     version = Versions.library
     description = "A comprehensive kotlin library designed for FTC."
