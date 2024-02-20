@@ -1,5 +1,6 @@
 import animation.ScrubBar
 import field.Field
+import field.Robot
 import io.nacular.doodle.animation.Animator
 import io.nacular.doodle.animation.AnimatorImpl
 import io.nacular.doodle.application.Application
@@ -19,10 +20,7 @@ import io.nacular.doodle.theme.Theme
 import io.nacular.doodle.theme.ThemeManager
 import io.nacular.doodle.theme.basic.BasicTheme
 import io.nacular.doodle.theme.plus
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.MainScope
-import kotlinx.coroutines.cancel
-import kotlinx.coroutines.launch
+import kotlinx.coroutines.*
 //import org.kodein.di.*
 import settings.Settings
 import style.DefaultTheme
@@ -69,6 +67,8 @@ class GUIApp(
             private set
         private lateinit var themeManager: ThemeManager
         private lateinit var display: Display
+        var activeState = State.Unopened
+            private set
 
         const val fieldImageKey = "fieldImageURL"
         const val trajectoryKey = "currentTrajectory"
@@ -83,7 +83,12 @@ class GUIApp(
         }
     }
 
+    enum class State {
+        Unopened, Active, Shutdown
+    }
+
     init {
+        activeState = State.Active
         Companion.appScope = MainScope()
         Companion.focusManager = focusManager
         Companion.scheduler = scheduler
@@ -129,6 +134,7 @@ class GUIApp(
 
     override fun shutdown() {
         appScope.cancel()
+        activeState = State.Shutdown
     }
 }
 //

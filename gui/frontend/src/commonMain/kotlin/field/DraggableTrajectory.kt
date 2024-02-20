@@ -52,7 +52,7 @@ object DraggableTrajectory : EntityGroup() {
         }
     }
 
-    private var trajectory: TrajectoryMetadata = TrajectoryMetadata.fromTrajectory(
+    var trajectory: TrajectoryMetadata = TrajectoryMetadata.fromTrajectory(
         Storage.getItem(GUIApp.trajectoryKey)?.let {
             try {
                 SerializableTrajectory.fromJSON(it)
@@ -320,7 +320,7 @@ object DraggableTrajectory : EntityGroup() {
         }
     }
 
-    private fun initializePathEditing() {
+    internal fun initializePathEditing() {
         disableEditing()
         knots += PathKnot().apply {
             val startData = trajectory.startData
@@ -396,7 +396,7 @@ object DraggableTrajectory : EntityGroup() {
         recomputeTransforms()
     }
 
-    private fun initializeHeadingEditing() {
+    internal fun initializeHeadingEditing() {
         disableEditing()
         knots += HeadingKnot().apply {
             val startData = trajectory.startData

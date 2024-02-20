@@ -54,20 +54,20 @@ object Field : View() {
 
     init {
         idealSize = GROW
-//        children += DraggableTrajectory
-//        children += Robot.also { it.visible = false }
+        children += DraggableTrajectory
+        children += Robot.also { it.visible = false }
 
-        val stroke = Stroke(Color.Green)
-        val altStroke = Stroke(Color.Green.darker(0.5f))
-        listOf(PropLocation.Center).forEach {
-            children += PathEntity(RedSus.getPath(it), altStroke)
-            children += PathEntity(BlueSus.getPath(it), altStroke)
-            children += PathEntity(BlueCloseAuto.getTrajectory(it).path, stroke)
-            children += PathEntity(BlueFarAuto.getPath(it).path, stroke)
-            children += PathEntity(BlueFarAuto.getPath(it).path, stroke)
-            children += PathEntity(RedFarAuto.getTrajectory(it).path, stroke)
-            children += PathEntity(RedCloseAuto.getTrajectory(it).path, stroke)
-        }
+//        val stroke = Stroke(Color.Green)
+//        val altStroke = Stroke(Color.Green.darker(0.5f))
+//        listOf(PropLocation.Center).forEach {
+//            children += PathEntity(RedSus.getPath(it), altStroke)
+//            children += PathEntity(BlueSus.getPath(it), altStroke)
+//            children += PathEntity(BlueCloseAuto.getTrajectory(it).path, stroke)
+//            children += PathEntity(BlueFarAuto.getPath(it).path, stroke)
+//            children += PathEntity(BlueFarAuto.getPath(it).path, stroke)
+//            children += PathEntity(RedFarAuto.getTrajectory(it).path, stroke)
+//            children += PathEntity(RedCloseAuto.getTrajectory(it).path, stroke)
+//        }
 
 //        children += WaypointPopup()
         Dragger(this).apply {
@@ -135,7 +135,7 @@ abstract class PoseFieldEntity : FieldEntity() {
 
 
     final override fun render(canvas: Canvas) {
-        canvas.clear()
+//        canvas.clear()
         canvas.rotate(center, heading) {
             rotateRender(this)
         }

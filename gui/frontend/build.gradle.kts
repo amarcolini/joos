@@ -19,7 +19,7 @@ kotlin {
     jvm {
         withJava()
         compilations.all {
-            kotlinOptions.jvmTarget = JavaVersion.VERSION_1_8.toString()
+            kotlinOptions.jvmTarget = JavaVersion.VERSION_11.toString()
         }
     }
 
@@ -69,6 +69,11 @@ kotlin {
                 val target = "$targetOs-$targetArch"
 
                 implementation("io.nacular.doodle:desktop-jvm-$target:$doodleVersion") // Desktop apps are tied to specific platforms
+            }
+        }
+        val jvmTest by getting {
+            dependencies {
+                implementation(kotlin("test"))
             }
         }
     }
