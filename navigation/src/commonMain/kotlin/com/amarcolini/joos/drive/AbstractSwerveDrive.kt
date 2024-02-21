@@ -19,7 +19,7 @@ import kotlin.math.sqrt
  * @param modulePositions the positions of all the modules relative to the center of rotation of the robot
  */
 abstract class AbstractSwerveDrive @JvmOverloads constructor(
-    protected val modules: List<SwerveModule>,
+    val modules: List<SwerveModule>,
     protected val modulePositions: List<Vector2d>,
     protected val externalHeadingSensor: AngleSensor? = null
 ) : Drive() {
@@ -94,4 +94,6 @@ abstract class AbstractSwerveDrive @JvmOverloads constructor(
             module.setModuleOrientation(orientation)
         }
     }
+
+    fun getModuleOrientations(): List<Angle> = modules.map { it.getModuleOrientation() }
 }
