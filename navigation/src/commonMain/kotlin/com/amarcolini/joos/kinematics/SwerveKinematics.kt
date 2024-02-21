@@ -28,10 +28,10 @@ object SwerveKinematics {
         val x = wheelBase / 2
         val y = trackWidth / 2
         return listOf(
-            Vector2d(x, -y),
-            Vector2d(-x, -y),
-            Vector2d(-x, y),
             Vector2d(x, y),
+            Vector2d(-x, y),
+            Vector2d(-x, -y),
+            Vector2d(x, -y),
         )
     }
 
@@ -43,7 +43,7 @@ object SwerveKinematics {
         trackWidth: Double
     ): List<Vector2d> {
         val y = trackWidth / 2
-        return listOf(Vector2d(0.0, -y), Vector2d(0.0, y))
+        return listOf(Vector2d(0.0, y), Vector2d(0.0, -y))
     }
 
     /**
