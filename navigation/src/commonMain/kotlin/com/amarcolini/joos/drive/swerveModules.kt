@@ -8,6 +8,7 @@ import com.amarcolini.joos.kinematics.DiffSwerveKinematics
 import com.amarcolini.joos.util.deg
 import com.amarcolini.joos.util.rad
 import com.amarcolini.joos.util.wrap
+import kotlin.jvm.JvmField
 import kotlin.math.PI
 import kotlin.math.abs
 
@@ -51,6 +52,7 @@ abstract class PIDSwerveModule(
     private var targetSpeed: (Double) -> Unit = { mult: Double ->
         setDrivePower(0.0)
     }
+    @JvmField
     protected val pidController = PIDController(pidCoefficients)
 
     init {
@@ -66,6 +68,8 @@ abstract class PIDSwerveModule(
             setCorrectedWheelVelocity(velocity * it, acceleration * it)
         }
     }
+
+    fun getTargetOrientation() = pidController.targetPosition.rad
 
     /**
      * Sets the corrected wheel velocity (and acceleration) of the wheel motor.
@@ -106,6 +110,7 @@ abstract class PIDDiffSwerveModule(
     protected var feedforward: Feedforward,
 ) : SwerveModule() {
     private var targetPower: Double = 0.0
+    @JvmField
     protected val pidController = PIDController(pidCoefficients)
 
     init {
@@ -123,6 +128,8 @@ abstract class PIDDiffSwerveModule(
     final override fun setDrivePower(power: Double) {
         targetPower = power
     }
+
+    fun getTargetOrientation() = pidController.targetPosition.rad
 
     override fun update() {
         val orientation = getModuleOrientation()
