@@ -12,3 +12,4 @@ pluginManagement {
         mavenCentral()
     }
 }
+include("guiTest")

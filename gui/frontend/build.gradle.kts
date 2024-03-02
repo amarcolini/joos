@@ -1,5 +1,8 @@
+import dev.icerock.gradle.MRVisibility
+
 plugins {
     kotlin("multiplatform")
+    id("dev.icerock.mobile.multiplatform-resources") version "0.23.0"
 //    application
 }
 
@@ -17,7 +20,6 @@ kotlin {
     }
 
     jvm {
-        withJava()
         compilations.all {
             kotlinOptions.jvmTarget = JavaVersion.VERSION_11.toString()
         }
@@ -36,6 +38,7 @@ kotlin {
                 implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:$coroutinesVersion")
                 api(project(":navigation"))
                 implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.5.0")
+                implementation("dev.icerock.moko:resources:0.23.0")
 
                 // Optional
                 // implementation ("io.nacular.doodle:controls:$doodleVersion" )
@@ -44,13 +47,21 @@ kotlin {
             }
         }
 
+        val commonTest by getting {
+            dependencies {
+                implementation("dev.icerock.moko:resources-test:0.23.0")
+            }
+        }
+
         val jsMain by getting {
+            dependsOn(commonMain)
             dependencies {
                 implementation("io.nacular.doodle:browser:$doodleVersion")
             }
         }
 
         val jvmMain by getting {
+            dependsOn(commonMain)
             dependencies {
                 val osName = System.getProperty("os.name")
                 val targetOs = when {
@@ -77,6 +88,11 @@ kotlin {
             }
         }
     }
+}
+
+multiplatformResources {
+    multiplatformResourcesPackage = "com.amarcolini.joos.frontend" // required
+    multiplatformResourcesVisibility = MRVisibility.Public // optional, default Public
 }
 
 java {

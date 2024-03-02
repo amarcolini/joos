@@ -15,7 +15,8 @@ class DummyMotor(
     private val kV: Double = 1.0,
     private val kA: Double = Double.POSITIVE_INFINITY,
     private val kStatic: Double = 0.0,
-    private val clock: NanoClock = DummyClock
+    private val clock: NanoClock = DummyClock,
+    val hardwareLock: Any = object {}
 ) : DcMotorEx {
     override fun getManufacturer(): HardwareDevice.Manufacturer = HardwareDevice.Manufacturer.Other
     override fun getDeviceName() = "dummy"
@@ -50,18 +51,25 @@ class DummyMotor(
     }
 
     override fun setDirection(direction: DcMotorSimple.Direction?) {
-        reversed = direction == DcMotorSimple.Direction.REVERSE
+        synchronized(hardwareLock) {
+            reversed = direction == DcMotorSimple.Direction.REVERSE
+        }
     }
 
-    override fun getDirection(): DcMotorSimple.Direction =
+    override fun getDirection(): DcMotorSimple.Direction = synchronized(hardwareLock) {
         if (reversed) DcMotorSimple.Direction.REVERSE
         else DcMotorSimple.Direction.FORWARD
-
-    override fun setPower(power: Double) {
-        this.power = power.coerceIn(-1.0, 1.0)
     }
 
-    override fun getPower(): Double = power
+    override fun setPower(power: Double) {
+        synchronized(hardwareLock) {
+            this.power = power.coerceIn(-1.0, 1.0)
+        }
+    }
+
+    override fun getPower(): Double = synchronized(hardwareLock) {
+        power
+    }
 
     override fun getMotorType(): MotorConfigurationType =
         MotorConfigurationType.getUnspecifiedMotorType()
@@ -79,7 +87,9 @@ class DummyMotor(
     private var zeroPowerBehavior: DcMotor.ZeroPowerBehavior = DcMotor.ZeroPowerBehavior.FLOAT
 
     override fun setZeroPowerBehavior(zeroPowerBehavior: DcMotor.ZeroPowerBehavior) {
-        this.zeroPowerBehavior = zeroPowerBehavior
+        synchronized(hardwareLock) {
+            this.zeroPowerBehavior = zeroPowerBehavior
+        }
     }
 
     override fun getZeroPowerBehavior(): DcMotor.ZeroPowerBehavior = this.zeroPowerBehavior

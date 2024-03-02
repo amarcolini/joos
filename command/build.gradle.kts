@@ -21,11 +21,6 @@ tasks.withType<Test> {
     }
 }
 
-java {
-    sourceCompatibility = JavaVersion.VERSION_1_8
-    targetCompatibility = JavaVersion.VERSION_1_8
-}
-
 dependencies {
     api("org.jetbrains.kotlin:kotlin-stdlib:${Versions.kotlin}")
     implementation("org.jetbrains.kotlin:kotlin-reflect:${Versions.kotlin}")
@@ -54,6 +49,11 @@ tasks.clean.configure {
     }
 }
 
+java {
+    sourceCompatibility = JavaVersion.VERSION_1_8
+    targetCompatibility = JavaVersion.VERSION_1_8
+}
+
 kotlin {
     sourceSets {
         get("main").kotlin.srcDirs("src/main/kotlin")
@@ -67,10 +67,10 @@ android {
         sourceCompatibility = JavaVersion.VERSION_1_8
         targetCompatibility = JavaVersion.VERSION_1_8
     }
-//    sourceSets {
+    sourceSets {
 //        get("main").java.srcDirs("src/main/kotlin")
-//        get("test").java.srcDirs("src/test/kotlin")
-//    }
+        get("test").java.srcDirs("src/test/kotlin")
+    }
     defaultConfig {
         minSdk = 24
     }

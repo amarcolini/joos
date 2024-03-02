@@ -47,10 +47,10 @@ abstract class SwerveModule {
  * A basic [SwerveModule] implementation using a [PIDController] to hold module position.
  */
 abstract class PIDSwerveModule(
-    protected val pidCoefficients: PIDCoefficients
+    pidCoefficients: PIDCoefficients
 ) : SwerveModule() {
     private var targetSpeed: (Double) -> Unit = { mult: Double ->
-        setDrivePower(0.0)
+        setCorrectedDrivePower(0.0)
     }
     @JvmField
     protected val pidController = PIDController(pidCoefficients)
@@ -74,7 +74,7 @@ abstract class PIDSwerveModule(
     /**
      * Sets the corrected wheel velocity (and acceleration) of the wheel motor.
      */
-    abstract fun setCorrectedWheelVelocity(velocity: Double, acceleration: Double)
+    protected abstract fun setCorrectedWheelVelocity(velocity: Double, acceleration: Double)
 
     final override fun setDrivePower(power: Double) {
         targetSpeed = {
@@ -85,12 +85,12 @@ abstract class PIDSwerveModule(
     /**
      * Sets the corrected wheel motor power (normalized voltage) on the interval `[-1.0, 1.0]`.
      */
-    abstract fun setCorrectedDrivePower(power: Double)
+    protected abstract fun setCorrectedDrivePower(power: Double)
 
     override fun update() {
         val orientation = getModuleOrientation()
         val direction =
-            if (abs((pidController.targetPosition - orientation.radians).wrap(-PI, PI)) <= (PI * 0.5)) 1.0
+            if (abs((pidController.targetPosition - orientation.radians).wrap(-PI, PI)) <= (PI / 2)) 1.0
             else -1.0
         setModulePower(pidController.update(orientation.radians))
         targetSpeed.invoke(direction)
@@ -161,7 +161,7 @@ abstract class PIDDiffSwerveModule(
     /**
      * Sets the following motor powers (normalized voltages). All arguments are on the interval `[-1.0, 1.0]`.
      */
-    abstract fun setMotorPowers(
+    protected abstract fun setMotorPowers(
         top: Double,
         bottom: Double,
     )
@@ -170,17 +170,17 @@ abstract class PIDDiffSwerveModule(
      * Returns the total rotation of the gears. Angles should exactly match the ordering in
      * [setMotorPowers].
      */
-    abstract fun getGearRotations(): List<Angle>
+    protected abstract fun getGearRotations(): List<Angle>
 
     /**
      * Returns the positions of the gears in linear distance units. Positions should exactly match the ordering in
      * [setMotorPowers].
      */
-    abstract fun getGearPositions(): List<Double>
+    protected abstract fun getGearPositions(): List<Double>
 
     /**
      * Returns the velocities of the gears in linear distance units. Velocities should exactly match the ordering in
      * [setMotorPowers].
      */
-    open fun getGearVelocities(): List<Double>? = null
+    protected open fun getGearVelocities(): List<Double>? = null
 }

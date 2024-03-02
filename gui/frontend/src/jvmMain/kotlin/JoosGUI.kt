@@ -14,6 +14,7 @@ import util.TrajectoryMetadata
 object JoosGUI {
     var trajectory: SerializableTrajectory? = null
 
+    @JvmStatic
     fun launch() {
         trajectory?.let {
             DraggableTrajectory.trajectory = TrajectoryMetadata.fromTrajectory(

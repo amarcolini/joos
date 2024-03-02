@@ -1,8 +1,10 @@
+//import org.kodein.di.*
 import animation.ScrubBar
+import com.amarcolini.joos.frontend.MR
+import dev.icerock.moko.resources.desc.image.asImageDesc
+import dev.icerock.moko.resources.getImageByFileName
 import field.Field
-import field.Robot
 import io.nacular.doodle.animation.Animator
-import io.nacular.doodle.animation.AnimatorImpl
 import io.nacular.doodle.application.Application
 import io.nacular.doodle.controls.PopupManager
 import io.nacular.doodle.controls.modal.ModalManager
@@ -20,8 +22,10 @@ import io.nacular.doodle.theme.Theme
 import io.nacular.doodle.theme.ThemeManager
 import io.nacular.doodle.theme.basic.BasicTheme
 import io.nacular.doodle.theme.plus
-import kotlinx.coroutines.*
-//import org.kodein.di.*
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.MainScope
+import kotlinx.coroutines.cancel
+import kotlinx.coroutines.launch
 import settings.Settings
 import style.DefaultTheme
 import util.BetterViewBuilder.Companion.viewBuilder
@@ -106,10 +110,11 @@ class GUIApp(
         } else themeManager.selected = basicTheme + DefaultTheme(basicTheme.config)
 
         appScope.launch {
-            val fallback = "./background/generic.png"
+            val fallback = MR.images.generic
             val url =
-                Storage.getItem(fieldImageKey)?.let { parseURL(it) } ?: fallback
-            Field.backgrounds["Generic"] = imageLoader.load(url) ?: imageLoader.load(fallback) ?: run {
+                getLocalStorageItem(fieldImageKey)?.let { parseURL(it) }
+            Field.backgrounds["Generic"] = url?.let { imageLoader.load(it) } ?:
+            createImageFromResource(fallback, imageLoader) ?: run {
                 println("Unable to load default image!")
                 null
             }

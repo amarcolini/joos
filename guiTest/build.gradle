@@ -1,0 +1,14 @@
+plugins {
+    id 'java'
+}
+
+group = 'org.example'
+version = '0.4.9'
+
+repositories {
+    mavenCentral()
+}
+
+dependencies {
+    implementation project(":gui:frontend")
+}

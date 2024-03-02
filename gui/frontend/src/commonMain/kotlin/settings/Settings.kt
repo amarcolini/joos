@@ -30,6 +30,7 @@ import io.nacular.doodle.layout.constraints.constrain
 import io.nacular.doodle.text.StyledText
 import io.nacular.doodle.utils.VerticalAlignment
 import kotlinx.coroutines.launch
+import setLocalStorageItem
 import util.BetterViewBuilder.Companion.padding
 import util.BetterViewBuilder.Companion.viewBuilder
 import util.NumberField
@@ -43,9 +44,9 @@ object Settings : View() {
         pressedChanged += { _, _, new ->
             if (new) {
 //                val url = window.prompt("Enter image URL:", "https://")
-                val url: String? = null
+                val url: String? = "https://preview.redd.it/custom-centerstage-field-diagrams-works-with-meepmeep-v0-uqcy8o9sfpob1.png?width=1080&crop=smart&auto=webp&s=73ae9941723772ab9c6cb322f28fb0c66a7465aa"
                 if (url != null) {
-                    Storage.setItem(GUIApp.fieldImageKey, url)
+                    setLocalStorageItem(GUIApp.fieldImageKey, url)
                     appScope.launch {
                         imageLoader.load(GUIApp.parseURL(url))?.let {
                             Field.backgrounds["Generic"] = it
@@ -64,7 +65,7 @@ object Settings : View() {
         pressedChanged += { _, _, new ->
             if (new) {
                 val json = DraggableTrajectory.toJSON()
-                Storage.setItem(GUIApp.trajectoryKey, json)
+                setLocalStorageItem(GUIApp.trajectoryKey, json)
 //                window.alert(json)
             }
         }
@@ -118,7 +119,7 @@ object Settings : View() {
 //                            window.alert("Failed to create Trajectory!")
                         } else {
                             val json = DraggableTrajectory.toJSON()
-                            Storage.setItem(GUIApp.trajectoryKey, json)
+                            setLocalStorageItem(GUIApp.trajectoryKey, json)
                             TimeManager.listeners += trajectoryListener
                             TimeManager.duration = trajectory.duration()
                             Robot.pose = trajectory.start()

@@ -5,7 +5,6 @@ import GUIApp.Companion.focusManager
 import GUIApp.Companion.menus
 import GUIApp.Companion.modalManager
 import GUIApp.Companion.popupManager
-import Storage
 import com.amarcolini.joos.geometry.Angle
 import com.amarcolini.joos.geometry.Pose2d
 import com.amarcolini.joos.geometry.Vector2d
@@ -16,6 +15,7 @@ import com.amarcolini.joos.serialization.*
 import com.amarcolini.joos.trajectory.Trajectory
 import com.amarcolini.joos.trajectory.constraints.*
 import com.amarcolini.joos.util.deg
+import getLocalStorageItem
 import io.nacular.doodle.controls.modal.ModalManager
 import io.nacular.doodle.controls.popupmenu.MenuCreationContext
 import io.nacular.doodle.core.View
@@ -53,7 +53,7 @@ object DraggableTrajectory : EntityGroup() {
     }
 
     var trajectory: TrajectoryMetadata = TrajectoryMetadata.fromTrajectory(
-        Storage.getItem(GUIApp.trajectoryKey)?.let {
+        getLocalStorageItem(GUIApp.trajectoryKey)?.let {
             try {
                 SerializableTrajectory.fromJSON(it)
             } catch (_: Exception) {

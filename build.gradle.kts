@@ -89,7 +89,7 @@ allprojects {
 
     tasks.withType<org.jetbrains.kotlin.gradle.tasks.KotlinCompile>().configureEach {
         kotlinOptions {
-            freeCompilerArgs = listOf("-Xjvm-default=all") //all or all-compatibility
+            freeCompilerArgs = listOf("-Xjvm-default=all", "-Xexpect-actual-classes") //all or all-compatibility
         }
     }
 
