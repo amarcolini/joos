@@ -3,51 +3,142 @@ package settings
 import GUIApp
 import GUIApp.Companion.appScope
 import GUIApp.Companion.imageLoader
+import GUIApp.Companion.modalManager
 import animation.ScrubBar
 import animation.TimeManager
-import com.amarcolini.joos.trajectory.Trajectory
-import com.amarcolini.joos.util.deg
+import com.amarcolini.joos.geometry.Pose2d
+import com.amarcolini.joos.serialization.SerializableTrajectory
+import com.amarcolini.joos.serialization.StartPiece
 import field.DraggableTrajectory
-import field.DraggableTrajectory.constraints
 import field.Field
+import field.FieldEntity
 import field.Robot
+import io.nacular.doodle.controls.IndexedItem
+import io.nacular.doodle.controls.ItemVisualizer
+import io.nacular.doodle.controls.StringVisualizer
 import io.nacular.doodle.controls.StyledTextVisualizer
 import io.nacular.doodle.controls.buttons.PushButton
 import io.nacular.doodle.controls.dropdown.Dropdown
 import io.nacular.doodle.controls.form.verticalLayout
+import io.nacular.doodle.controls.modal.ModalManager
 import io.nacular.doodle.controls.text.Label
 import io.nacular.doodle.core.View
+import io.nacular.doodle.core.view
+import io.nacular.doodle.drawing.Canvas
 import io.nacular.doodle.drawing.Color
 import io.nacular.doodle.drawing.lighter
 import io.nacular.doodle.drawing.paint
-import io.nacular.doodle.event.KeyCode
-import io.nacular.doodle.event.KeyEvent
-import io.nacular.doodle.event.KeyListener
+import io.nacular.doodle.event.*
+import io.nacular.doodle.geometry.Circle
+import io.nacular.doodle.geometry.Point
 import io.nacular.doodle.geometry.Size
 import io.nacular.doodle.layout.HorizontalFlowLayout
 import io.nacular.doodle.layout.Insets
+import io.nacular.doodle.layout.ListLayout
+import io.nacular.doodle.layout.WidthSource
+import io.nacular.doodle.layout.constraints.Strength
 import io.nacular.doodle.layout.constraints.constrain
 import io.nacular.doodle.text.StyledText
+import io.nacular.doodle.theme.basic.dropdown.BasicDropdownBehavior
+import io.nacular.doodle.utils.Dimension
+import io.nacular.doodle.utils.ObservableList
 import io.nacular.doodle.utils.VerticalAlignment
+import io.nacular.doodle.utils.observable
 import kotlinx.coroutines.launch
+import kotlinx.serialization.json.Json
 import setLocalStorageItem
 import util.BetterViewBuilder.Companion.padding
 import util.BetterViewBuilder.Companion.viewBuilder
 import util.NumberField
+import util.TrajectoryMetadata
 import kotlin.math.min
 
-object Settings : View() {
+internal object Settings : View() {
+    val trajectories = ObservableList(arrayListOf<DraggableTrajectory>())
+
+    init {
+        trajectories.changed += { list: ObservableList<DraggableTrajectory>, diffs ->
+            trajectorySelect.visible = list.size > 1
+            if (list.isNotEmpty() && currentTrajectory?.let { list.contains(it) } != true) {
+                currentTrajectory = trajectories.first()
+            }
+            currentTrajectory?.visible = true
+            updateControlSelection()
+        }
+    }
+
+    private var currentTrajectory: DraggableTrajectory? by observable(null) { old, new ->
+        if (old != null) {
+            Field.children -= old
+            old.visible = false
+        }
+        if (new != null) {
+            new.visible = true
+            Field.children += new
+        }
+        val valid = new != null
+        if (!valid) hideTrajectoryMenu()
+//        val index = trajectories.indexOf(new)
+//        if (index != -1) {
+//            trajectorySelect.selection = index
+//        }
+        trajectoryConfigMenu.visible = valid
+        exportButton.visible = valid
+        control.visible = valid
+        updateControlSelection()
+    }
+
+    private val trajectorySelect = Dropdown(
+        trajectories, object : ItemVisualizer<DraggableTrajectory, IndexedItem> {
+            private val delegate = StringVisualizer(setOf(Dimension.Height, Dimension.Width))
+            override fun invoke(item: DraggableTrajectory, previous: View?, context: IndexedItem): View {
+                return delegate.invoke("Trajectory ${context.index + 1}", previous, context)
+            }
+        }
+    )
+        .apply {
+            BasicDropdownBehavior
+            size = Size(160, 35)
+            idealSize = size
+            changed += {
+                currentTrajectory = trajectories[it.selection]
+            }
+        }
+
     private val fieldImageButton = PushButton("Change Field Image").apply {
         visible = true
         size = Size(160, 35)
         idealSize = size
         pressedChanged += { _, _, new ->
             if (new) {
-//                val url = window.prompt("Enter image URL:", "https://")
-                val url: String? = "https://preview.redd.it/custom-centerstage-field-diagrams-works-with-meepmeep-v0-uqcy8o9sfpob1.png?width=1080&crop=smart&auto=webp&s=73ae9941723772ab9c6cb322f28fb0c66a7465aa"
-                if (url != null) {
-                    setLocalStorageItem(GUIApp.fieldImageKey, url)
-                    appScope.launch {
+                appScope.launch {
+                    val url = modalManager {
+                        val popup = FieldImageMenu(::completed)
+                        pointerOutsideModalChanged += PointerListener.pressed {
+                            completed(null)
+                        }
+                        ModalManager.RelativeModal(popup, this@apply) { modal, view ->
+                            (modal.top eq view.bottom + 10)..Strength.Strong
+                            (modal.top greaterEq 5)..Strength.Strong
+                            (modal.left greaterEq 5)..Strength.Strong
+                            (modal.centerX eq view.center.x)..Strength.Strong
+
+                            modal.right lessEq parent.right - 5
+
+                            when {
+                                parent.height.readOnly - view.bottom > modal.height.readOnly + 15 -> modal.bottom lessEq parent.bottom - 5
+                                else -> modal.bottom lessEq view.y - 10
+                            }
+
+                            modal.width.preserve
+                            modal.height.preserve
+                        }
+                    }
+                    //                val url = window.prompt("Enter image URL:", "https://")
+//                    val url: String? =
+//                        "https://preview.redd.it/custom-centerstage-field-diagrams-works-with-meepmeep-v0-uqcy8o9sfpob1.png?width=1080&crop=smart&auto=webp&s=73ae9941723772ab9c6cb322f28fb0c66a7465aa"
+                    if (url != null) {
+                        setLocalStorageItem(GUIApp.fieldImageKey, url)
                         imageLoader.load(GUIApp.parseURL(url))?.let {
                             Field.backgrounds["Generic"] = it
                             Field.rerender()
@@ -64,14 +155,49 @@ object Settings : View() {
         idealSize = size
         pressedChanged += { _, _, new ->
             if (new) {
-                val json = DraggableTrajectory.toJSON()
-                setLocalStorageItem(GUIApp.trajectoryKey, json)
+                val json = currentTrajectory?.serializableTrajectory()?.toJSON()
+                if (json != null) {
+                    setLocalStorageItem(GUIApp.trajectoryKey, json)
 //                window.alert(json)
+                }
             }
         }
     }
 
-    private val control = Dropdown(
+    fun hideTrajectoryMenu() {
+        ScrubBar.visible = false
+        trajectoryConfigMenu.visible = false
+        Robot.visible = false
+        Robot.rerenderNow()
+        TimeManager.listeners -= trajectoryListener
+        TimeManager.setTime(0.0, false)
+    }
+
+    fun showTrajectoryMenu(trajectory: DraggableTrajectory): Boolean {
+        val compiled = trajectory.currentTrajectory ?: return false
+        if (trajectory != currentTrajectory) currentTrajectory = trajectory
+        TimeManager.duration = compiled.duration()
+        TimeManager.setTime(0.0, false)
+        TimeManager.listeners += trajectoryListener
+        Robot.pose = compiled.start()
+        ScrubBar.visible = true
+        trajectoryConfigMenu.visible = true
+        Robot.visible = true
+        Robot.pose = trajectory.currentPath.start()
+        ScrubBar.rerenderNow()
+        Robot.rerenderNow()
+        return true
+    }
+
+    private val trajectoryListener: (Double, Double) -> Unit = { _, new ->
+        val current = currentTrajectory?.currentTrajectory
+        if (current != null) {
+            Robot.pose = current[new]
+            Field.rerenderNow()
+        }
+    }
+
+    val control = Dropdown(
         listOf(
             StyledText(" Edit Path ", background = Color.Blue.lighter().paint),
             StyledText(" Edit Heading ", background = Color.Red.lighter().paint),
@@ -79,61 +205,45 @@ object Settings : View() {
         ), StyledTextVisualizer()
     )
         .apply {
-            val trajectoryListener: (Double, Double) -> Unit = { _, new ->
-                val current = DraggableTrajectory.currentTrajectory
-                if (current != null) {
-                    Robot.pose = current[new]
-                    Field.rerenderNow()
-                }
-            }
-
             size = Size(160, 35)
             idealSize = size
             changed += {
-                fun setShowTrajectory(value: Boolean) {
-                    ScrubBar.visible = value
-                    trajectoryConfigMenu.visible = value
-                    Robot.visible = value
-                    Robot.pose = DraggableTrajectory.currentPath.start()
-                    Robot.rerenderNow()
-                    if (!value) {
-                        TimeManager.listeners -= trajectoryListener
-                        TimeManager.setTime(0.0, false)
-                    }
-                }
-                when (it.selection) {
-                    0 -> {
-                        setShowTrajectory(false)
-                        DraggableTrajectory.mode = DraggableTrajectory.Mode.EditPath
-                    }
+                updateControlSelection()
+            }
+        }
 
-                    1 -> {
-                        setShowTrajectory(false)
-                        DraggableTrajectory.mode = DraggableTrajectory.Mode.EditHeading
-                    }
+    fun updateControlSelection() {
+        when (control.selection) {
+            0 -> {
+                hideTrajectoryMenu()
+                currentTrajectory?.mode = DraggableTrajectory.Mode.EditPath
+            }
 
-                    2 -> {
-                        DraggableTrajectory.disableEditing()
-                        val trajectory: Trajectory? = DraggableTrajectory.currentTrajectory
-                        if (trajectory == null) {
+            1 -> {
+                hideTrajectoryMenu()
+                currentTrajectory?.mode = DraggableTrajectory.Mode.EditHeading
+            }
+
+            2 -> {
+                currentTrajectory?.mode = DraggableTrajectory.Mode.View
+                if (currentTrajectory?.let { traj -> showTrajectoryMenu(traj) } != true) {
 //                            window.alert("Failed to create Trajectory!")
-                        } else {
-                            val json = DraggableTrajectory.toJSON()
-                            setLocalStorageItem(GUIApp.trajectoryKey, json)
-                            TimeManager.listeners += trajectoryListener
-                            TimeManager.duration = trajectory.duration()
-                            Robot.pose = trajectory.start()
-                            setShowTrajectory(true)
-                        }
+                } else {
+                    val json = currentTrajectory?.serializableTrajectory()?.toJSON()
+                    if (json != null) {
+                        setLocalStorageItem(GUIApp.trajectoryKey, json)
                     }
                 }
             }
         }
+    }
+
+    private val json = Json { prettyPrint = false }
 
     private val trajectoryConfigMenu = viewBuilder {
         visible = false
         layout = verticalLayout(this)
-        +PushButton("Start").apply {
+        PushButton("Start").apply {
             size = Size(160, 35)
             idealSize = size
             pressedChanged += { _, _, new ->
@@ -164,20 +274,11 @@ object Settings : View() {
                 initialValue,
                 1,
                 false,
-                {}
+                setter
             ).apply {
 //                this.insets = Insets(2.0)
-                this.width = 70.0
-                this.focusChanged += { _, _, new ->
-                    if (!new) setter(this.value)
-                }
-                this.keyChanged += object : KeyListener {
-                    override fun pressed(event: KeyEvent) {
-                        if (event.code == KeyCode.Enter || event.code == KeyCode.NumpadEnter) {
-                            setter(this@apply.value)
-                        }
-                    }
-                }
+                this.minimumSize = Size(100.0, 70.0)
+                this.idealSize = minimumSize
             }
         }
 
@@ -195,8 +296,8 @@ object Settings : View() {
         }
 
         fun updateTrajectory() {
-            DraggableTrajectory.recomputeTrajectory()
-            val trajectory = DraggableTrajectory.currentTrajectory ?: run {
+            currentTrajectory?.recomputeTrajectory()
+            val trajectory = currentTrajectory?.currentTrajectory ?: run {
 //                window.alert("Failed to satisfy constraints!")
                 return
             }
@@ -205,29 +306,27 @@ object Settings : View() {
             ScrubBar.rerender()
         }
 
-        listOf(constraints::maxVel, constraints::maxAccel).forEach { prop ->
-            +viewBuilder {
-                layout = HorizontalFlowLayout(verticalAlignment = VerticalAlignment.Middle)
-                +Label("${prop.name}:")
-                +createNumberField(prop.get()) {
-                    prop.set(it)
-                    updateTrajectory()
-                }
-            }
-        }
-
-        listOf(constraints::maxAngVel, constraints::maxAngAccel).forEach { prop ->
-            +viewBuilder {
-                layout = HorizontalFlowLayout(verticalAlignment = VerticalAlignment.Middle)
-                +Label("${prop.name}:")
-                +createNumberField(prop.get().degrees) {
-                    prop.set(it.deg)
-                    updateTrajectory()
-                }.apply { format = { "$it°" } }
-            }
-        }
-
-        doLayout()
+//        listOf(constraints::maxVel, constraints::maxAccel).forEach { prop ->
+//            +viewBuilder {
+//                layout = HorizontalFlowLayout(verticalAlignment = VerticalAlignment.Middle)
+//                +Label("${prop.name}:")
+//                +createNumberField(prop.get()) {
+//                    prop.set(it)
+//                    updateTrajectory()
+//                }
+//            }
+//        }
+//
+//        listOf(constraints::maxAngVel, constraints::maxAngAccel).forEach { prop ->
+//            +viewBuilder {
+//                layout = HorizontalFlowLayout(verticalAlignment = VerticalAlignment.Middle)
+//                +Label("${prop.name}:")
+//                +createNumberField(prop.get().degrees) {
+//                    prop.set(it.deg)
+//                    updateTrajectory()
+//                }.apply { format = { "$it°" } }
+//            }
+//        }
     }
 
 //    val subPieceList = mutableListModelOf<PieceWithData>()
@@ -253,12 +352,18 @@ object Settings : View() {
         minimumSize = Size(230.0, 100.0)
         width = minimumSize.width
         insets = Insets(left = 10.0)
+        //Just resetting all UI components
+        currentTrajectory = DraggableTrajectory(
+            TrajectoryMetadata.fromTrajectory(
+                SerializableTrajectory(StartPiece(Pose2d()), mutableListOf())
+            )
+        )
+        currentTrajectory = null
         val padding = object : View() {
             init {
                 size = Size(100.0, 200.0)
                 layout = verticalLayout(this)
-                children += listOf(exportButton, fieldImageButton, control, trajectoryConfigMenu)
-                doLayout()
+                children += listOf(fieldImageButton, trajectorySelect, exportButton, control, trajectoryConfigMenu)
             }
         }
         children += padding

@@ -44,7 +44,7 @@ interface DrivePathFollower : DriveComponent {
                 end = { setDriveSignal(DriveSignal()) },
                 requirements = setOf(this)
             )
-        } else Command.emptyCommand()
+        } else Command.empty()
     }
 
     /**

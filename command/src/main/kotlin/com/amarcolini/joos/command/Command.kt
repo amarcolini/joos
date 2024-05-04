@@ -36,7 +36,7 @@ abstract class Command {
          * Creates a command that does nothing.
          */
         @JvmStatic
-        fun emptyCommand(): InstantCommand = InstantCommand {}
+        fun empty(): InstantCommand = InstantCommand {}
     }
 
     /**

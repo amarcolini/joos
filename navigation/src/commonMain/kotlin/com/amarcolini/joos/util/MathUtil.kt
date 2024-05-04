@@ -137,11 +137,11 @@ internal fun signVar(polynomial: DoubleArray, pascalsTriangle: Array<IntArray>):
  * is recommended to compute this once and pass it to each consecutive function call to improve performance.
  */
 fun isolateRoots(
-    polynomial: DoubleArray,
-    pascalsTriangle: Array<IntArray> = generatePascalsTriangle(polynomial.size)
+    polynomial: Polynomial,
+    pascalsTriangle: Array<IntArray> = generatePascalsTriangle(polynomial.coeffs.size)
 ): List<ClosedFloatingPointRange<Double>> {
-    var n = polynomial.size
-    val l = arrayListOf(Triple(0, 0, polynomial))
+    var n = polynomial.coeffs.size
+    val l = arrayListOf(Triple(0, 0, polynomial.coeffs.copyOf()))
     val isol = ArrayList<Triple<Int, Int, Int>>()
     while (l.isNotEmpty()) {
         var (c, k, q) = l.removeAt(0)
@@ -162,19 +162,8 @@ fun isolateRoots(
     }
     return isol.map { (c, k, h) ->
         val denom = (1 shl k).toDouble()
-        c / denom .. (c + h) / denom
+        c / denom..(c + h) / denom
     }
-}
-
-/**
- * Evaluates [polynomial] at [x].
- */
-fun evaluatePolynomial(polynomial: DoubleArray, x: Double): Double {
-    var result = 0.0
-    for (c in polynomial) {
-        result = result * x + c
-    }
-    return result
 }
 
 fun cos(angle: Angle): Double = angle.cos()

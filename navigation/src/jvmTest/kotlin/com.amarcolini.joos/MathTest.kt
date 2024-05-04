@@ -5,6 +5,8 @@ import com.amarcolini.joos.geometry.Vector2d
 import com.amarcolini.joos.kinematics.SwerveKinematics
 import com.amarcolini.joos.path.*
 import com.amarcolini.joos.serialization.format
+import com.amarcolini.joos.trajectory.TrajectoryBuilder
+import com.amarcolini.joos.trajectory.constraints.GenericConstraints
 import com.amarcolini.joos.util.*
 import org.apache.commons.math3.util.FastMath
 import org.junit.jupiter.api.Test
@@ -62,7 +64,7 @@ class MathTest {
         val c = -0.1
         val roots = solveQuadratic(a, b, c).filter { it in (0.0..1.0) }
             val computedRoots = isolateRoots(
-            doubleArrayOf(a, b, c)
+            Polynomial(a, b, c)
         )
         println(roots)
         println(computedRoots)
@@ -210,5 +212,29 @@ class MathTest {
                 )
             }
         )
+    }
+
+    @Test
+    fun benchmarkCompleteProfile() {
+        logBenchmark(3_000, 200,
+            "current" to {
+                val traj = TrajectoryBuilder(
+                    Pose2d(), false, GenericConstraints()
+                ).splineToSplineHeading(Pose2d(-10.0, 10.0, 0.deg), 180.deg)
+                    .forward(10.0)
+                    .splineTo(Vector2d(-40.0, -20.0), 150.deg)
+                    .build()
+            })
+    }
+
+    @Test
+    fun testPolynomialOperations() {
+        val a = Polynomial(2.0, 3.0, 5.0)
+        val b = Polynomial(4.0, 1.0)
+
+        assert(a + b == Polynomial(2.0, 7.0, 6.0))
+        assert(a * b == Polynomial(8.0, 14.0, 23.0, 5.0))
+        assert(a.deriv() == Polynomial(4.0, 3.0))
+        assert(a[3.0] == 32.0)
     }
 }

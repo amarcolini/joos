@@ -81,22 +81,17 @@ object LetsPlotUtil {
         return fig
     }
 
-    fun createPathLayer(length: Double, color: Any?, points: (Double) -> Vector2d): geomPath {
-        val pathData = arrayListOf(
-            arrayListOf<Double>(),
-            arrayListOf(),
-        )
-        DoubleProgression.fromClosedInterval(0.0, length, 40)
-            .forEach {
-                val point = points(it)
-                pathData[0].add(point.x)
-                pathData[1].add(point.y)
-            }
+    fun createPathLayer(color: Any?, points: List<Vector2d>): geomPath {
         return geomPath(
-            data = mapOf("x" to pathData[0], "y" to pathData[1]),
+            data = mapOf("x" to points.map { it.x }, "y" to points.map { it.y }),
             color = color,
             size = 1.0
         ) { x = "x"; y = "y" }
+    }
+
+    fun createPathLayer(length: Double, color: Any?, points: (Double) -> Vector2d): geomPath {
+        return createPathLayer(color, DoubleProgression.fromClosedInterval(0.0, length, 40)
+            .map { points(it) })
     }
 
     fun createPathLayer(path: Path, color: Any? = "black"): geomPath =

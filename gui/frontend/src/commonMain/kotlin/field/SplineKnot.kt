@@ -12,7 +12,7 @@ import io.nacular.doodle.geometry.*
 import io.nacular.doodle.system.SystemPointerEvent
 import kotlin.math.roundToInt
 
-abstract class SplineKnot : FieldEntity() {
+abstract class SplineKnot internal constructor() : FieldEntity() {
     init {
         bounds = Rectangle(4.0, 4.0)
         center = origin
@@ -115,7 +115,7 @@ abstract class SplineKnot : FieldEntity() {
     }
 }
 
-class PathKnot : SplineKnot() {
+class PathKnot internal constructor() : SplineKnot() {
     override val point: Circle = Circle(origin, 1.75)
     override var startKnot: Circle = Circle(1.0)
     override var endKnot: Circle = Circle(1.0)
@@ -163,7 +163,7 @@ class PathKnot : SplineKnot() {
     }
 }
 
-class HeadingKnot : SplineKnot() {
+class HeadingKnot internal constructor() : SplineKnot() {
     override val point: Circle = Circle(origin, 1.75)
     override var startKnot: Circle = Circle(1.0)
     override var endKnot: Circle = Circle(1.0)

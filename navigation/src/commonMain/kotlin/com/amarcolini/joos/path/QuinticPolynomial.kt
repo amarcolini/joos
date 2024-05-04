@@ -1,9 +1,5 @@
 package com.amarcolini.joos.path
 
-import com.amarcolini.joos.util.EPSILON
-import com.amarcolini.joos.util.evaluatePolynomial
-import com.amarcolini.joos.util.generatePascalsTriangle
-import com.amarcolini.joos.util.isolateRoots
 
 /**
  * Quintic Bezier Polynomial
@@ -59,13 +55,20 @@ class QuinticPolynomial(
             dcoeffs[2] * t * t +
             dcoeffs[3] * t + dcoeffs[4]
 
+    val d2coeffs = doubleArrayOf(
+        20 * ((p5 - 5 * p4 + 10 * p3 - 10 * p2 + 5 * p1 - p0)),
+        20 * (3 * p4 - 12 * p3 + 18 * p2 - 12 * p1 + 3 * p0),
+        20 * (3 * p3 - 9 * p2 + 9 * p1 - 3 * p0),
+        20 * (p2 - 2 * p1 + p0)
+    )
+
     /**
      * Returns the second derivative of the polynomial at `t`.
      */
-    fun secondDeriv(t: Double): Double = 20 * ((p5 - 5 * p4 + 10 * p3 - 10 * p2 + 5 * p1 - p0) * t * t * t +
-            (3 * p4 - 12 * p3 + 18 * p2 - 12 * p1 + 3 * p0) * t * t +
-            (3 * p3 - 9 * p2 + 9 * p1 - 3 * p0) * t +
-            p2 - 2 * p1 + p0)
+    fun secondDeriv(t: Double): Double = d2coeffs[0] * t * t * t +
+            d2coeffs[1] * t * t +
+            d2coeffs[2] * t +
+            d2coeffs[3]
 
     /**
      * Returns the third derivative of the polynomial at `t`.

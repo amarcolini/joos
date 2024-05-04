@@ -13,7 +13,7 @@ import io.nacular.doodle.geometry.Rectangle
 import kotlin.math.PI
 import kotlin.math.min
 
-class WaypointPopup : FieldEntity() {
+internal class WaypointPopup : FieldEntity() {
     init {
         bounds = Rectangle(30.0, 30.0)
     }

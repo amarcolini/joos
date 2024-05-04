@@ -2,12 +2,10 @@ package com.amarcolini.joos.hardware.drive
 
 import com.amarcolini.joos.command.Command
 import com.amarcolini.joos.command.FunctionalCommand
-import com.amarcolini.joos.drive.Drive
 import com.amarcolini.joos.drive.DriveSignal
 import com.amarcolini.joos.followers.TrajectoryFollower
 import com.amarcolini.joos.geometry.Angle
 import com.amarcolini.joos.geometry.Pose2d
-import com.amarcolini.joos.hardware.Motor
 import com.amarcolini.joos.trajectory.Trajectory
 import com.amarcolini.joos.trajectory.TrajectoryBuilder
 import com.amarcolini.joos.trajectory.constraints.TrajectoryConstraints
@@ -68,7 +66,7 @@ interface DriveTrajectoryFollower : DriveComponent {
                 end = { setDriveSignal(DriveSignal()) },
                 requirements = setOf(this)
             )
-        } else Command.emptyCommand()
+        } else Command.empty()
     }
 
     /**

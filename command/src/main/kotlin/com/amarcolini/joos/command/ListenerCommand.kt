@@ -1,6 +1,5 @@
 package com.amarcolini.joos.command
 
-import java.util.function.BiConsumer
 import java.util.function.Consumer
 
 /**
@@ -11,7 +10,7 @@ import java.util.function.Consumer
  * @param onEnd the action to run when this command is ended. Takes in whether it was interrupted as a parameter.
  */
 class ListenerCommand @JvmOverloads constructor(
-    private val command: Command = emptyCommand(),
+    private val command: Command = empty(),
     @JvmField var onInit: Runnable = Runnable {},
     @JvmField var onExecute: Runnable = Runnable {},
     @JvmField var onEnd: Consumer<Boolean> = Consumer<Boolean> {}

@@ -15,7 +15,7 @@ class SelectCommand @JvmOverloads constructor(
         vararg requirements: Component
     ) : this(command, requirements.toSet())
 
-    private var selected: Command = emptyCommand()
+    private var selected: Command = empty()
 
     override fun init() {
         selected = command.get()

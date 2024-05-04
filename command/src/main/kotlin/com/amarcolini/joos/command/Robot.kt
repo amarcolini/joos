@@ -8,6 +8,7 @@ import com.qualcomm.robotcore.eventloop.opmode.OpMode
 import com.qualcomm.robotcore.eventloop.opmode.OpModeRegistrar
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp
 import com.qualcomm.robotcore.hardware.HardwareMap
+import com.amarcolini.joos.dashboard.SuperTelemetry
 import org.firstinspires.ftc.ftccommon.external.OnCreateEventLoop
 import kotlin.reflect.full.hasAnnotation
 
@@ -39,7 +40,13 @@ abstract class Robot : CommandInterface {
      * The current hardware map.
      */
     @JvmField
-    val hMap: HardwareMap = opMode.hardwareMap
+    protected val hMap: HardwareMap = opMode.hardwareMap
+
+    /**
+     * [SuperTelemetry].
+     */
+    @JvmField
+    protected val telem = SuperTelemetry
 
     val gamepad: MultipleGamepad = CommandScheduler.gamepad
         ?: throw IllegalStateException("A Robot cannot be instantiated without an active OpMode.")

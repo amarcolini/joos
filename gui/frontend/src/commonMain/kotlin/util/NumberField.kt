@@ -2,6 +2,9 @@ package util
 
 import com.amarcolini.joos.serialization.format
 import io.nacular.doodle.controls.text.TextField
+import io.nacular.doodle.event.KeyCode
+import io.nacular.doodle.event.KeyEvent
+import io.nacular.doodle.event.KeyListener
 import io.nacular.doodle.geometry.Size
 import io.nacular.doodle.layout.Insets
 import io.nacular.doodle.utils.roundToNearest
@@ -21,17 +24,28 @@ class NumberField(
             field = value
         }
 
+    private val roundTo = 10.0.pow(-decimals)
+    private val regex = Regex((if (isNegative) "-?" else "") + "\\d+(?:\\.\\d+)?")
+    private fun updateValue() {
+        regex.find(text)?.value?.toDoubleOrNull()?.roundToNearest(roundTo)?.let(numberFormat)?.also {
+            value = it
+        }
+    }
+
     init {
         borderVisible = true
         minimumSize = Size(80.0, 40.0)
         size = minimumSize
         purpose = Purpose.Number
         insets = Insets(2.0)
-        val roundTo = 10.0.pow(-decimals)
-        val regex = Regex((if (isNegative) "-?" else "") + "\\d+(?:\\.\\d+)?")
-        textChanged += { _, _, new ->
-            regex.find(new)?.value?.toDoubleOrNull()?.roundToNearest(roundTo)?.let(numberFormat)?.also {
-                value = it
+        this.focusChanged += { _, _, new ->
+            if (!new) updateValue()
+        }
+        this.keyChanged += object : KeyListener {
+            override fun pressed(event: KeyEvent) {
+                if (event.code == KeyCode.Enter || event.code == KeyCode.NumpadEnter) {
+                    updateValue()
+                }
             }
         }
     }

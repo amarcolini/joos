@@ -41,7 +41,7 @@ abstract class CommandOpMode : LinearOpMode(), CommandInterface {
         }
     }
 
-    open inner class InitializerDelegate<T> constructor(
+    open inner class InitializerDelegate<T>(
         private val onInit: () -> T,
     ) {
         private var output: T? = null

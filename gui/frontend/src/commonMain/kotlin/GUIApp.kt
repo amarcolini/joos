@@ -1,14 +1,19 @@
 //import org.kodein.di.*
 import animation.ScrubBar
+import animation.TimeManager
 import com.amarcolini.joos.frontend.MR
+import com.amarcolini.joos.trajectory.Trajectory
 import dev.icerock.moko.resources.desc.image.asImageDesc
 import dev.icerock.moko.resources.getImageByFileName
+import field.DraggableTrajectory
 import field.Field
+import field.Robot
 import io.nacular.doodle.animation.Animator
 import io.nacular.doodle.application.Application
 import io.nacular.doodle.controls.PopupManager
 import io.nacular.doodle.controls.modal.ModalManager
 import io.nacular.doodle.controls.popupmenu.MenuFactory
+import io.nacular.doodle.controls.popupmenu.MenuFactoryImpl
 import io.nacular.doodle.core.Display
 import io.nacular.doodle.core.Layout.Companion.simpleLayout
 import io.nacular.doodle.core.View
@@ -33,7 +38,8 @@ import util.FlexColumn
 import util.FlexRow
 import util.GROW
 
-class GUIApp(
+internal class GUIApp(
+    config: GUIConfig,
     display: Display,
     imageLoader: ImageLoader,
     focusManager: FocusManager,
@@ -91,6 +97,10 @@ class GUIApp(
         Unopened, Active, Shutdown
     }
 
+    data class GUIConfig(
+        val showSidePanel: Boolean = true,
+    )
+
     init {
         activeState = State.Active
         Companion.appScope = MainScope()
@@ -120,7 +130,7 @@ class GUIApp(
             }
         }
         display += viewBuilder {
-            +Settings
+            if (config.showSidePanel) +Settings
             +viewBuilder {
                 +Field
                 +ScrubBar

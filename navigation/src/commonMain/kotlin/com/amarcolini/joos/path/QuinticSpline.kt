@@ -1,12 +1,10 @@
 package com.amarcolini.joos.path
 
 import com.amarcolini.joos.geometry.Vector2d
-import com.amarcolini.joos.util.EPSILON
-import com.amarcolini.joos.util.evaluatePolynomial
-import com.amarcolini.joos.util.generatePascalsTriangle
-import com.amarcolini.joos.util.isolateRoots
+import com.amarcolini.joos.util.*
 import kotlin.jvm.JvmOverloads
-import kotlin.math.absoluteValue
+import kotlin.math.min
+import kotlin.math.sign
 
 /**
  * Quintic Bezier Spline
@@ -100,12 +98,51 @@ class QuinticSpline(
         generatePascalsTriangle(10)
     }
 
-    val coeffs = x.coeffs.zip(y.coeffs).map {
-        Vector2d(it.first, it.second)
+    val coeffs by lazy {
+        x.coeffs.zip(y.coeffs).map {
+            Vector2d(it.first, it.second)
+        }
     }
 
-    val dcoeffs = x.dcoeffs.zip(y.dcoeffs).map {
-        Vector2d(it.first, it.second)
+    val dcoeffs by lazy {
+        x.dcoeffs.zip(y.dcoeffs).map {
+            Vector2d(it.first, it.second)
+        }
+    }
+
+    val d2coeffs by lazy {
+        x.d2coeffs.zip(y.d2coeffs).map {
+            Vector2d(it.first, it.second)
+        }
+    }
+
+    val preCurvature by lazy {
+        val dx = Polynomial(*x.dcoeffs)
+        val d2x = Polynomial(*x.d2coeffs)
+        val dy = Polynomial(*y.dcoeffs)
+        val d2y = Polynomial(*y.d2coeffs)
+        val d3x = d2x.deriv()
+        val d3y = d2y.deriv()
+        ((dx * d3y - dy * d3x) * (dx * dx + dy * dy)) - ((dx * d2y - dy * d2x) * (dx * d2x + dy * d2y) * 3.0)
+    }
+
+    fun maxCurvatures(tolerance: Double = 0.1): List<Double> {
+        val p = preCurvature
+        val roots = isolateRoots(p).mapNotNull {
+            val start = p[it.start]
+            val end = p[it.endInclusive]
+            if (sign(start) == sign(end)) return@mapNotNull null
+            var (a, b) = if (start < end) it.start to it.endInclusive else it.endInclusive to it.start
+            while (b - a >= tolerance) {
+                val m = (a + b) / 2
+                val result = p[m]
+                if (result == 0.0) return@mapNotNull m
+                if (result < 0.0) a = m
+                else b = m
+            }
+            (a + b) / 2
+        }
+        return roots
     }
 
     private val invLeadingCoefficient by lazy {
@@ -138,23 +175,21 @@ class QuinticSpline(
      * but with the Modified Uspensky algorithm instead of using a Sturm sequence.
      */
     fun project(p: Vector2d, tolerance: Double): Double {
-        val g = preG.copyOf()
-        g[5] = g[5] + (p dot dcoeffs[0]) / invLeadingCoefficient
-        g[6] = g[6] + (p dot dcoeffs[1]) / invLeadingCoefficient
-        g[7] = g[7] + (p dot dcoeffs[2]) / invLeadingCoefficient
-        g[8] = g[8] + (p dot dcoeffs[3]) / invLeadingCoefficient
-        g[9] = g[9] + (p dot coeffs[4]) / invLeadingCoefficient
+        val gCoeffs = preG.copyOf()
+        gCoeffs[5] = gCoeffs[5] + (p dot dcoeffs[0]) / invLeadingCoefficient
+        gCoeffs[6] = gCoeffs[6] + (p dot dcoeffs[1]) / invLeadingCoefficient
+        gCoeffs[7] = gCoeffs[7] + (p dot dcoeffs[2]) / invLeadingCoefficient
+        gCoeffs[8] = gCoeffs[8] + (p dot dcoeffs[3]) / invLeadingCoefficient
+        gCoeffs[9] = gCoeffs[9] + (p dot coeffs[4]) / invLeadingCoefficient
+        val g = Polynomial(*gCoeffs)
         val roots = isolateRoots(g, pascalsTriangle).mapNotNull {
-            if (!(evaluatePolynomial(g, it.start) < 0 && evaluatePolynomial(
-                    g,
-                    it.endInclusive
-                ) > 0)
+            if (!(g[it.start] < 0 && g[it.endInclusive] > 0)
             ) return@mapNotNull null
             var a = it.start
             var b = it.endInclusive
             while (b - a >= tolerance) {
                 val m = (a + b) / 2
-                val result = evaluatePolynomial(g, m)
+                val result = g[m]
                 if (result == 0.0) return@mapNotNull m to (p - internalGet(m)).squaredNorm()
                 if (result < 0.0) a = m
                 else b = m

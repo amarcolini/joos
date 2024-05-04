@@ -14,7 +14,7 @@ import io.nacular.measured.units.Measure
 //    var paint: Paint = ColorPaint(Color.Black),
 //    private val thickness: Double = 1.5
 //) : FieldEntity() {
-object Robot : PoseFieldEntity() {
+internal object Robot : PoseFieldEntity() {
     private val paint: Paint = ColorPaint(Color.Black)
     private const val thickness: Double = 1.5
 
@@ -57,6 +57,7 @@ object Robot : PoseFieldEntity() {
     private var clickBounds: Rectangle = Rectangle()
 
     init {
+        this.zOrder = 100
         computeGeometry()
         clipCanvasToBounds = false
     }

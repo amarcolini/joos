@@ -1,6 +1,5 @@
 package field
 
-import GUIApp
 import GUIApp.Companion.focusManager
 import GUIApp.Companion.menus
 import GUIApp.Companion.modalManager
@@ -27,15 +26,30 @@ import io.nacular.doodle.system.SystemPointerEvent
 import io.nacular.doodle.utils.addOrAppend
 import kotlinx.coroutines.launch
 import kotlinx.serialization.Transient
+import settings.FieldImageMenu
 import settings.KnotMenu
 import util.NumberField
 import util.TrajectoryMetadata
 import util.TrajectoryMetadata.Companion.with
 import util.TrajectoryMetadata.Companion.withData
+import kotlin.jvm.JvmStatic
 import kotlin.math.max
 import kotlin.properties.Delegates
 
-object DraggableTrajectory : EntityGroup() {
+class DraggableTrajectory(var trajectory: TrajectoryMetadata) : EntityGroup() {
+    companion object {
+        @JvmStatic
+        internal fun loadFromStorage(): DraggableTrajectory? {
+            return getLocalStorageItem(GUIApp.trajectoryKey)?.let {
+                try {
+                    DraggableTrajectory(TrajectoryMetadata.fromTrajectory(SerializableTrajectory.fromJSON(it)))
+                } catch (_: Exception) {
+                    null
+                }
+            }
+        }
+    }
+
     private val knots: MutableList<SplineKnot> = mutableListOf()
 
     enum class Mode {
@@ -52,31 +66,14 @@ object DraggableTrajectory : EntityGroup() {
         }
     }
 
-    var trajectory: TrajectoryMetadata = TrajectoryMetadata.fromTrajectory(
-        getLocalStorageItem(GUIApp.trajectoryKey)?.let {
-            try {
-                SerializableTrajectory.fromJSON(it)
-            } catch (_: Exception) {
-                null
-            }
-        }
-            ?: SerializableTrajectory(
-                StartPiece(Pose2d()),
-                mutableListOf(
-                    LinePiece(Vector2d(30.0, 30.0), SplineHeading(45.deg)),
-                    SplinePiece(Vector2d(40.0, 0.0), 30.deg)
-                )
-            )
-    )
-
     val numPieces get() = trajectory.pieceData.size
 
     private val pathEntity: PathEntity =
-        PathEntity(trajectory.serializableTrajectory().createPath().path, Stroke(Color.Green))
+        PathEntity(this.trajectory.serializableTrajectory().createPath().path, Stroke(Color.Green))
 
     val currentPath: Path get() = pathEntity.path
 
-    data class TempGenericConstraints constructor(
+    data class TempGenericConstraints(
         var maxVel: Double = 30.0,
         var maxAccel: Double = 30.0,
         override var maxAngVel: Angle = 180.deg,
@@ -120,6 +117,7 @@ object DraggableTrajectory : EntityGroup() {
 
     fun recomputeTrajectory() {
         trajectoryIsUpdated = false
+        currentTrajectory
     }
 
     private fun update() {
@@ -133,7 +131,7 @@ object DraggableTrajectory : EntityGroup() {
         return serializableTrajectory().toJSON().replace(Regex("(?<=\\d\\.\\d)\\d+"), "")
     }
 
-    fun disableEditing() {
+    private fun disableEditing() {
         children.removeAll(knots)
         knots.clear()
     }
@@ -188,11 +186,14 @@ object DraggableTrajectory : EntityGroup() {
     ) {
         val listener = PointerListener.pressed { event ->
             if (SystemPointerEvent.Button.Button2 in event.buttons && SystemPointerEvent.Button.Button1 !in event.buttons) {
+                println("launching coroutine!")
                 GUIApp.appScope.launch {
+                    println("launching modal manager!")
                     modalManager {
                         pointerOutsideModalChanged += PointerListener.pressed {
                             completed(Unit)
                         }
+                        println("instantiating modal!")
                         ModalManager.RelativeModal(menu(this::completed), knot) { modal, knot ->
                             (modal.top eq knot.bottom + 10)..Strong
                             (modal.top greaterEq 5)..Strong
@@ -208,7 +209,7 @@ object DraggableTrajectory : EntityGroup() {
 
                             modal.width.preserve
                             modal.height.preserve
-                        }
+                        }.also { println("done!") }
                     }
                 }
             }
@@ -226,6 +227,7 @@ object DraggableTrajectory : EntityGroup() {
             knot,
             knot.startVisible || knot.endVisible
         )
+        FieldImageMenu{}
     }
 
     private fun makeMenu(
@@ -320,7 +322,7 @@ object DraggableTrajectory : EntityGroup() {
         }
     }
 
-    internal fun initializePathEditing() {
+    private fun initializePathEditing() {
         disableEditing()
         knots += PathKnot().apply {
             val startData = trajectory.startData
@@ -328,7 +330,7 @@ object DraggableTrajectory : EntityGroup() {
             position = startPos().toPoint()
             tangent = startData.start.tangent
             startVisible = false
-            endVisible = trajectory.pieceData[0].trajectoryPiece is SplinePiece
+            endVisible = trajectory.pieceData.getOrNull(0)?.trajectoryPiece is SplinePiece
             onChange += {
                 startData.start.pose = Pose2d(it.position.toVector2d(), startData.start.pose.heading)
                 startData.start.tangent = it.tangent
@@ -396,7 +398,7 @@ object DraggableTrajectory : EntityGroup() {
         recomputeTransforms()
     }
 
-    internal fun initializeHeadingEditing() {
+    private fun initializeHeadingEditing() {
         disableEditing()
         knots += HeadingKnot().apply {
             val startData = trajectory.startData

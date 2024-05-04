@@ -3,6 +3,12 @@ package field
 import GUIApp
 import com.amarcolini.joos.geometry.Pose2d
 import com.amarcolini.joos.geometry.Vector2d
+import com.amarcolini.joos.path.heading.SplineHeading
+import com.amarcolini.joos.serialization.LinePiece
+import com.amarcolini.joos.serialization.SerializableTrajectory
+import com.amarcolini.joos.serialization.SplinePiece
+import com.amarcolini.joos.serialization.StartPiece
+import com.amarcolini.joos.util.deg
 import com.amarcolini.joos.util.rad
 import io.nacular.doodle.core.Layout
 import io.nacular.doodle.core.View
@@ -12,12 +18,15 @@ import io.nacular.doodle.event.PointerListener.Companion.pressed
 import io.nacular.doodle.geometry.Point
 import io.nacular.doodle.geometry.Rectangle
 import io.nacular.doodle.image.Image
+import io.nacular.doodle.utils.ObservableList
 import io.nacular.doodle.utils.observable
 import io.nacular.doodle.utils.roundToNearest
 import io.nacular.measured.units.Angle
 import io.nacular.measured.units.Measure
+import settings.Settings
 import util.GROW
 import util.ObservableMap
+import util.TrajectoryMetadata
 import kotlin.math.PI
 import kotlin.math.min
 
@@ -40,7 +49,7 @@ var View.cPos
 /**
  * The field container.
  */
-object Field : View() {
+internal object Field : View() {
     val backgrounds: MutableMap<String, Image?> = ObservableMap(mutableMapOf(), ::rerender)
     const val fieldSize = 144.0
 
@@ -48,13 +57,22 @@ object Field : View() {
 
     fun setBackgroundPaint(paint: Paint) {
         renderBackground = {
-            rect(boundingBox, paint)
+            //workaround to fix weird artifacts on desktop
+            rect(Rectangle(
+                boundingBox.x - 1,
+                boundingBox.y - 1,
+                boundingBox.width + 1,
+                boundingBox.height + 1,
+            ), paint)
         }
     }
 
+    public override val children: ObservableList<View>
+        get() = super.children
+
     init {
+//        setBackgroundPaint(Color.White.paint)
         idealSize = GROW
-        children += DraggableTrajectory
         children += Robot.also { it.visible = false }
 
 //        val stroke = Stroke(Color.Green)
@@ -96,12 +114,12 @@ object Field : View() {
     override fun render(canvas: Canvas) {
         val size = min(width, height)
         val fieldRect = Rectangle((width - size) * 0.5, (height - size) * 0.5, size, size)
-        canvas.clear()
+//        canvas.clear()
         canvas.renderBackground(fieldRect)
         backgrounds["Generic"]?.let {
             canvas.image(it, fieldRect)
         } ?: run {
-            canvas.rect(fieldRect, Stroke(thickness = 2.0))
+            canvas.rect(fieldRect, Stroke(Color.Black, 2.0))
         }
     }
 }

@@ -19,12 +19,12 @@ class DashboardTest {
         } catch (e: Exception) {
             e.printStackTrace()
         }
-        val initialBoolean = ConfigOpMode.myDataClass.isHappy
+        ConfigOpMode.myDataClass = ConfigOpMode.Billy(isHappy = false)
         ConfigHandler.internalModel.get<CustomVariable>("ConfigOpMode")
             ?.get<CustomVariable>("myDataClass")
             ?.get<BasicVariable<Boolean>>("isHappy")
-            ?.set(!initialBoolean)
-        assert(ConfigOpMode.myDataClass.isHappy == !initialBoolean)
+            ?.set(true)
+        assert(ConfigOpMode.myDataClass.isHappy)
 
         ConfigHandler.internalModel.get<CustomVariable>("ConfigOpMode")
             ?.get<CustomVariable>("myArray")
@@ -33,8 +33,8 @@ class DashboardTest {
         assert(ConfigOpMode.myArray[0] == 6.9)
 
         ConfigHandler.internalModel.get<CustomVariable>("ConfigOpMode")
-            ?.get<BasicVariable<Double>>("myFloat")
-            ?.set(6.9)
+            ?.get<BasicVariable<Float>>("myFloat")
+            ?.set(6.9f)
         assert(ConfigOpMode.myFloat == 6.9f)
 
         printConfigVariable(ConfigHandler.internalModel)
@@ -101,7 +101,7 @@ object ConfigResults {
 
 class ConfigOpMode {
     companion object {
-        var myArray = arrayOf(0.0, 1.0, 1.5)
+        val myArray = arrayOf(0.0, 1.0, 1.5)
 
         var myFloat = 8f
 

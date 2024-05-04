@@ -70,12 +70,12 @@ class CommandTest {
     @Test
     fun testConcurrentModification() {
         var result = false
-        val cmd = Command.emptyCommand().runForever()
+        val cmd = Command.empty().runForever()
             .onEnd {
                 result = true
             }
         repeat(3) {
-            scheduler.schedule(Command.emptyCommand())
+            scheduler.schedule(Command.empty())
         }
         scheduler.schedule(Command.of {
             scheduler.schedule(Command.of {

@@ -151,7 +151,11 @@ abstract class ParametricCurve {
      * Computes the curvature of a parametric curve at the internal parameter [t].
      */
     @JvmOverloads
-    fun curvature(s: Double, t: Double = reparam(s)): Double = tangentAngleDeriv(s, t).radians
+    fun curvature(s: Double, t: Double = reparam(s)): Double {
+        val internalDeriv = internalDeriv(t)
+        val internalSecondDeriv = internalSecondDeriv(t)
+        return (internalDeriv cross internalSecondDeriv) / internalDeriv.squaredNorm().pow(1.5)
+    }
 
     /**
      * Returns the nearest point on the curve in terms of the internal parameter [t].

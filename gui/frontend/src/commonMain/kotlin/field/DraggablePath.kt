@@ -8,7 +8,7 @@ import io.nacular.doodle.drawing.LinearGradientPaint
 import io.nacular.doodle.drawing.Stroke
 import io.nacular.doodle.geometry.Point
 
-object DraggablePath : EntityGroup() {
+class DraggablePath : EntityGroup() {
     private val start = PathKnot().apply {
         startVisible = false
         lengthMode = SplineKnot.LengthMode.FREE_LENGTH

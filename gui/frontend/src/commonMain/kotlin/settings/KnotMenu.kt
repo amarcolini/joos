@@ -15,6 +15,7 @@ import io.nacular.doodle.drawing.darker
 import io.nacular.doodle.drawing.paint
 import io.nacular.doodle.geometry.Size
 import io.nacular.doodle.layout.Insets
+import io.nacular.doodle.layout.ListLayout
 import io.nacular.doodle.layout.WidthSource
 import io.nacular.doodle.layout.constraints.Strength.Companion.Weak
 import util.BetterListLayout
@@ -23,7 +24,7 @@ import util.BetterViewBuilder.Companion.viewBuilder
 import util.NumberField
 import kotlin.math.max
 
-object KnotMenu {
+internal object KnotMenu {
     private infix fun Label.with(other: View) = space(this, other) { (label, control) ->
         parent.height.writable eq max(control.height.readOnly, label.height.readOnly)
 

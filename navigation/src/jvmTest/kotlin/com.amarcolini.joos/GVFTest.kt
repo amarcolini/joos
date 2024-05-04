@@ -9,14 +9,14 @@ import com.amarcolini.joos.geometry.Angle
 import com.amarcolini.joos.geometry.Pose2d
 import com.amarcolini.joos.geometry.Vector2d
 import com.amarcolini.joos.kinematics.Kinematics
-import com.amarcolini.joos.path.CircularArc
-import com.amarcolini.joos.path.PathBuilder
-import com.amarcolini.joos.path.PositionPath
-import com.amarcolini.joos.path.PositionPathBuilder
+import com.amarcolini.joos.path.*
+import com.amarcolini.joos.trajectory.TrajectoryBuilder
+import com.amarcolini.joos.trajectory.constraints.GenericConstraints
 import com.amarcolini.joos.util.*
 import com.amarcolini.joos.util.PositionPathGVF.Companion.createRecticircle
 import org.jetbrains.letsPlot.export.ggsave
 import org.jetbrains.letsPlot.geom.geomPath
+import org.jetbrains.letsPlot.letsPlot
 import org.junit.jupiter.api.Test
 import utils.benchmark.logBenchmark
 import kotlin.math.PI
@@ -360,6 +360,40 @@ class GVFTest {
             Vector2d(20.0, 20.0)
         ) + createPathLayer(gvf.path)
         ggsave(plot, "circulararc.png")
+    }
+
+    @Test
+    fun testExtrema() {
+        val path = PathBuilder(Pose2d())
+            .splineTo(Vector2d(20.0, 30.0), 135.deg)
+            .build()
+        var plot = letsPlot() + LetsPlotUtil.createPathLayer(path)
+        val curve = (path.segments[0].curve as QuinticSpline)
+        val extrema = curve.maxCurvatures(0.01)
+
+        logBenchmark(1_000, 20, "basic" to {
+            val path2 = PathBuilder(Pose2d())
+                .splineTo(Vector2d(20.0, 30.0), 135.deg)
+                .preBuild()
+//            val curve2 = (path.segments[0].curve as QuinticSpline)
+//            val extrema2 = curve2.maxCurvatures(0.01)
+        }, "original" to {
+            val traj = TrajectoryBuilder(Pose2d(), false, GenericConstraints())
+                .splineTo(Vector2d(20.0, 30.0), 135.deg)
+                .build()
+        })
+        println(curve.preCurvature.coeffs.toList())
+        println(extrema.map { it to curve.curvature(0.0, it)})
+        println(curve.x.dcoeffs.toList())
+        println(curve.y.dcoeffs.toList())
+        println(curve.x.d2coeffs.toList())
+        println(curve.y.d2coeffs.toList())
+        extrema.map {
+            val point = curve.internalGet(it)
+            val deriv = curve.deriv(0.0, it).run { Vector2d(-y, x) } * 2.0
+            plot += createPathLayer("red", listOf(point + deriv, point - deriv))
+        }
+        ggsave(plot, "curvatureMax.png")
     }
 
     @Test
