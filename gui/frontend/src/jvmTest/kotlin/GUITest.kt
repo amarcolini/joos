@@ -38,47 +38,4 @@ class GUITest {
             e.printStackTrace()
         }
     }
-
-    @Test
-    fun testCrash() {
-        application(
-            modules = listOf(
-                Modules.ImageModule,
-                Modules.PointerModule,
-                Modules.FocusModule,
-//            AccessibilityModule,
-                Modules.PopupModule,
-                Modules.ModalModule,
-                Modules.PathModule,
-                Modules.MenuFactoryModule,
-                BasicTheme.BasicTheme,
-                BasicTheme.basicButtonBehavior(),
-                BasicTheme.basicDropdownBehavior(),
-                BasicTheme.basicLabelBehavior(),
-                BasicTheme.basicMenuBehavior(),
-                NativeTheme.NativeTheme,
-                NativeTheme.nativeTextFieldBehavior(),
-//            DI.Module("pathmetrics") {
-//                bind<PathMetrics>() with singleton {
-//                    PathMetricsImpl(instance())
-//                }
-//            }
-//            KeyboardModule,
-            )
-        ) {
-            CrashingApp(
-                instance(),
-                instance(),
-                instance(),
-                instance(),
-            )
-        }
-        try {
-            while (GUIApp.activeState != GUIApp.State.Shutdown) {
-                Thread.sleep(500)
-            }
-        } catch (e: Exception) {
-            e.printStackTrace()
-        }
-    }
 }

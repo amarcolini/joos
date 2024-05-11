@@ -2,7 +2,7 @@ package pathfinding
 
 import kotlin.math.min
 
-class DStarLite(val space: DStarSpace, var start: DStarSpace.Vertex, val goal: DStarSpace.Vertex) {
+class DStarLite<T : DStarSpace<T>.Vertex>(val space: DStarSpace<T>, var start: T, val goal: T) {
     data class Key(
         val first: Double,
         val second: Double
@@ -14,7 +14,8 @@ class DStarLite(val space: DStarSpace, var start: DStarSpace.Vertex, val goal: D
             else second.compareTo(other.second)
     }
 
-    private val queue = PriorityQueue<DStarSpace.Vertex> { a, b -> a.key.compareTo(b.key) }
+    private val queue = PriorityQueue<T> { a, b -> a.key.compareTo(b.key) }
+    private val queueItems: MutableMap<T, PriorityQueue<T>.Item> = mutableMapOf()
 
     private var kM = 0.0
     private var sLast = start
@@ -26,19 +27,37 @@ class DStarLite(val space: DStarSpace, var start: DStarSpace.Vertex, val goal: D
             it.g = Double.POSITIVE_INFINITY
         }
         goal.rhs = 0.0
-        queue += goal.also { it.key = Key(space.h(it, start) to 0.0) }
+        queueItems[goal] = queue.insert(goal.also { it.key = Key(space.h(start, goal) to 0.0) })
     }
 
     init {
         reset()
     }
 
+    fun getShortestPath(): List<T>? {
+        if (start.g == Double.POSITIVE_INFINITY) return null
+        var current = start
+        val list = mutableListOf(current)
+        for (i in 1..space.vertices.size) {
+            val result = space.successors(current).map {
+                it to space.c(current, it) + it.g
+            }.minBy { it.second }
+//            if (result.second == Double.POSITIVE_INFINITY) return null
+            current = result.first
+            list += current
+            if (current == goal) return list
+        }
+        println("timed out!")
+        return list
+    }
+
     fun computeShortestPath() {
         var u = queue.pop()
+        queueItems.remove(u)
         while (u.key <= calculateKey(start) || start.rhs > start.g) {
             val newKey = calculateKey(u)
             when {
-                u.key < newKey -> queue.insert(u.also { it.key = newKey })
+                u.key < newKey -> queueItems[u] = queue.insert(u.also { it.key = newKey })
                 u.g > u.rhs -> {
                     u.g = u.rhs
                     space.predecessors(u).forEach { s ->
@@ -58,20 +77,25 @@ class DStarLite(val space: DStarSpace, var start: DStarSpace.Vertex, val goal: D
                 }
             }
             u = queue.pop()
+            queueItems.remove(u)
         }
     }
 
-    private fun updateVertex(vertex: DStarSpace.Vertex) {
-
+    private fun updateVertex(u: T) {
+        val item = queueItems.getOrDefault(u, null)
+        if (item != null) queue.remove(item)
+        if (u.g != u.rhs) {
+            queueItems[u] = queue.insert(u.also { it.key = calculateKey(goal) })
+        }
     }
 
-    private fun calculateKey(vertex: DStarSpace.Vertex): Key = Key(
-        min(vertex.g, vertex.rhs) + space.h(vertex, goal), min(vertex.g, vertex.rhs)
+    private fun calculateKey(vertex: T): Key = Key(
+        min(vertex.g, vertex.rhs) + space.h(start, vertex), min(vertex.g, vertex.rhs)
     )
 }
 
-abstract class DStarSpace {
-    abstract val vertices: List<Vertex>
+abstract class DStarSpace<T : DStarSpace<T>.Vertex> {
+    abstract val vertices: List<T>
 
     abstract inner class Vertex protected constructor() {
         /**
@@ -95,15 +119,15 @@ abstract class DStarSpace {
      * - always less than or equal to the true cost between the vertices
      * - always less than or equal to the cost to another vertex, and then [b]
      */
-    abstract fun h(a: Vertex, b: Vertex): Double
+    abstract fun h(a: T, b: T): Double
 
     /**
      * Similar to [h], but works only on neighboring vertices.
      * Returns the true cost of traveling from one vertex to its neighbors.
      */
-    abstract fun c(a: Vertex, b: Vertex): Double
+    abstract fun c(a: T, b: T): Double
 
-    abstract fun successors(a: Vertex): List<Vertex>
+    abstract fun successors(a: T): List<T>
 
-    abstract fun predecessors(b: Vertex): List<Vertex>
+    abstract fun predecessors(b: T): List<T>
 }
