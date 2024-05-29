@@ -169,8 +169,8 @@ class Servo @JvmOverloads constructor(
     fun goToPosition(position: Double, speed: Angle) = goToPosition(position, speed / range)
 
     /**
-     * Returns a command that goes to the specified position at the desired speed. 
-     * Note that since there is no feedback from the servo, it may or may not
+     * Returns a command that uses [range] and [speed] (specified in units per second) to go to the specified position
+     * at the desired speed by slowly incrementing the position. Note that since there is no feedback from the servo, it may or may not
      * actually achieve the desired speed.
      */
     fun goToPosition(position: Double, speed: Double): Command = Command.select {
@@ -192,8 +192,8 @@ class Servo @JvmOverloads constructor(
     fun goToAngle(angle: Angle, speed: Angle): Command = goToPosition(angle / range, speed)
 
     /**
-     * Returns a command that goes to the specified angle at the desired speed. 
-     * Note that since there is no feedback from the servo, it may or may not
+     * Returns a command that uses [range] and [speed] (specified in units per second) to go to the specified angle
+     * at the desired speed. Note that since there is no feedback from the servo, it may or may not
      * actually achieve the desired speed.
      */
     fun goToAngle(angle: Angle, speed: Double): Command = goToPosition(angle / range, speed)

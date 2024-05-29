@@ -274,11 +274,13 @@ object SuperTelemetry {
     /**
      * The radius used by [drawRobot].
      */
+    @JvmField
     val robotRadius = 9.0
 
     /**
      * The resolution used by [drawSampledPath] and [drawSampledTrajectory] when sampling.
      */
+    @JvmField
     val resolution = 2.0
 
     /**
@@ -321,6 +323,7 @@ object SuperTelemetry {
     /**
      * Draws a path on [FTC Dashboard](https://github.com/acmerobotics/ftc-dashboard).
      */
+    @JvmOverloads
     fun drawSampledPath(
         path: Path,
         color: String,

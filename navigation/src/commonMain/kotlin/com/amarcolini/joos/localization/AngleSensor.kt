@@ -6,8 +6,7 @@ import kotlin.jvm.JvmOverloads
 import kotlin.jvm.JvmStatic
 
 /**
- * A class describing an abstract angle measuring device. This includes
- * the IMU in the Control/Expansion Hub as well as any other similar sensors.
+ * A class describing an abstract angle measuring device.
  */
 abstract class AngleSensor {
     companion object {
@@ -20,20 +19,22 @@ abstract class AngleSensor {
         }
     }
 
-    private var offset: Angle = 0.rad
+    var offset: Angle = 0.rad
+
+    var reversed: Boolean = false
 
     /**
      * The raw angle measurement.
      */
     protected abstract fun getRawAngle(): Angle
 
-    fun getAngle() = getRawAngle() + offset
+    fun getAngle() = getRawAngle() * (if (reversed) -1.0 else 1.0) + offset
 
     /**
-     * Creates an offset so that [getAngle] returns [angle].
+     * Sets [offset] so that [getAngle] returns [angle].
      */
     fun setAngle(angle: Angle) {
-        offset = -getRawAngle() + angle
+        offset = -getRawAngle() * (if (reversed) -1.0 else 1.0) + angle
     }
 
     open fun getAngularVelocity(): Angle? = null

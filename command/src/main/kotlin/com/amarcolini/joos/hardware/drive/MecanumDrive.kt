@@ -13,10 +13,7 @@ import com.amarcolini.joos.trajectory.constraints.MecanumConstraints
  * A [Component] implementation of a mecanum drive.
  */
 open class MecanumDrive @JvmOverloads constructor(
-    /**
-     * All the motors in this drive.
-     */
-    @JvmField protected val motors: MotorGroup,
+    override val motors: MotorGroup,
     trackWidth: Double = 1.0,
     wheelBase: Double = trackWidth,
     lateralMultiplier: Double = 1.0,

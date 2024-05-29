@@ -36,11 +36,7 @@ open class TankDrive @JvmOverloads constructor(
         externalHeadingSensor: AngleSensor? = null
     ) : this(left, right, constraints.trackWidth, externalHeadingSensor)
 
-    /**
-     * All the motors in this drive.
-     */
-    @JvmField
-    protected val motors: MotorGroup = MotorGroup(left, right)
+    override val motors: MotorGroup = MotorGroup(left, right)
 
     override fun setMotorPowers(left: Double, right: Double) {
         this.left.setPower(left)
