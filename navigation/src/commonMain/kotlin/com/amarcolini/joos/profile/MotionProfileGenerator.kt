@@ -407,7 +407,7 @@ object MotionProfileGenerator {
             var (forwardStartState, forwardDx) = forwardStates[i]
             var (backwardStartState, backwardDx) = backwardStates[i]
 
-            // if there's a discrepancy in the displacements, split the the longer chunk in two and add the second
+            // if there's a discrepancy in the displacements, split the longer chunk in two and add the second
             // to the corresponding list; this guarantees that segments are always aligned
             if (!(forwardDx epsilonEquals backwardDx)) {
                 if (forwardDx > backwardDx) {

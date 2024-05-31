@@ -8,14 +8,12 @@ import com.amarcolini.joos.serialization.format
 import com.amarcolini.joos.trajectory.TrajectoryBuilder
 import com.amarcolini.joos.trajectory.constraints.GenericConstraints
 import com.amarcolini.joos.util.*
+import com.amarcolini.joos.util.max
 import org.apache.commons.math3.util.FastMath
 import org.junit.jupiter.api.Test
 import utils.benchmark.benchmark
 import utils.benchmark.logBenchmark
-import kotlin.math.PI
-import kotlin.math.abs
-import kotlin.math.absoluteValue
-import kotlin.math.sin
+import kotlin.math.*
 
 class MathTest {
     @Test
@@ -152,19 +150,58 @@ class MathTest {
         val path = PathBuilder(Pose2d())
             .splineTo(Vector2d(30.0, 30.0), 0.deg)
             .build()
+        val spline = path.segments[0].curve as QuinticSpline
         val times = 100_000
+        fun naiveProject(vec: Vector2d): Double {
+            var curr = 0.0;
+            var dist = (spline[0.0, curr] - vec).squaredNorm()
+            for (t in DoubleProgression.fromClosedInterval(0.0, 1.0, 100)) {
+                val new = (spline[0.0, t] - vec).squaredNorm()
+                if (new < dist) {
+                    curr = t
+                    dist = new
+                }
+            }
+            return curr
+        }
+        val cache = DoubleProgression.fromClosedInterval(0.0, 1.0, 100).map {
+            it to spline[0.0, it]
+        }
+        fun naiveCacheProject(vec: Vector2d): Double {
+            return cache.minBy { (it.second - vec).squaredNorm() }.first
+        }
+        var rrErr = 0.0
+        var naiveErr = 0.0
+        var cacheErr = 0.0
         logBenchmark(
             times,
             warmup = 20,
-            "old" to {
+            "rr" to {
                 val vec = Vector2d(15.0 + Math.random(), 12.0 + Math.random())
-                val result = path.fastProject(vec)
+                val result = path.fastProject(vec, iterations = 10)
+//                val actual = spline.project(vec, EPSILON)
+//                rrErr += abs(spline.reparam(result) - actual)
             },
-            "composite" to {
+            "fancy" to {
                 val vec = Vector2d(15.0 + Math.random(), 12.0 + Math.random())
-                val (t, s) = path.compositeProject(vec)
+                val result = spline.project(vec, 0.0026)
+            },
+            "naive" to {
+                val vec = Vector2d(15.0 + Math.random(), 12.0 + Math.random())
+                val result = naiveProject(vec)
+//                val actual = spline.project(vec, EPSILON)
+//                naiveErr += abs(result - actual)
+            },
+            "naive cached" to {
+                val vec = Vector2d(15.0 + Math.random(), 12.0 + Math.random())
+                val result = naiveCacheProject(vec)
+//                val actual = spline.project(vec, EPSILON)
+//                cacheErr += abs(result - actual)
             }
         )
+//        println("rr err: ${rrErr / (times + 20.0)}")
+//        println("naive err: ${naiveErr / (times + 20.0)}")
+//        println("cache err: ${cacheErr / (times + 20.0)}")
     }
 
     @Test
