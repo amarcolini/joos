@@ -18,7 +18,7 @@ import kotlin.jvm.JvmOverloads
  * Builder for trajectories with *dynamic* constraints.
  */
 @JsExport
-open class TrajectoryBuilder protected constructor(
+open class TrajectoryBuilder(
     startPose: Pose2d,
     startDeriv: Pose2d,
     startSecondDeriv: Pose2d,
@@ -185,8 +185,8 @@ open class TrajectoryBuilder protected constructor(
 
     private fun addSegment(
         add: () -> Unit,
-        velConstraintOverride: TrajectoryVelocityConstraint,
-        accelConstraintOverride: TrajectoryAccelerationConstraint
+        velConstraintOverride: TrajectoryVelocityConstraint? = null,
+        accelConstraintOverride: TrajectoryAccelerationConstraint? = null
     ): TrajectoryBuilder {
         setConstraints(velConstraintOverride, accelConstraintOverride)
         addPathSegment(add)
@@ -200,11 +200,12 @@ open class TrajectoryBuilder protected constructor(
      */
     @JsName("setContraintsSeparate")
     fun setConstraints(
-        velConstraintOverride: TrajectoryVelocityConstraint, accelConstraintOverride: TrajectoryAccelerationConstraint
+        velConstraintOverride: TrajectoryVelocityConstraint? = null,
+        accelConstraintOverride: TrajectoryAccelerationConstraint? = null
     ): TrajectoryBuilder {
         pushPath()
-        currentVelConstraint = velConstraintOverride
-        currentAccelConstraint = accelConstraintOverride
+        if (velConstraintOverride != null) currentVelConstraint = velConstraintOverride
+        if (accelConstraintOverride != null) currentAccelConstraint = accelConstraintOverride
         return this
     }
 
@@ -298,11 +299,11 @@ open class TrajectoryBuilder protected constructor(
      */
     @JvmOverloads
     fun setAngularConstraints(
-        angVelOverride: Angle, angAccelOverride: Angle = baseAngAccel, angJerkOverride: Angle = baseAngJerk
+        angVelOverride: Angle? = null, angAccelOverride: Angle? = null, angJerkOverride: Angle? = null
     ): TrajectoryBuilder {
-        currentAngVel = angVelOverride
-        currentAngAccel = angAccelOverride
-        currentAngJerk = angJerkOverride
+        if (angVelOverride != null) currentAngVel = angVelOverride
+        if (angAccelOverride != null) currentAngAccel = angAccelOverride
+        if (angJerkOverride != null) currentAngJerk = angJerkOverride
         return this
     }
 
@@ -348,12 +349,30 @@ open class TrajectoryBuilder protected constructor(
     @JsName("turnCustom")
     fun turn(
         angle: Angle,
-        angVelOverride: Angle,
-        angAccelOverride: Angle = baseAngAccel,
-        angJerkOverride: Angle = baseAngJerk
+        angVelOverride: Angle? = null,
+        angAccelOverride: Angle? = null,
+        angJerkOverride: Angle? = null
     ): TrajectoryBuilder {
         setAngularConstraints(angVelOverride, angAccelOverride, angJerkOverride)
         turn(angle)
+        resetAngularConstraints()
+        return this
+    }
+
+    /**
+     * Adds a turn segment that turns to the specified [angle] in the global coordinate space.
+     *
+     * @param angle angle to turn to
+     */
+    @JsName("turnToCustom")
+    fun turnTo(
+        angle: Angle,
+        angVelOverride: Angle? = null,
+        angAccelOverride: Angle? = null,
+        angJerkOverride: Angle? = null
+    ): TrajectoryBuilder {
+        setAngularConstraints(angVelOverride, angAccelOverride, angJerkOverride)
+        turnTo(angle)
         resetAngularConstraints()
         return this
     }
@@ -371,8 +390,8 @@ open class TrajectoryBuilder protected constructor(
     fun addLine(
         endPosition: Vector2d,
         headingInterpolation: HeadingInterpolation = TangentHeading,
-        velConstraintOverride: TrajectoryVelocityConstraint,
-        accelConstraintOverride: TrajectoryAccelerationConstraint = baseAccelConstraint
+        velConstraintOverride: TrajectoryVelocityConstraint? = null,
+        accelConstraintOverride: TrajectoryAccelerationConstraint? = null
     ) = addSegment({ addLine(endPosition, headingInterpolation) }, velConstraintOverride, accelConstraintOverride)
 
     /**
@@ -385,8 +404,8 @@ open class TrajectoryBuilder protected constructor(
     @JsName("lineToCustom")
     fun lineTo(
         endPosition: Vector2d,
-        velConstraintOverride: TrajectoryVelocityConstraint,
-        accelConstraintOverride: TrajectoryAccelerationConstraint = baseAccelConstraint
+        velConstraintOverride: TrajectoryVelocityConstraint? = null,
+        accelConstraintOverride: TrajectoryAccelerationConstraint? = null
     ) = addSegment({ lineTo(endPosition) }, velConstraintOverride, accelConstraintOverride)
 
     /**
@@ -399,8 +418,8 @@ open class TrajectoryBuilder protected constructor(
     @JsName("lineToConstantHeadingCustom")
     fun lineToConstantHeading(
         endPosition: Vector2d,
-        velConstraintOverride: TrajectoryVelocityConstraint,
-        accelConstraintOverride: TrajectoryAccelerationConstraint = baseAccelConstraint
+        velConstraintOverride: TrajectoryVelocityConstraint? = null,
+        accelConstraintOverride: TrajectoryAccelerationConstraint? = null
     ) = addSegment(
         { lineToConstantHeading(endPosition) }, velConstraintOverride, accelConstraintOverride
     )
@@ -415,8 +434,8 @@ open class TrajectoryBuilder protected constructor(
     @JsName("lineToLinearHeadingCustom")
     fun lineToLinearHeading(
         endPose: Pose2d,
-        velConstraintOverride: TrajectoryVelocityConstraint,
-        accelConstraintOverride: TrajectoryAccelerationConstraint = baseAccelConstraint
+        velConstraintOverride: TrajectoryVelocityConstraint? = null,
+        accelConstraintOverride: TrajectoryAccelerationConstraint? = null
     ) = addSegment({ lineToLinearHeading(endPose) }, velConstraintOverride, accelConstraintOverride)
 
     /**
@@ -429,8 +448,8 @@ open class TrajectoryBuilder protected constructor(
     @JsName("lineToSplineHeadingCustom")
     fun lineToSplineHeading(
         endPose: Pose2d,
-        velConstraintOverride: TrajectoryVelocityConstraint,
-        accelConstraintOverride: TrajectoryAccelerationConstraint = baseAccelConstraint
+        velConstraintOverride: TrajectoryVelocityConstraint? = null,
+        accelConstraintOverride: TrajectoryAccelerationConstraint? = null
     ) = addSegment({ lineToSplineHeading(endPose) }, velConstraintOverride, accelConstraintOverride)
 
     /**
@@ -443,8 +462,8 @@ open class TrajectoryBuilder protected constructor(
     @JsName("forwardCustom")
     fun forward(
         distance: Double,
-        velConstraintOverride: TrajectoryVelocityConstraint,
-        accelConstraintOverride: TrajectoryAccelerationConstraint = baseAccelConstraint
+        velConstraintOverride: TrajectoryVelocityConstraint? = null,
+        accelConstraintOverride: TrajectoryAccelerationConstraint? = null
     ) = addSegment({ forward(distance) }, velConstraintOverride, accelConstraintOverride)
 
     /**
@@ -457,8 +476,8 @@ open class TrajectoryBuilder protected constructor(
     @JsName("backCustom")
     fun back(
         distance: Double,
-        velConstraintOverride: TrajectoryVelocityConstraint,
-        accelConstraintOverride: TrajectoryAccelerationConstraint = baseAccelConstraint
+        velConstraintOverride: TrajectoryVelocityConstraint? = null,
+        accelConstraintOverride: TrajectoryAccelerationConstraint? = null
     ) = addSegment({ back(distance) }, velConstraintOverride, accelConstraintOverride)
 
     /**
@@ -471,8 +490,8 @@ open class TrajectoryBuilder protected constructor(
     @JsName("StrafeLeftCustom")
     fun strafeLeft(
         distance: Double,
-        velConstraintOverride: TrajectoryVelocityConstraint,
-        accelConstraintOverride: TrajectoryAccelerationConstraint = baseAccelConstraint
+        velConstraintOverride: TrajectoryVelocityConstraint? = null,
+        accelConstraintOverride: TrajectoryAccelerationConstraint? = null
     ) = addSegment({ strafeLeft(distance) }, velConstraintOverride, accelConstraintOverride)
 
     /**
@@ -485,8 +504,8 @@ open class TrajectoryBuilder protected constructor(
     @JsName("strafeRightCustom")
     fun strafeRight(
         distance: Double,
-        velConstraintOverride: TrajectoryVelocityConstraint,
-        accelConstraintOverride: TrajectoryAccelerationConstraint = baseAccelConstraint
+        velConstraintOverride: TrajectoryVelocityConstraint? = null,
+        accelConstraintOverride: TrajectoryAccelerationConstraint? = null
     ) = addSegment({ strafeRight(distance) }, velConstraintOverride, accelConstraintOverride)
 
     /**
@@ -507,8 +526,8 @@ open class TrajectoryBuilder protected constructor(
         headingInterpolation: HeadingInterpolation = TangentHeading,
         startTangentMag: Double = -1.0,
         endTangentMag: Double = -1.0,
-        velConstraintOverride: TrajectoryVelocityConstraint,
-        accelConstraintOverride: TrajectoryAccelerationConstraint = baseAccelConstraint
+        velConstraintOverride: TrajectoryVelocityConstraint? = null,
+        accelConstraintOverride: TrajectoryAccelerationConstraint? = null
     ) = addSegment(
         { addSpline(endPosition, endTangent, headingInterpolation, startTangentMag, endTangentMag) },
         velConstraintOverride,
@@ -527,8 +546,8 @@ open class TrajectoryBuilder protected constructor(
     fun splineTo(
         endPosition: Vector2d,
         endTangent: Angle,
-        velConstraintOverride: TrajectoryVelocityConstraint,
-        accelConstraintOverride: TrajectoryAccelerationConstraint = baseAccelConstraint
+        velConstraintOverride: TrajectoryVelocityConstraint? = null,
+        accelConstraintOverride: TrajectoryAccelerationConstraint? = null
     ) = addSegment(
         { splineTo(endPosition, endTangent) }, velConstraintOverride, accelConstraintOverride
     )
@@ -545,8 +564,8 @@ open class TrajectoryBuilder protected constructor(
     fun splineToConstantHeading(
         endPosition: Vector2d,
         endTangent: Angle,
-        velConstraintOverride: TrajectoryVelocityConstraint,
-        accelConstraintOverride: TrajectoryAccelerationConstraint = baseAccelConstraint
+        velConstraintOverride: TrajectoryVelocityConstraint? = null,
+        accelConstraintOverride: TrajectoryAccelerationConstraint? = null
     ) = addSegment(
         { splineToConstantHeading(endPosition, endTangent) }, velConstraintOverride, accelConstraintOverride
     )
@@ -563,8 +582,8 @@ open class TrajectoryBuilder protected constructor(
     fun splineToLinearHeading(
         endPose: Pose2d,
         endTangent: Angle,
-        velConstraintOverride: TrajectoryVelocityConstraint,
-        accelConstraintOverride: TrajectoryAccelerationConstraint = baseAccelConstraint
+        velConstraintOverride: TrajectoryVelocityConstraint? = null,
+        accelConstraintOverride: TrajectoryAccelerationConstraint? = null
     ) = addSegment(
         { splineToLinearHeading(endPose, endTangent) }, velConstraintOverride, accelConstraintOverride
     )
@@ -581,8 +600,8 @@ open class TrajectoryBuilder protected constructor(
     fun splineToSplineHeading(
         endPose: Pose2d,
         endTangent: Angle,
-        velConstraintOverride: TrajectoryVelocityConstraint,
-        accelConstraintOverride: TrajectoryAccelerationConstraint = baseAccelConstraint
+        velConstraintOverride: TrajectoryVelocityConstraint? = null,
+        accelConstraintOverride: TrajectoryAccelerationConstraint? = null
     ) = addSegment(
         { splineToSplineHeading(endPose, endTangent) }, velConstraintOverride, accelConstraintOverride
     )
@@ -590,10 +609,14 @@ open class TrajectoryBuilder protected constructor(
     override fun makePathSegment(path: Path): PathTrajectorySegment {
         return TrajectoryGenerator.generatePathTrajectorySegment(
             path, currentVelConstraint, currentAccelConstraint, currentMotionState, resolution = resolution
-        )
+        ).also { currentMotionState = it.profile.end() }
     }
 
-    override fun makeTurnSegment(pose: Pose2d, angle: Angle): TurnSegment = TrajectoryGenerator.generateTurnSegment(
-        pose, angle, currentAngVel, currentAngAccel, currentAngJerk, true
-    )
+    override fun makeTurnSegment(pose: Pose2d, angle: Angle): TurnSegment {
+        if (!(currentMotionState.v epsilonEquals 0.0 && currentMotionState.a epsilonEquals 0.0 && currentMotionState.j epsilonEquals 0.0))
+            throw IllegalStateException("Cannot make turn segment unless robot is at rest.")
+        return TrajectoryGenerator.generateTurnSegment(
+            pose, angle, currentAngVel, currentAngAccel, currentAngJerk, true
+        )
+    }
 }

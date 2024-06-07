@@ -3,7 +3,6 @@ package com.amarcolini.joos.followers
 import com.amarcolini.joos.drive.DriveSignal
 import com.amarcolini.joos.geometry.Pose2d
 import com.amarcolini.joos.trajectory.Trajectory
-import com.amarcolini.joos.trajectory.TrajectoryMarker
 import com.amarcolini.joos.util.NanoClock
 import com.amarcolini.joos.util.abs
 import kotlin.js.ExperimentalJsExport
@@ -24,9 +23,8 @@ abstract class TrajectoryFollower @JvmOverloads constructor(
     private val timeout: Double = 0.0,
     protected val clock: NanoClock = NanoClock.system
 ) {
-    private var startTimestamp: Double = 0.0
+    private var startTimestamp: Double = Double.NaN
     private var admissible = false
-    private var remainingMarkers = mutableListOf<TrajectoryMarker>()
     private var executedFinalUpdate = false
 
     /**
@@ -48,11 +46,6 @@ abstract class TrajectoryFollower @JvmOverloads constructor(
         this.startTimestamp = clock.seconds()
         this.trajectory = trajectory
         this.admissible = false
-
-        remainingMarkers.clear()
-        remainingMarkers.addAll(trajectory.markers)
-        remainingMarkers.sortBy { it.time }
-
         executedFinalUpdate = false
     }
 
@@ -80,10 +73,6 @@ abstract class TrajectoryFollower @JvmOverloads constructor(
      */
     @JvmOverloads
     fun update(currentPose: Pose2d, currentRobotVel: Pose2d? = null): DriveSignal {
-        while (remainingMarkers.size > 0 && elapsedTime() > remainingMarkers[0].time) {
-            remainingMarkers.removeAt(0).callback.onMarkerReached()
-        }
-
         val trajEndError = trajectory.end() - currentPose
         admissible = abs(trajEndError.x) < admissibleError.x &&
                 abs(trajEndError.y) < admissibleError.y &&
@@ -91,10 +80,6 @@ abstract class TrajectoryFollower @JvmOverloads constructor(
         return if (internalIsFollowing() || executedFinalUpdate) {
             internalUpdate(currentPose, currentRobotVel)
         } else {
-            for (marker in remainingMarkers) {
-                marker.callback.onMarkerReached()
-            }
-            remainingMarkers.clear()
             executedFinalUpdate = true
             DriveSignal()
         }

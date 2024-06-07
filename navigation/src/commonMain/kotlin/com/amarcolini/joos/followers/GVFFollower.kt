@@ -81,9 +81,15 @@ class GVFFollower @JvmOverloads constructor(
         setInputBounds(-PI, PI)
     }
 
-    override fun internalUpdate(currentPose: Pose2d, currentRobotVel: Pose2d?): DriveSignal {
+    override fun internalUpdate(
+        currentPose: Pose2d,
+        currentRobotVel: Pose2d?,
+        projectedPose: Pose2d,
+        projectedDisplacement: Double
+    ): DriveSignal {
         val output =
-            gvf.internalGet(GuidingVectorField.Query(currentPose.vec()))
+            GuidingVectorField.Query(currentPose.vec())
+                .Phi(projectedPose.vec(), path.deriv(projectedDisplacement).vec())
         val gvfResult = gvf.compute(output)
 
         val initialDesiredHeading =

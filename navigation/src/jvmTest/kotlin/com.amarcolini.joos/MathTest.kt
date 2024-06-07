@@ -3,17 +3,17 @@ package com.amarcolini.joos
 import com.amarcolini.joos.geometry.Pose2d
 import com.amarcolini.joos.geometry.Vector2d
 import com.amarcolini.joos.kinematics.SwerveKinematics
-import com.amarcolini.joos.path.*
-import com.amarcolini.joos.serialization.format
+import com.amarcolini.joos.path.PathBuilder
+import com.amarcolini.joos.path.PositionPath
+import com.amarcolini.joos.path.QuinticSpline
 import com.amarcolini.joos.trajectory.TrajectoryBuilder
 import com.amarcolini.joos.trajectory.constraints.GenericConstraints
 import com.amarcolini.joos.util.*
-import com.amarcolini.joos.util.max
 import org.apache.commons.math3.util.FastMath
 import org.junit.jupiter.api.Test
-import utils.benchmark.benchmark
 import utils.benchmark.logBenchmark
-import kotlin.math.*
+import kotlin.math.PI
+import kotlin.math.sin
 
 class MathTest {
     @Test
@@ -61,7 +61,7 @@ class MathTest {
         val b = 0.9
         val c = -0.1
         val roots = solveQuadratic(a, b, c).filter { it in (0.0..1.0) }
-            val computedRoots = isolateRoots(
+        val computedRoots = isolateRoots(
             Polynomial(a, b, c)
         )
         println(roots)
@@ -164,12 +164,15 @@ class MathTest {
             }
             return curr
         }
+
         val cache = DoubleProgression.fromClosedInterval(0.0, 1.0, 100).map {
             it to spline[0.0, it]
         }
+
         fun naiveCacheProject(vec: Vector2d): Double {
             return cache.minBy { (it.second - vec).squaredNorm() }.first
         }
+
         var rrErr = 0.0
         var naiveErr = 0.0
         var cacheErr = 0.0

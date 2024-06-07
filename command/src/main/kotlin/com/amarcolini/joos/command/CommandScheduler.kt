@@ -4,7 +4,10 @@ import android.content.Context
 import com.amarcolini.joos.dashboard.SuperTelemetry
 import com.amarcolini.joos.gamepad.MultipleGamepad
 import com.qualcomm.ftccommon.FtcEventLoop
-import com.qualcomm.robotcore.eventloop.opmode.*
+import com.qualcomm.robotcore.eventloop.opmode.Autonomous
+import com.qualcomm.robotcore.eventloop.opmode.OpMode
+import com.qualcomm.robotcore.eventloop.opmode.OpModeManagerNotifier
+import com.qualcomm.robotcore.eventloop.opmode.TeleOp
 import com.qualcomm.robotcore.hardware.HardwareMap
 import org.firstinspires.ftc.ftccommon.external.OnCreateEventLoop
 import java.util.function.BooleanSupplier
@@ -107,54 +110,55 @@ object CommandScheduler : OpModeManagerNotifier.Notifications {
      * A list storing all actions that couldn't be completed at the time they were called because
      * the scheduler was busy.
      */
-    private val actionCache = LinkedHashSet<() -> Boolean>()
+    private var actionCache = LinkedHashSet<() -> Unit>()
 
     /**
      * Command scheduling policy. If true, all commands which cannot currently be scheduled will be scheduled as soon as
-     * they can be schedule. If false (default behavior), all commands which cannot currently be scheduled will not be scheduled.
+     * they can be scheduled. If false (default behavior), all commands which cannot currently be scheduled will not be scheduled.
      */
     @JvmStatic
-    var schedulePolicy: Boolean = false
+    var waitToScheduleCommands: Boolean = false
 
     /**
      * Returns whether a command can currently be scheduled.
      */
     @JvmStatic
     fun isAvailable(command: Command): Boolean =
-        requirements.none { (key, value) -> command.requirements.contains(key) && !value.isInterruptable }
-
-    private fun initCommand(command: Command) {
-        command.init()
-        scheduledCommands.add(command)
-        command.requirements.forEach { requirements[it] = command }
-    }
+        command.requirements.none { requirements[it]?.isInterruptable == false }
 
     /**
      * Schedules commands for execution.
      *
      * @return `true` if all commands were successfully scheduled immediately, and `false` if they were not. Note that if
      * the scheduler is currently updating, this method will return `false`, but the scheduler will attempt to
-     * schedule the commands when it can. If [schedulePolicy] is `true`, all commands will be successfully scheduled.
+     * schedule the commands when it can. If [waitToScheduleCommands] is `true`, all commands will be successfully scheduled.
      *
-     * @see schedulePolicy
+     * @see waitToScheduleCommands
      */
     @JvmStatic
     fun schedule(vararg commands: Command): Boolean {
         var success = true
         if (isBusy) {
-            actionCache += { schedule(*commands) || schedulePolicy }
+            actionCache += { schedule(*commands) }
             return false
         }
         for (command in commands) {
             success = success && if (!command.isScheduled() && isAvailable(command)) {
-                requirements.filterKeys { key -> command.requirements.contains(key) }
-                    .forEach { (_, command) ->
-                        scheduledCommands.remove(command)
-                        command.end(true)
+                command.requirements.forEach {
+                    val cancelled = requirements[it]
+                    requirements[it] = command
+                    if (cancelled != null) {
+                        scheduledCommands.remove(cancelled)
+                        cancelled.end(true)
                     }
-                initCommand(command)
+                }
+                command.init()
+                scheduledCommands.add(command)
                 true
-            } else false
+            } else {
+                if (waitToScheduleCommands) actionCache += { schedule(command) }
+                false
+            }
         }
         return success
     }
@@ -164,9 +168,9 @@ object CommandScheduler : OpModeManagerNotifier.Notifications {
      *
      * @return `true` if all commands were successfully scheduled immediately, and `false` if they were not. Note that if
      * the scheduler is currently updating, this method will return `false`, but the scheduler will attempt to
-     * schedule the commands when it can. If [schedulePolicy] is `true`, all commands will be successfully scheduled.
+     * schedule the commands when it can. If [waitToScheduleCommands] is `true`, all commands will be successfully scheduled.
      *
-     * @see schedulePolicy
+     * @see waitToScheduleCommands
      */
     @JvmStatic
     fun schedule(runnable: Runnable): Boolean = schedule(Command.of(runnable))
@@ -176,10 +180,10 @@ object CommandScheduler : OpModeManagerNotifier.Notifications {
      *
      * @return `true` if all commands were successfully scheduled immediately, and `false` if they were not. Note that if
      * the scheduler is currently updating, this method will return `false`, but the scheduler will attempt to
-     * schedule the commands when it can. If [schedulePolicy] is `true`, all commands will be successfully scheduled.
+     * schedule the commands when it can. If [waitToScheduleCommands] is `true`, all commands will be successfully scheduled.
      *
      * @param repeat whether the provided [runnable] should run repeatedly or not
-     * @see schedulePolicy
+     * @see waitToScheduleCommands
      */
     @JvmStatic
     fun schedule(repeat: Boolean, runnable: Runnable): Boolean = schedule(BasicCommand(runnable).runUntil { !repeat })
@@ -225,7 +229,9 @@ object CommandScheduler : OpModeManagerNotifier.Notifications {
         telem.update()
 
         //Updates action cache
-        actionCache.removeIf { it() }
+        val tempCache = actionCache
+        actionCache = LinkedHashSet()
+        tempCache.forEach { it() }
     }
 
     /**
@@ -313,7 +319,7 @@ object CommandScheduler : OpModeManagerNotifier.Notifications {
     fun cancelAll() = cancel(*scheduledCommands.toTypedArray())
 
     /**
-     * Resets this [CommandScheduler]. The telemetry is reset, all commands are cancelled, and all commands, components, and conditions are cleared.
+     * Resets this [CommandScheduler]. The telemetry and scheduling policy are reset, all commands are cancelled, and all commands, components, and conditions are cleared.
      */
     @JvmStatic
     fun reset() {
@@ -324,7 +330,7 @@ object CommandScheduler : OpModeManagerNotifier.Notifications {
             requirements.clear()
             conditions.clear()
             resetTelemetry()
-            true
+            waitToScheduleCommands = false
         }
         if (isBusy) actionCache += reset
         else reset()

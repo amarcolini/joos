@@ -1,24 +1,26 @@
 package com.amarcolini.joos.trajectory
 
 import com.amarcolini.joos.geometry.Pose2d
+import com.amarcolini.joos.path.LineSegment
 import com.amarcolini.joos.path.Path
 import com.amarcolini.joos.path.PathSegment
+import com.amarcolini.joos.path.heading.LinearHeading
+import com.amarcolini.joos.path.heading.LinearInterpolator
 import com.amarcolini.joos.profile.MotionProfile
+import com.amarcolini.joos.util.epsilonEquals
 import kotlin.js.JsExport
 import kotlin.js.JsName
+import kotlin.jvm.JvmField
 
 /**
- * Trajectory composed of a list of trajectory segments and trajectory markers.
+ * Trajectory composed of a list of trajectory segments.
  *
  * @param segments list of trajectory segments
- * @param markers list of trajectory markers
  * @see TrajectorySegment
- * @see TrajectoryMarker
  */
 @JsExport
 class Trajectory(
-    val segments: List<TrajectorySegment>,
-    val markers: List<TrajectoryMarker> = emptyList()
+    @JvmField val segments: List<TrajectorySegment>
 ) {
     /**
      * The path representing this trajectory, excluding turn and wait segments.
@@ -31,6 +33,14 @@ class Trajectory(
         for (segment in segments) {
             if (segment is PathTrajectorySegment) pathSegments += segment.path.segments
         }
+        if (pathSegments.isEmpty()) {
+            val start = start()
+            val end = end()
+            pathSegments += PathSegment(
+                LineSegment(start.vec(), end.vec()),
+                LinearInterpolator(start.heading, start.heading angleTo end.heading)
+            )
+        }
         path = Path(pathSegments)
     }
 
@@ -38,20 +48,13 @@ class Trajectory(
      * @param segment single trajectory segment
      */
     @JsName("fromSingle")
-    constructor(segment: TrajectorySegment, markers: List<TrajectoryMarker> = emptyList()) : this(
-        listOf(segment),
-        markers
-    )
+    constructor(segment: TrajectorySegment) : this(listOf(segment))
 
     @JsName("fromPath")
     constructor(
         path: Path,
-        profile: MotionProfile,
-        markers: List<TrajectoryMarker> = emptyList()
-    ) : this(
-        PathTrajectorySegment(path, profile),
-        markers
-    )
+        profile: MotionProfile
+    ) : this(PathTrajectorySegment(path, profile))
 
     /**
      * Returns the length of the trajectory.
@@ -89,7 +92,7 @@ class Trajectory(
     }
 
     /**
-     * Returns the distance travelled [t] seconds into the trajectory.
+     * Returns the distance traveled [t] seconds into the trajectory.
      */
     fun distance(t: Double): Double {
         if (t <= 0.0) {
@@ -105,6 +108,25 @@ class Trajectory(
             distance += segment.length()
         }
         return distance
+    }
+
+    /**
+     * Returns the time in seconds where the trajectory has traveled [s] distance. Only
+     * works if distance is always increasing.
+     */
+    fun reparam(s: Double): Double {
+        var tLo = 0.0
+        var tHi = duration()
+        for (i in 1..50) {
+            val tMid = 0.5 * (tLo + tHi)
+            if (distance(tMid) > s) {
+                tHi = tMid
+            } else {
+                tLo = tMid
+            }
+            if (tLo epsilonEquals tHi) break
+        }
+        return 0.5 * (tLo + tHi)
     }
 
     /**

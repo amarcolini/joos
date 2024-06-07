@@ -4,7 +4,9 @@ import com.amarcolini.joos.geometry.Angle
 import com.amarcolini.joos.geometry.Pose2d
 import com.amarcolini.joos.path.Path
 import com.amarcolini.joos.profile.MotionState
+import com.amarcolini.joos.trajectory.constraints.UnsatisfiableConstraint
 import com.amarcolini.joos.util.deg
+import com.amarcolini.joos.util.epsilonEquals
 import com.amarcolini.joos.util.rad
 import kotlin.jvm.JvmOverloads
 
@@ -13,7 +15,7 @@ private fun zeroPosition(state: MotionState) = MotionState(0.0, state.v, state.a
 /**
  * Builder for trajectories with *static* constraints.
  */
-class SimpleTrajectoryBuilder private constructor(
+class SimpleTrajectoryBuilder(
     startPose: Pose2d,
     startDeriv: Pose2d,
     startSecondDeriv: Pose2d,
@@ -109,16 +111,21 @@ class SimpleTrajectoryBuilder private constructor(
         ),
     )
 
+    private var currentMotionState = start
+
     override fun makePathSegment(path: Path) =
         TrajectoryGenerator.generateSimplePathTrajectorySegment(
             path,
             maxProfileVel,
             maxProfileAccel,
             maxProfileJerk,
-        )
+            currentMotionState
+        ).also { currentMotionState = it.profile.end() }
 
-    override fun makeTurnSegment(pose: Pose2d, angle: Angle) =
-        TrajectoryGenerator.generateTurnSegment(
+    override fun makeTurnSegment(pose: Pose2d, angle: Angle): TurnSegment {
+        if (!(currentMotionState.v epsilonEquals 0.0 && currentMotionState.a epsilonEquals 0.0 && currentMotionState.j epsilonEquals 0.0))
+            throw IllegalStateException("Cannot make turn segment unless robot is at rest.")
+        return TrajectoryGenerator.generateTurnSegment(
             pose,
             angle,
             maxAngVel,
@@ -126,4 +133,5 @@ class SimpleTrajectoryBuilder private constructor(
             maxAngJerk,
             true
         )
+    }
 }

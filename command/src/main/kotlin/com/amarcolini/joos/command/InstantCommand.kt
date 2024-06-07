@@ -7,7 +7,5 @@ class InstantCommand(
     private val runnable: Runnable = Runnable {}
 ) : Command() {
     override fun init() = runnable.run()
-    override fun isFinished() = true
-
     override var isInterruptable = true
 }

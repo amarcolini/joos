@@ -1,8 +1,5 @@
 package com.amarcolini.joos.hardware.drive
 
-import com.amarcolini.joos.command.Command
-import com.amarcolini.joos.command.FunctionalCommand
-import com.amarcolini.joos.drive.DriveSignal
 import com.amarcolini.joos.followers.PathFollower
 import com.amarcolini.joos.geometry.Angle
 import com.amarcolini.joos.path.Path
@@ -14,13 +11,13 @@ interface DrivePathFollower : DriveComponent {
     /**
      * Returns a [PathBuilder] with the constraints of this drive.
      */
-    fun pathBuilder(): PathBuilder = PathBuilder(poseEstimate)
+    fun pathBuilder(): PathBuilder = PathBuilder(localizer.poseEstimate)
 
     /**
      * Returns a [PathBuilder] with the constraints of this drive.
      */
     fun pathBuilder(startTangent: Angle): PathBuilder = PathBuilder(
-        poseEstimate,
+        localizer.poseEstimate,
         startTangent
     )
 
@@ -28,28 +25,14 @@ interface DrivePathFollower : DriveComponent {
      * Returns a [PathBuilder] with the constraints of this drive.
      */
     fun pathBuilder(reversed: Boolean): PathBuilder = PathBuilder(
-        poseEstimate,
+        localizer.poseEstimate,
         reversed
     )
 
     /**
-     * Returns a [Command] that follows the provided path.
+     * Returns a [FollowPathCommand] that follows the provided path.
      */
-    fun followPath(path: Path): Command {
-        return if (!pathFollower.isFollowing()) {
-            FunctionalCommand(
-                init = { pathFollower.followPath(path) },
-                execute = { setDriveSignal(pathFollower.update(poseEstimate, poseVelocity)) },
-                isFinished = { !pathFollower.isFollowing() },
-                end = { setDriveSignal(DriveSignal()) },
-                requirements = setOf(this)
-            )
-        } else Command.empty()
-    }
-
-    /**
-     * Returns the path currently being followed by this drive, if any.
-     */
-    fun getCurrentPath(): Path? =
-        if (pathFollower.isFollowing()) pathFollower.path else null
+    fun followPath(path: Path): FollowPathCommand = FollowPathCommand(
+        path, pathFollower, this
+    )
 }

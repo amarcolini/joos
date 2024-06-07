@@ -1,6 +1,6 @@
 package com.amarcolini.joos.profile
 
-import kotlin.js.ExperimentalJsExport
+import com.amarcolini.joos.util.epsilonEquals
 import kotlin.js.JsExport
 
 /**
@@ -27,6 +27,25 @@ class MotionProfile(val segments: List<MotionSegment>) {
             remainingTime -= segment.dt
         }
         return segments.last().end()
+    }
+
+    /**
+     * Uses a binary search to find the [MotionState] corresponding to [s]. Only works correctly
+     * if position is always increasing.
+     */
+    fun getByDistance(s: Double): MotionState {
+        var tLo = 0.0
+        var tHi = duration()
+        for (i in 1..50) {
+            val tMid = 0.5 * (tLo + tHi)
+            if (this[tMid].x > s) {
+                tHi = tMid
+            } else {
+                tLo = tMid
+            }
+            if (tLo epsilonEquals tHi) break
+        }
+        return this[0.5 * (tLo + tHi)]
     }
 
     /**

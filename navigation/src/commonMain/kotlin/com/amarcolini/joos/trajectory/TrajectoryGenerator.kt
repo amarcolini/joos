@@ -17,7 +17,6 @@ import kotlin.jvm.JvmOverloads
  * Trajectory generator for creating trajectories with dynamic and static constraints from paths.
  */
 object TrajectoryGenerator {
-
     fun generateProfile(
         path: Path,
         velocityConstraint: TrajectoryVelocityConstraint,
@@ -68,59 +67,6 @@ object TrajectoryGenerator {
             overshoot
         )
     }
-
-    // note: this assumes that the profile position is monotonic increasing
-    // (which isn't true if the profile rewinds for some reason)
-    fun displacementToTime(trajectory: Trajectory, s: Double): Double {
-        var tLo = 0.0
-        var tHi = trajectory.duration()
-        while (!(tLo epsilonEquals tHi)) {
-            val tMid = 0.5 * (tLo + tHi)
-            if (trajectory.distance(tMid) > s) {
-                tHi = tMid
-            } else {
-                tLo = tMid
-            }
-        }
-        return 0.5 * (tLo + tHi)
-    }
-
-    fun pointToTime(trajectory: Trajectory, point: Vector2d) =
-        displacementToTime(trajectory, trajectory.path.project(point))
-
-    fun convertMarkers(
-        segments: List<TrajectorySegment>,
-        temporalMarkers: List<TemporalMarker>,
-        displacementMarkers: List<DisplacementMarker>,
-        spatialMarkers: List<SpatialMarker>
-    ): List<TrajectoryMarker> {
-        val trajectory = Trajectory(segments)
-        return temporalMarkers.map { (producer, callback) ->
-            TrajectoryMarker(producer.produce(trajectory.duration()), callback)
-        } +
-                displacementMarkers.map { (producer, callback) ->
-                    TrajectoryMarker(
-                        displacementToTime(trajectory, producer.produce(trajectory.length())),
-                        callback
-                    )
-                } +
-                spatialMarkers.map { (point, callback) ->
-                    TrajectoryMarker(pointToTime(trajectory, point), callback)
-                }
-    }
-
-    /**
-     * Generates a trajectory.
-     */
-    fun generateTrajectory(
-        segments: List<TrajectorySegment>,
-        temporalMarkers: List<TemporalMarker>,
-        displacementMarkers: List<DisplacementMarker>,
-        spatialMarkers: List<SpatialMarker>
-    ) = Trajectory(
-        segments,
-        convertMarkers(segments, temporalMarkers, displacementMarkers, spatialMarkers)
-    )
 
     /**
      * Generates a dynamic constraint path trajectory segment.

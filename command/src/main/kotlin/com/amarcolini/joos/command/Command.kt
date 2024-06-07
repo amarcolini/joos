@@ -52,23 +52,17 @@ abstract class Command {
     /**
      * Runs once when first scheduled.
      */
-    open fun init() {
-        if (!isScheduled()) return
-    }
+    open fun init() {}
 
     /**
      * Runs repeatedly until [isFinished] returns true.
      */
-    open fun execute() {
-        if (!isScheduled()) return
-    }
+    open fun execute() {}
 
     /**
      * Runs once when this command finishes or is interrupted.
      */
-    open fun end(interrupted: Boolean) {
-        if (!isScheduled()) return
-    }
+    open fun end(interrupted: Boolean) {}
 
     /**
      * Returns whether this command is finished.
@@ -120,7 +114,7 @@ abstract class Command {
      * Adds a command to run after this one.
      */
     infix fun then(other: Command): SequentialCommand = if (this is SequentialCommand)
-        this.apply { add(other) }
+        this.run { add(other) }
     else SequentialCommand(isInterruptable && other.isInterruptable, this, other)
 
     /**
@@ -145,7 +139,7 @@ abstract class Command {
      * Adds a command to run in parallel with this one (Both run simultaneously until they finish).
      */
     infix fun and(other: Command): ParallelCommand = if (this is ParallelCommand)
-        this.apply { add(other) }
+        this.run { add(other) }
     else ParallelCommand(isInterruptable && other.isInterruptable, this, other)
 
     /**
@@ -158,7 +152,7 @@ abstract class Command {
      * Adds a command to run in parallel with this one (Both run simultaneously until one finishes).
      */
     infix fun race(other: Command): RaceCommand = if (this is RaceCommand)
-        this.apply { add(other) }
+        this.run { add(other) }
     else RaceCommand(isInterruptable && other.isInterruptable, this, other)
 
     /**
@@ -219,7 +213,7 @@ abstract class Command {
     /**
      * Overrides this command's [init] function.
      */
-    fun init(action: Runnable): FunctionalCommand = if (this is FunctionalCommand)
+    fun setInit(action: Runnable): FunctionalCommand = if (this is FunctionalCommand)
         this.apply { init = action }
     else FunctionalCommand(
         action,
@@ -233,7 +227,7 @@ abstract class Command {
     /**
      * Overrides this command's [execute] function.
      */
-    fun execute(action: Runnable): FunctionalCommand = if (this is FunctionalCommand)
+    fun setExecute(action: Runnable): FunctionalCommand = if (this is FunctionalCommand)
         this.apply { execute = action }
     else FunctionalCommand(
         this::init,
@@ -247,7 +241,7 @@ abstract class Command {
     /**
      * Overrides this command's [end] function.
      */
-    fun end(action: Consumer<Boolean>): FunctionalCommand = if (this is FunctionalCommand)
+    fun setEnd(action: Consumer<Boolean>): FunctionalCommand = if (this is FunctionalCommand)
         this.apply { end = action }
     else FunctionalCommand(
         this::init,

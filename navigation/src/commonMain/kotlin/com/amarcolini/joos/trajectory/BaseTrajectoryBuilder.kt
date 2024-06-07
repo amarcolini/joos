@@ -27,10 +27,6 @@ abstract class BaseTrajectoryBuilder<T : BaseTrajectoryBuilder<T>> protected con
 ) {
     private var pathBuilder: PathBuilder = PathBuilder(startPose, startDeriv, startSecondDeriv)
 
-    private val temporalMarkers = mutableListOf<TemporalMarker>()
-    private val displacementMarkers = mutableListOf<DisplacementMarker>()
-    private val spatialMarkers = mutableListOf<SpatialMarker>()
-
     internal var segments = mutableListOf<TrajectorySegment>()
 
     protected fun addPathSegment(add: () -> Unit) {
@@ -73,7 +69,19 @@ abstract class BaseTrajectoryBuilder<T : BaseTrajectoryBuilder<T>> protected con
         val start = if (segments.isEmpty()) startPose else segments.last().end()
         addSegment(makeTurnSegment(start, angle))
         pathBuilder = PathBuilder(segments.last().end())
+        return this as T
+    }
 
+    /**
+     * Adds a turn segment that turns to the specified [angle] in the global coordinate space.
+     *
+     * @param angle angle to turn to
+     */
+    fun turnTo(angle: Angle): T {
+        pushPath()
+        val start = if (segments.isEmpty()) startPose else segments.last().end()
+        addSegment(makeTurnSegment(start, (angle - start.heading).normDelta()))
+        pathBuilder = PathBuilder(segments.last().end())
         return this as T
     }
 
@@ -85,7 +93,6 @@ abstract class BaseTrajectoryBuilder<T : BaseTrajectoryBuilder<T>> protected con
         val start = if (segments.isEmpty()) startPose else segments.last().end()
         addSegment(WaitSegment(start, seconds))
         pathBuilder = PathBuilder(segments.last().end())
-
         return this as T
     }
 
@@ -98,7 +105,6 @@ abstract class BaseTrajectoryBuilder<T : BaseTrajectoryBuilder<T>> protected con
      */
     fun addLine(endPosition: Vector2d, headingInterpolation: HeadingInterpolation = TangentHeading): T {
         addPathSegment { pathBuilder.addLine(endPosition, headingInterpolation) }
-
         return this as T
     }
 
@@ -152,88 +158,25 @@ abstract class BaseTrajectoryBuilder<T : BaseTrajectoryBuilder<T>> protected con
                 endTangentMag,
             )
         }
-
         return this as T
     }
 
     fun splineTo(endPosition: Vector2d, endTangent: Angle) = addSpline(endPosition, endTangent)
     fun splineToConstantHeading(endPosition: Vector2d, endTangent: Angle) =
         addSpline(endPosition, endTangent, ConstantHeading)
+
     fun splineToLinearHeading(endPose: Pose2d, endTangent: Angle) =
         addSpline(endPose.vec(), endTangent, LinearHeading(endPose.heading))
+
     fun splineToSplineHeading(endPose: Pose2d, endTangent: Angle) =
         addSpline(endPose.vec(), endTangent, SplineHeading(endPose.heading))
-
-    /**
-     * Adds a marker to the trajectory at [time].
-     */
-    fun addTemporalMarker(time: Double, callback: MarkerCallback): T =
-        addTemporalMarker(0.0, time, callback)
-
-    /**
-     * Adds a marker to the trajectory at [scale] * trajectory duration + [offset].
-     */
-    @JsName("addTemporalMarkerOffset")
-    fun addTemporalMarker(scale: Double, offset: Double, callback: MarkerCallback): T =
-        addTemporalMarker({ scale * it + offset }, callback)
-
-    /**
-     * Adds a marker to the trajectory at [time] evaluated with the trajectory duration.
-     */
-    @JsName("addTemporalMarkerCustom")
-    fun addTemporalMarker(time: (Double) -> Double, callback: MarkerCallback): T {
-        temporalMarkers.add(TemporalMarker(time, callback))
-
-        return this as T
-    }
-
-    /**
-     * Adds a marker that will be triggered at the closest trajectory point to [point].
-     */
-    fun addSpatialMarker(point: Vector2d, callback: MarkerCallback): T {
-        spatialMarkers.add(SpatialMarker(point, callback))
-
-        return this as T
-    }
-
-    /**
-     * Adds a marker at the current position of the trajectory.
-     */
-    fun addDisplacementMarker(callback: MarkerCallback): T =
-        addDisplacementMarker(pathBuilder.build().length(), callback)
-
-    /**
-     * Adds a marker to the trajectory at [displacement].
-     */
-    @JsName("addDisplacementMarkerD")
-    fun addDisplacementMarker(displacement: Double, callback: MarkerCallback): T =
-        addDisplacementMarker(0.0, displacement, callback)
-
-    /**
-     * Adds a marker to the trajectory at [scale] * path length + [offset].
-     */
-    @JsName("addDisplacementMarkerOffset")
-    fun addDisplacementMarker(scale: Double, offset: Double, callback: MarkerCallback): T =
-        addDisplacementMarker({ scale * it + offset }, callback)
-
-    /**
-     * Adds a marker to the trajectory at [displacement] evaluated with path length.
-     */
-    @JsName("addDisplacementMarkerCustom")
-    fun addDisplacementMarker(displacement: (Double) -> Double, callback: MarkerCallback): T {
-        displacementMarkers.add(DisplacementMarker(displacement, callback))
-
-        return this as T
-    }
 
     /**
      * Constructs the [Trajectory] instance.
      */
     fun build(): Trajectory {
         pushPath()
-        return TrajectoryGenerator.generateTrajectory(
-            segments, temporalMarkers, displacementMarkers, spatialMarkers
-        )
+        return Trajectory(segments)
     }
 
     protected abstract fun makePathSegment(path: Path): PathTrajectorySegment

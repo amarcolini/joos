@@ -4,30 +4,18 @@ package com.amarcolini.joos.command
  * A command that runs commands in parallel until one of them finishes.
  */
 class RaceCommand(
-    isInterruptable: Boolean ,
-    vararg commands: Command
-) : CommandGroup(true, commands, isInterruptable) {
-    constructor(vararg commands: Command): this(!commands.any { !it.isInterruptable }, *commands)
+    override var isInterruptable: Boolean,
+    commands: List<Command>
+) : CommandGroup(commands) {
+    constructor(isInterruptable: Boolean, vararg commands: Command) : this(isInterruptable, commands.toList())
+    constructor(vararg commands: Command) : this(!commands.any { !it.isInterruptable }, *commands)
 
-    private val commands = commands.toMutableList()
-    override fun add(command: Command) {
-        commands += command
-        isInterruptable = isInterruptable && command.isInterruptable
+    override fun add(command: Command) = RaceCommand(isInterruptable, commands + command)
+    override val requirements: Set<Component> = intersectRequirements(commands)
+
+    override fun internalInit() {
+        scheduleQueue += commands
     }
 
-    override fun init() {
-        commands.forEach { it.init() }
-    }
-
-    override fun execute() {
-        commands.forEach { it.execute() }
-        commands.filter { it.isFinished() }.forEach { it.end(false) }
-    }
-
-    override fun end(interrupted: Boolean) {
-        if (!interrupted) commands.filter { !it.isFinished() }.forEach { it.end(true) }
-        else commands.forEach { it.end(true) }
-    }
-
-    override fun isFinished(): Boolean = commands.any { it.isFinished() }
+    override fun isFinished() = scheduledCommands.size < commands.size
 }

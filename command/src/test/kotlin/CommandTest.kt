@@ -54,20 +54,6 @@ class CommandTest {
     }
 
     @Test
-    fun testPerformance() {
-        if (logOutput) println("* Performance test cannot be done with log output turned on.")
-        else {
-            val commands = List(10000) { Command.of {} }.toTypedArray()
-            scheduler.schedule(*commands)
-
-            val clock = NanoClock.system
-            val now = clock.seconds()
-            repeat(3) { scheduler.update() }
-            println("performance: ${clock.seconds() - now}")
-        }
-    }
-
-    @Test
     fun testConcurrentModification() {
         var result = false
         val cmd = Command.empty().runForever()
@@ -87,44 +73,6 @@ class CommandTest {
             scheduler.update()
         }
         assert(result)
-    }
-
-    @Test
-    fun testWhyMyCodeDoesntWork() {
-        val lift = Component.of {
-            if (logOutput) println("updating lift")
-        }
-        var atPosition = false
-        scheduler.register(lift)
-        val command = Command.select(lift) {
-            WaitCommand(1.0).setInterruptable(true).requires(lift)
-                .onEnd { println("get cancelled punk") }
-                .onInit { println("working a little") }
-                .onExecute { println("but wait!") }
-        }
-        val command2 = Command.select(lift) {
-            FunctionalCommand(
-                init = {
-                }, execute = {
-                }, end = {
-                }, isFinished = {
-                    atPosition
-                }, isInterruptable = true, requirements = setOf(lift)
-            ).onInit { println("actually working") }.onExecute { println("actually executing") }
-        }
-
-        println("#1 available: ${scheduler.isAvailable(command)}")
-        scheduler.schedule(command)
-        var toggle = false
-        scheduler.map({ toggle }, command2)
-        repeat(5) { scheduler.update() }
-        println("are we ready? ${command.isFinished()}")
-        println("#2 available: ${scheduler.isAvailable(command2)}")
-        toggle = true
-        scheduler.update()
-        toggle = false
-        println("toggled!")
-        repeat(5) { scheduler.update() }
     }
 
     @Test
@@ -352,6 +300,27 @@ class CommandTest {
         }
         if (logOutput) println(compounded)
         assert(compounded epsilonEquals 3.0)
+    }
+
+    @Test
+    fun testSchedulePolicy() {
+        val component = DummyComponent("Fred")
+        val command1 = RangeCommand("c1", 0, 2, false, setOf(component))
+        val command2 = RangeCommand("c2", 0, 2, true, setOf(component))
+
+        scheduler.waitToScheduleCommands = false
+        assert(scheduler.schedule(command1))
+        assert(!scheduler.schedule(command2))
+        while (scheduler.isScheduled(command1)) scheduler.update()
+        scheduler.update()
+        assert(!scheduler.isScheduled(command2))
+
+        scheduler.waitToScheduleCommands = true
+        assert(scheduler.schedule(command1))
+        assert(!scheduler.schedule(command2))
+        while (scheduler.isScheduled(command1)) scheduler.update()
+        scheduler.update()
+        assert(scheduler.isScheduled(command2) && command2.num == 1)
     }
 }
 

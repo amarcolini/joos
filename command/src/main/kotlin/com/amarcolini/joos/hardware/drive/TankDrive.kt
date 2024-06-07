@@ -1,23 +1,10 @@
 package com.amarcolini.joos.hardware.drive
 
 import com.amarcolini.joos.command.Component
-import com.amarcolini.joos.control.PIDCoefficients
 import com.amarcolini.joos.drive.AbstractTankDrive
-import com.amarcolini.joos.drive.DriveSignal
-import com.amarcolini.joos.followers.TankPIDVAFollower
-import com.amarcolini.joos.followers.TrajectoryFollower
-import com.amarcolini.joos.geometry.Pose2d
-import com.amarcolini.joos.hardware.Motor
 import com.amarcolini.joos.hardware.MotorGroup
-import com.amarcolini.joos.kinematics.TankKinematics
 import com.amarcolini.joos.localization.AngleSensor
-import com.amarcolini.joos.localization.Localizer
-import com.amarcolini.joos.localization.TankLocalizer
 import com.amarcolini.joos.trajectory.constraints.TankConstraints
-import com.amarcolini.joos.util.deg
-import com.amarcolini.joos.util.rad
-import kotlin.math.abs
-import kotlin.math.min
 
 
 /**
@@ -29,7 +16,8 @@ open class TankDrive @JvmOverloads constructor(
     trackWidth: Double = 1.0,
     externalHeadingSensor: AngleSensor? = null,
 ) : AbstractTankDrive(trackWidth, externalHeadingSensor), DriveComponent {
-    @JvmOverloads constructor(
+    @JvmOverloads
+    constructor(
         left: MotorGroup,
         right: MotorGroup,
         constraints: TankConstraints,
@@ -51,14 +39,6 @@ open class TankDrive @JvmOverloads constructor(
     override fun getWheelPositions(): List<Double> = listOf(
         left.currentPosition, right.currentPosition
     )
-
-    override fun setRunMode(runMode: Motor.RunMode) {
-        motors.forEach { it.runMode = runMode }
-    }
-
-    override fun setZeroPowerBehavior(zeroPowerBehavior: Motor.ZeroPowerBehavior) {
-        motors.forEach { it.zeroPowerBehavior = zeroPowerBehavior }
-    }
 
     override fun update() {
         updatePoseEstimate()

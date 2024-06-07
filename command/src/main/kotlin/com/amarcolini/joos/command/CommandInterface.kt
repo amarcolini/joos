@@ -1,6 +1,6 @@
 package com.amarcolini.joos.command
 
-import com.amarcolini.joos.command.CommandScheduler.schedulePolicy
+import com.amarcolini.joos.command.CommandScheduler.waitToScheduleCommands
 import java.util.function.BooleanSupplier
 
 /**
@@ -17,9 +17,9 @@ interface CommandInterface {
      *
      * @return `true` if all commands were successfully scheduled immediately, and `false` if they were not. Note that if
      * the scheduler is currently updating, this method will return `false`, but the scheduler will attempt to
-     * schedule the commands when it can. If [schedulePolicy] is `true`, all commands will be successfully scheduled.
+     * schedule the commands when it can. If [waitToScheduleCommands] is `true`, all commands will be successfully scheduled.
      *
-     * @see CommandScheduler.schedulePolicy
+     * @see CommandScheduler.waitToScheduleCommands
      */
     fun schedule(vararg commands: Command): Boolean = CommandScheduler.schedule(*commands)
 
@@ -28,9 +28,9 @@ interface CommandInterface {
      *
      * @return `true` if all commands were successfully scheduled immediately, and `false` if they were not. Note that if
      * the scheduler is currently updating, this method will return `false`, but the scheduler will attempt to
-     * schedule the commands when it can. If [CommandScheduler.schedulePolicy] is `true`, all commands will be successfully scheduled.
+     * schedule the commands when it can. If [CommandScheduler.waitToScheduleCommands] is `true`, all commands will be successfully scheduled.
      *
-     * @see CommandScheduler.schedulePolicy
+     * @see CommandScheduler.waitToScheduleCommands
      */
     fun schedule(runnable: Runnable): Boolean = CommandScheduler.schedule(runnable)
 
@@ -39,10 +39,10 @@ interface CommandInterface {
      *
      * @return `true` if all commands were successfully scheduled immediately, and `false` if they were not. Note that if
      * the scheduler is currently updating, this method will return `false`, but the scheduler will attempt to
-     * schedule the commands when it can. If [CommandScheduler.schedulePolicy] is `true`, all commands will be successfully scheduled.
+     * schedule the commands when it can. If [CommandScheduler.waitToScheduleCommands] is `true`, all commands will be successfully scheduled.
      *
      * @param repeat whether the provided [runnable] should run repeatedly or not
-     * @see CommandScheduler.schedulePolicy
+     * @see CommandScheduler.waitToScheduleCommands
      */
     fun schedule(repeat: Boolean, runnable: Runnable): Boolean = CommandScheduler.schedule(repeat, runnable)
 

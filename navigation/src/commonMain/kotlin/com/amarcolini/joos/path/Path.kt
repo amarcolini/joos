@@ -6,6 +6,7 @@ import com.amarcolini.joos.geometry.Vector2d
 import com.amarcolini.joos.util.DoubleProgression
 import kotlin.js.JsExport
 import kotlin.js.JsName
+import kotlin.jvm.JvmField
 import kotlin.jvm.JvmOverloads
 import kotlin.math.roundToInt
 
@@ -15,13 +16,17 @@ import kotlin.math.roundToInt
  * @param segments list of path segments
  */
 @JsExport
-class Path(val segments: List<PathSegment>) {
+class Path(@JvmField val segments: List<PathSegment>) {
 
     /**
      * @param segment single path segment
      */
     @JsName("fromSingle")
     constructor(segment: PathSegment) : this(listOf(segment))
+
+    init {
+        if (segments.isEmpty()) throw IllegalArgumentException("A Path cannot be initialized without segments.")
+    }
 
     /**
      * Returns the length of the path.
@@ -169,30 +174,30 @@ class Path(val segments: List<PathSegment>) {
     /**
      * Returns the start pose.
      */
-    fun start() = get(0.0)
+    fun start() = segments.first().start()
 
     /**
      * Returns the start pose derivative.
      */
-    fun startDeriv() = deriv(0.0)
+    fun startDeriv() = segments.first().startDeriv()
 
     /**
      * Returns the start pose second derivative.
      */
-    fun startSecondDeriv() = secondDeriv(0.0)
+    fun startSecondDeriv() = segments.first().startSecondDeriv()
 
     /**
      * Returns the end pose.
      */
-    fun end() = get(length())
+    fun end() = segments.last().end()
 
     /**
      * Returns the end pose derivative.
      */
-    fun endDeriv() = deriv(length())
+    fun endDeriv() = segments.last().startDeriv()
 
     /**
      * Returns the end pose second derivative.
      */
-    fun endSecondDeriv() = secondDeriv(length())
+    fun endSecondDeriv() = segments.last().startDeriv()
 }

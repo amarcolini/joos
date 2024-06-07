@@ -5,8 +5,6 @@ import com.amarcolini.joos.drive.AbstractMecanumDrive
 import com.amarcolini.joos.hardware.Motor
 import com.amarcolini.joos.hardware.MotorGroup
 import com.amarcolini.joos.localization.AngleSensor
-import com.amarcolini.joos.localization.Localizer
-import com.amarcolini.joos.localization.MecanumLocalizer
 import com.amarcolini.joos.trajectory.constraints.MecanumConstraints
 
 /**
@@ -73,14 +71,6 @@ open class MecanumDrive @JvmOverloads constructor(
             .forEach { (motor, power) ->
                 motor.setDistanceVelocity(power.first, power.second)
             }
-    }
-
-    override fun setRunMode(runMode: Motor.RunMode) {
-        motors.forEach { it.runMode = runMode }
-    }
-
-    override fun setZeroPowerBehavior(zeroPowerBehavior: Motor.ZeroPowerBehavior) {
-        motors.forEach { it.zeroPowerBehavior = zeroPowerBehavior }
     }
 
     override fun update() {

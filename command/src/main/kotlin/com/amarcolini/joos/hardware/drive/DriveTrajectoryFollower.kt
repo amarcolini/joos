@@ -17,7 +17,7 @@ interface DriveTrajectoryFollower : DriveComponent {
     /**
      * Returns a [TrajectoryBuilder] with the constraints of this drive.
      */
-    fun trajectoryBuilder(): TrajectoryBuilder = trajectoryBuilder(poseEstimate)
+    fun trajectoryBuilder(): TrajectoryBuilder = trajectoryBuilder(localizer.poseEstimate)
 
     /**
      * Returns a [TrajectoryBuilder] with the constraints of this drive.
@@ -30,48 +30,30 @@ interface DriveTrajectoryFollower : DriveComponent {
      * Returns a [TrajectoryBuilder] with the constraints of this drive.
      */
     fun trajectoryBuilder(
-        startPose: Pose2d = poseEstimate,
+        startPose: Pose2d = localizer.poseEstimate,
         startTangent: Angle = startPose.heading
     ): TrajectoryBuilder = TrajectoryBuilder(
         startPose,
         startTangent,
-        constraints.velConstraint,
-        constraints.accelConstraint,
-        constraints.maxAngVel, constraints.maxAngAccel, constraints.maxAngJerk
+        constraints
     )
 
     /**
      * Returns a [TrajectoryBuilder] with the constraints of this drive.
      */
     fun trajectoryBuilder(
-        startPose: Pose2d = poseEstimate,
+        startPose: Pose2d = localizer.poseEstimate,
         reversed: Boolean
     ): TrajectoryBuilder = TrajectoryBuilder(
         startPose,
         reversed,
-        constraints.velConstraint,
-        constraints.accelConstraint,
-        constraints.maxAngVel, constraints.maxAngAccel, constraints.maxAngJerk
+        constraints
     )
 
     /**
      * Returns a [Command] that follows the provided trajectory.
      */
-    fun followTrajectory(trajectory: Trajectory): Command {
-        return if (!trajectoryFollower.isFollowing()) {
-            FunctionalCommand(
-                init = { trajectoryFollower.followTrajectory(trajectory) },
-                execute = { setDriveSignal(trajectoryFollower.update(poseEstimate, poseVelocity)) },
-                isFinished = { !trajectoryFollower.isFollowing() },
-                end = { setDriveSignal(DriveSignal()) },
-                requirements = setOf(this)
-            )
-        } else Command.empty()
-    }
-
-    /**
-     * Returns the trajectory currently being followed by this drive, if any.
-     */
-    fun getCurrentTrajectory(): Trajectory? =
-        if (trajectoryFollower.isFollowing()) trajectoryFollower.trajectory else null
+    fun followTrajectory(trajectory: Trajectory): FollowTrajectoryCommand = FollowTrajectoryCommand(
+        trajectory, trajectoryFollower, this
+    )
 }
