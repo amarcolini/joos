@@ -18,15 +18,12 @@ import kotlin.math.ceil
  */
 object SuperTelemetry {
     private var packet: TelemetryPacket = TelemetryPacket()
-    @JvmStatic
     val lines: MutableList<Linable> = ArrayList()
     private val telemetries: MutableList<Telemetry> = ArrayList()
 
-    @JvmStatic
     var isAutoClear: Boolean = true
         @JvmName("setAutoClear") set
 
-    @JvmStatic
     var msTransmissionInterval: Int = 250
         set(value) {
             telemetries.forEach { it.msTransmissionInterval = value }
@@ -34,13 +31,10 @@ object SuperTelemetry {
             field = value
         }
 
-    @JvmStatic
     var itemSeparator: String = " | "
 
-    @JvmStatic
     var captionValueSeparator: String = " : "
 
-    @JvmStatic
     fun fieldOverlay(): Canvas = packet.fieldOverlay()
 
     /**
@@ -186,7 +180,6 @@ object SuperTelemetry {
         }
     }
 
-    @JvmStatic
     fun register(vararg telemetries: Telemetry) {
         telemetries.forEach {
             it.isAutoClear = true
@@ -196,32 +189,26 @@ object SuperTelemetry {
         this.telemetries += telemetries
     }
 
-    @JvmStatic
     fun unregister(vararg telemetries: Telemetry): Boolean = this.telemetries.removeAll(telemetries.toSet())
 
-    @JvmStatic
     fun addData(caption: String, format: String, arg1: Any?, vararg args: Any?): Item =
         addData(caption, String.format(format, arg1, *args))
 
-    @JvmStatic
     fun addData(caption: String, value: Any?): Item {
         val item = Item(caption, value.toString())
         lines += item
         return item
     }
 
-    @JvmStatic
     fun addDataProvider(caption: String, provider: Supplier<Any?>): ItemProvider {
         val item = ItemProvider(caption, provider)
         lines += item
         return item
     }
 
-    @JvmStatic
     fun removeItem(item: Item): Boolean =
         lines.remove(item) || lines.filterIsInstance<Line>().any { it.items.remove(item) }
 
-    @JvmStatic
     fun clear() {
         lines.removeIf { lineable ->
             when (lineable) {
@@ -237,23 +224,18 @@ object SuperTelemetry {
         }
     }
 
-    @JvmStatic
     fun clearAll() = lines.clear()
 
-    @JvmStatic
     fun reset() {
         clearAll()
         telemetries.clear()
     }
 
-    @JvmStatic
     fun speak(text: String) = telemetries.forEach { it.speak(text) }
 
-    @JvmStatic
     fun speak(text: String, languageCode: String, countryCode: String) =
         telemetries.forEach { it.speak(text, languageCode, countryCode) }
 
-    @JvmStatic
     fun update() {
         lines.forEach { line ->
             when (line) {
@@ -284,10 +266,8 @@ object SuperTelemetry {
         return line
     }
 
-    @JvmStatic
     fun removeLine(line: Line): Boolean = lines.remove(line)
 
-    @JvmStatic
     fun setDisplayFormat(displayFormat: Telemetry.DisplayFormat?) {
         telemetries.forEach { it.setDisplayFormat(displayFormat) }
     }
@@ -295,19 +275,16 @@ object SuperTelemetry {
     /**
      * The radius used by [drawRobot].
      */
-    @JvmField
     val robotRadius = 9.0
 
     /**
      * The resolution used by [drawSampledPath] and [drawSampledTrajectory] when sampling.
      */
-    @JvmField
     val resolution = 2.0
 
     /**
      * Draws a list of poses on [FTC Dashboard](https://github.com/acmerobotics/ftc-dashboard).
      */
-    @JvmStatic
     fun drawPoseHistory(
         poseHistory: List<Pose2d>,
         color: String
@@ -327,7 +304,6 @@ object SuperTelemetry {
     /**
      * Draws a robot on [FTC Dashboard](https://github.com/acmerobotics/ftc-dashboard).
      */
-    @JvmStatic
     fun drawRobot(
         pose: Pose2d,
         color: String

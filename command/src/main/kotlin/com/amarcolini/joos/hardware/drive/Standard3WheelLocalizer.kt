@@ -10,7 +10,7 @@ import com.amarcolini.joos.util.rad
  * A utility class for creating 3-wheel tracking localizers with standard configurations.
  */
 class Standard3WheelLocalizer(
-    private val encoders: List<Motor.Encoder>,
+    @JvmField val encoders: List<Motor.Encoder>,
     encoderPositions: List<Pose2d>
 ) : ThreeTrackingWheelLocalizer(encoderPositions) {
     constructor(

@@ -11,8 +11,8 @@ import com.amarcolini.joos.trajectory.constraints.TankConstraints
  * A [Component] implementation of a tank drive.
  */
 open class TankDrive @JvmOverloads constructor(
-    private val left: MotorGroup,
-    private val right: MotorGroup,
+    @JvmField val leftMotors: MotorGroup,
+    @JvmField val rightMotors: MotorGroup,
     trackWidth: Double = 1.0,
     externalHeadingSensor: AngleSensor? = null,
 ) : AbstractTankDrive(trackWidth, externalHeadingSensor), DriveComponent {
@@ -24,20 +24,20 @@ open class TankDrive @JvmOverloads constructor(
         externalHeadingSensor: AngleSensor? = null
     ) : this(left, right, constraints.trackWidth, externalHeadingSensor)
 
-    override val motors: MotorGroup = MotorGroup(left, right)
+    override val motors: MotorGroup = MotorGroup(leftMotors, rightMotors)
 
     override fun setMotorPowers(left: Double, right: Double) {
-        this.left.setPower(left)
-        this.right.setPower(right)
+        leftMotors.setPower(left)
+        rightMotors.setPower(right)
     }
 
     override fun setWheelVelocities(velocities: List<Double>, accelerations: List<Double>) {
-        left.setDistanceVelocity(velocities[0], accelerations[0])
-        right.setDistanceVelocity(velocities[1], accelerations[1])
+        leftMotors.setDistanceVelocity(velocities[0], accelerations[0])
+        rightMotors.setDistanceVelocity(velocities[1], accelerations[1])
     }
 
     override fun getWheelPositions(): List<Double> = listOf(
-        left.currentPosition, right.currentPosition
+        leftMotors.currentPosition, rightMotors.currentPosition
     )
 
     override fun update() {

@@ -39,9 +39,7 @@ abstract class ThreeTrackingWheelLocalizer(
             )
         })
         val forwardMatrix = inverseMatrix.getInverse()
-        require(forwardMatrix != null) {
-            "The specified configuration cannot support full localization"
-        }
+            ?: throw IllegalArgumentException("The specified configuration cannot support full localization")
         this.forwardMatrix = forwardMatrix
     }
 

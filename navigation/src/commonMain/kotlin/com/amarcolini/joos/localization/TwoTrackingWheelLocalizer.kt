@@ -44,9 +44,7 @@ abstract class TwoTrackingWheelLocalizer(
             } else doubleArrayOf(0.0, 0.0, 1.0)
         })
         val forwardMatrix = inverseMatrix.getInverse()
-        require(forwardMatrix != null) {
-            "The specified configuration cannot support full localization"
-        }
+            ?: throw IllegalArgumentException("The specified configuration cannot support full localization")
         this.forwardMatrix = forwardMatrix
     }
 

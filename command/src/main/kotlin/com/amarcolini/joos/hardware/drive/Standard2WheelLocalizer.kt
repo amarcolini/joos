@@ -10,9 +10,9 @@ import com.amarcolini.joos.localization.TwoTrackingWheelLocalizer
  * A utility class for creating 2-wheel tracking localizers with standard configurations.
  */
 class Standard2WheelLocalizer(
-    private val encoders: List<Motor.Encoder>,
+    @JvmField val encoders: List<Motor.Encoder>,
     encoderPositions: List<Pose2d>,
-    private val externalHeadingSensor: AngleSensor,
+    @JvmField val externalHeadingSensor: AngleSensor,
 ) : TwoTrackingWheelLocalizer(encoderPositions) {
     constructor(
         parallelEncoder: Motor.Encoder,

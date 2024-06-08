@@ -43,39 +43,45 @@ abstract class ComponentDrive : Drive(), DriveComponent {
     }
 }
 
-class FollowPathCommand(
-    val path: Path,
-    val pathFollower: PathFollower,
-    val driveComponent: DriveComponent,
+open class FollowPathCommand(
+    @JvmField val path: Path,
+    @JvmField val pathFollower: PathFollower,
+    @JvmField val driveComponent: DriveComponent,
 ) : Command() {
-    override val requirements = setOf(driveComponent)
+    final override val requirements: Set<Component> = setOf(driveComponent)
 
-    override fun init() {
+    final override fun init() {
         pathFollower.followPath(path)
+        postInit()
     }
 
-    override fun execute() {
+    open fun postInit() {}
+
+    final override fun execute() {
         driveComponent.setDriveSignal(
             pathFollower.update(
                 driveComponent.localizer.poseEstimate,
                 driveComponent.localizer.poseVelocity
             )
         )
+        postExecute()
     }
 
-    override fun isFinished() = !pathFollower.isFollowing()
+    open fun postExecute() {}
 
-    override fun end(interrupted: Boolean) {
+    final override fun isFinished() = !pathFollower.isFollowing()
+
+    final override fun end(interrupted: Boolean) {
         driveComponent.setDriveSignal(DriveSignal())
     }
 }
 
 open class FollowTrajectoryCommand(
-    val trajectory: Trajectory,
-    val trajectoryFollower: TrajectoryFollower,
-    val driveComponent: DriveComponent,
+    @JvmField val trajectory: Trajectory,
+    @JvmField val trajectoryFollower: TrajectoryFollower,
+    @JvmField val driveComponent: DriveComponent,
 ) : Command() {
-    final override val requirements = setOf(driveComponent)
+    final override val requirements: Set<Component> = setOf(driveComponent)
 
     final override fun init() {
         trajectoryFollower.followTrajectory(trajectory)
