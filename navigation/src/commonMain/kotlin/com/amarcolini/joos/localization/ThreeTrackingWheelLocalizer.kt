@@ -5,6 +5,8 @@ import com.amarcolini.joos.kinematics.Kinematics
 import com.amarcolini.joos.util.Matrix3x3
 import com.amarcolini.joos.util.rad
 import kotlin.jvm.JvmField
+import kotlin.jvm.JvmOverloads
+import kotlin.jvm.JvmStatic
 
 /**
  * Localizer based on three unpowered tracking omni wheels.
@@ -13,16 +15,32 @@ import kotlin.jvm.JvmField
  */
 abstract class ThreeTrackingWheelLocalizer(
     @JvmField val wheelPoses: List<Pose2d>
-) : Localizer {
+) : DeadReckoningLocalizer {
+    companion object {
+        @JvmStatic
+        @JvmOverloads
+        fun from(
+            getWheelPositions: () -> List<Double>,
+            getWheelVelocities: () -> List<Double>? = { null },
+            wheelPoses: List<Pose2d>
+        ): ThreeTrackingWheelLocalizer = object : ThreeTrackingWheelLocalizer(wheelPoses) {
+            override fun getWheelPositions(): List<Double> = getWheelPositions()
+
+            override fun getWheelVelocities(): List<Double>? = getWheelVelocities()
+        }
+    }
+
     private var _poseEstimate = Pose2d()
-    override var poseEstimate: Pose2d
+    final override var poseEstimate: Pose2d
         get() = _poseEstimate
         set(value) {
             lastWheelPositions = emptyList()
             _poseEstimate = value
         }
-    override var poseVelocity: Pose2d? = null
+    final override var poseVelocity: Pose2d? = null
     private var lastWheelPositions = emptyList<Double>()
+    final override var lastRobotPoseDelta: Pose2d = Pose2d()
+        private set
 
     private val forwardMatrix: Matrix3x3
 
@@ -52,7 +70,7 @@ abstract class ThreeTrackingWheelLocalizer(
         )
     }
 
-    override fun update() {
+    final override fun update() {
         val wheelPositions = getWheelPositions()
         if (lastWheelPositions.isNotEmpty()) {
             val wheelDeltas = wheelPositions
@@ -60,6 +78,7 @@ abstract class ThreeTrackingWheelLocalizer(
                 .map { it.first - it.second }
             val robotPoseDelta = calculatePoseDelta(wheelDeltas)
             _poseEstimate = Kinematics.relativeOdometryUpdate(_poseEstimate, robotPoseDelta)
+            lastRobotPoseDelta = robotPoseDelta
         }
 
         val wheelVelocities = getWheelVelocities()

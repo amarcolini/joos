@@ -23,14 +23,13 @@ abstract class AbstractMecanumDrive @JvmOverloads constructor(
     protected val lateralMultiplier: Double = 1.0,
     protected val externalHeadingSensor: AngleSensor? = null
 ) : Drive() {
-
-    override var localizer: Localizer = MecanumLocalizer(
+    final override var localizer: Localizer = MecanumLocalizer.from(
         ::getWheelPositions,
         ::getWheelVelocities,
         trackWidth, wheelBase, lateralMultiplier,
     ).let { if (externalHeadingSensor != null) it.addHeadingSensor(externalHeadingSensor) else it }
 
-    override fun setDriveSignal(driveSignal: DriveSignal) {
+    final override fun setDriveSignal(driveSignal: DriveSignal) {
         val velocities = MecanumKinematics.robotToWheelVelocities(
             driveSignal.vel,
             trackWidth,
@@ -46,7 +45,7 @@ abstract class AbstractMecanumDrive @JvmOverloads constructor(
         setWheelVelocities(velocities, accelerations)
     }
 
-    override fun setDrivePower(drivePower: Pose2d) {
+    final override fun setDrivePower(drivePower: Pose2d) {
         val powers = MecanumKinematics.robotToWheelVelocities(
             drivePower.copy(heading = drivePower.heading.value.rad),
             1.0,

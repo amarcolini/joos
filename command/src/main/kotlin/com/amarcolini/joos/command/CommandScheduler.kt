@@ -197,9 +197,9 @@ object CommandScheduler : OpModeManagerNotifier.Notifications {
         //Updates all registered components
         components.forEach { it.update() }
 
-        //The predicate for removeIf is applied to all commands, acting like a for loop
+        //The predicate for removeAll is applied to all commands, acting like a for loop
         isBusy = true
-        scheduledCommands.removeIf {
+        scheduledCommands.removeAll {
             //Executes all scheduled commands
             it.execute()
             //Computes whether they are finished

@@ -5,7 +5,6 @@ import com.amarcolini.joos.control.PIDCoefficients
 import com.amarcolini.joos.control.PIDController
 import com.amarcolini.joos.geometry.Angle
 import com.amarcolini.joos.kinematics.DiffSwerveKinematics
-import com.amarcolini.joos.util.deg
 import com.amarcolini.joos.util.rad
 import com.amarcolini.joos.util.wrap
 import kotlin.jvm.JvmField
@@ -52,6 +51,7 @@ abstract class PIDSwerveModule(
     private var targetSpeed: (Double) -> Unit = { mult: Double ->
         setCorrectedDrivePower(0.0)
     }
+
     @JvmField
     protected val pidController = PIDController(pidCoefficients)
 
@@ -110,6 +110,7 @@ abstract class PIDDiffSwerveModule(
     protected var feedforward: Feedforward,
 ) : SwerveModule() {
     private var targetPower: Double = 0.0
+
     @JvmField
     protected val pidController = PIDController(pidCoefficients)
 
@@ -143,17 +144,17 @@ abstract class PIDDiffSwerveModule(
         )
     }
 
-    override fun getWheelPosition(): Double {
+    final override fun getWheelPosition(): Double {
         val positions = getGearPositions()
         return DiffSwerveKinematics.gearToWheelVelocities(positions[0], positions[1])
     }
 
-    override fun getWheelVelocity(): Double? {
+    final override fun getWheelVelocity(): Double? {
         val positions = getGearVelocities() ?: return null
         return DiffSwerveKinematics.gearToWheelVelocities(positions[0], positions[1])
     }
 
-    override fun getModuleOrientation(): Angle {
+    final override fun getModuleOrientation(): Angle {
         val (top, bottom) = getGearRotations()
         return DiffSwerveKinematics.gearToModuleOrientation(top, bottom)
     }

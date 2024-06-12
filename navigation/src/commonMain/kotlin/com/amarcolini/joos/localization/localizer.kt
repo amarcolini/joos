@@ -3,6 +3,7 @@ package com.amarcolini.joos.localization
 import com.amarcolini.joos.geometry.Pose2d
 import com.amarcolini.joos.kinematics.Kinematics
 import kotlin.js.JsExport
+import kotlin.jvm.JvmField
 
 /**
  * Generic interface for estimating robot pose over time.
@@ -43,7 +44,7 @@ interface DeadReckoningLocalizer : Localizer {
  */
 class HeadingLocalizer(
     private val headingSensor: AngleSensor,
-    private val deadReckoningLocalizer: DeadReckoningLocalizer,
+    @JvmField val deadReckoningLocalizer: DeadReckoningLocalizer,
 ) : Localizer {
     override var poseEstimate: Pose2d
         set(value) {
@@ -69,5 +70,4 @@ class HeadingLocalizer(
         poseVelocity =
             headingSensor.getAngularVelocity()?.let { deadReckoningLocalizer.poseVelocity?.copy(heading = it) }
     }
-
 }

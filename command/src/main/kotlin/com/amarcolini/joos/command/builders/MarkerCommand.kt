@@ -14,7 +14,7 @@ import com.amarcolini.joos.util.NanoClock
  * All commands will be scheduled by the time the sequential commands finish.
  */
 class MarkerCommand @JvmOverloads constructor(
-    override var isInterruptable: Boolean,
+    isInterruptable: Boolean,
     private val sequentialCommand: SequentialCommand,
     private val markers: List<Marker>,
     private val clock: NanoClock = NanoClock.system
@@ -28,6 +28,10 @@ class MarkerCommand @JvmOverloads constructor(
     constructor(commands: List<Command>, markers: List<Marker>) : this(
         SequentialCommand(*commands.toTypedArray()), markers
     )
+
+    init {
+        this.isInterruptable = isInterruptable
+    }
 
     abstract class Marker(@JvmField val command: Command) {
         /**
@@ -58,7 +62,7 @@ class MarkerCommand @JvmOverloads constructor(
         val currentCommand = sequentialCommand.commands[currentIndex]
         val totalTime = clock.seconds() - start
         val relativeTime = clock.seconds() - relativeStart
-        currentMarkers.removeIf { marker ->
+        currentMarkers.removeAll { marker ->
             val shouldSchedule =
                 marker.shouldSchedule(currentIndex, currentCommand, totalTime, relativeTime) || sequentialDone
             if (shouldSchedule) scheduleQueue += marker.command

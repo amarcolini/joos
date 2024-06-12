@@ -10,7 +10,7 @@ package com.amarcolini.joos.command
 abstract class CommandGroup(
     val commands: List<Command>,
 ) : Command() {
-    override var isInterruptable: Boolean = !commands.any { !it.isInterruptable }
+    final override var isInterruptable: Boolean = !commands.any { !it.isInterruptable }
 
     abstract override val requirements: Set<Component>
 

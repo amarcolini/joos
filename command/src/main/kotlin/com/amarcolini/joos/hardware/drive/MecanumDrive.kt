@@ -11,7 +11,7 @@ import com.amarcolini.joos.trajectory.constraints.MecanumConstraints
  * A [Component] implementation of a mecanum drive.
  */
 open class MecanumDrive @JvmOverloads constructor(
-    override val motors: MotorGroup,
+    final override val motors: MotorGroup,
     trackWidth: Double = 1.0,
     wheelBase: Double = trackWidth,
     lateralMultiplier: Double = 1.0,
@@ -55,25 +55,25 @@ open class MecanumDrive @JvmOverloads constructor(
         externalHeadingSensor,
     )
 
-    override fun getWheelPositions() = motors.map { it.distance }
+    final override fun getWheelPositions() = motors.map { it.distance }
 
-    override fun getWheelVelocities() = motors.map { it.distanceVelocity }
+    final override fun getWheelVelocities() = motors.map { it.distanceVelocity }
 
-    override fun setMotorPowers(frontLeft: Double, backLeft: Double, backRight: Double, frontRight: Double) {
+    final override fun setMotorPowers(frontLeft: Double, backLeft: Double, backRight: Double, frontRight: Double) {
         motors.zip(listOf(frontLeft, backLeft, backRight, frontRight))
             .forEach { (motor, power) ->
                 motor.power = power
             }
     }
 
-    override fun setWheelVelocities(velocities: List<Double>, accelerations: List<Double>) {
+    final override fun setWheelVelocities(velocities: List<Double>, accelerations: List<Double>) {
         motors.zip(velocities.zip(accelerations))
             .forEach { (motor, power) ->
                 motor.setDistanceVelocity(power.first, power.second)
             }
     }
 
-    override fun update() {
+    final override fun update() {
         updatePoseEstimate()
         motors.forEach { it.update() }
     }

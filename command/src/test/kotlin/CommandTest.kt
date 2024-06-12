@@ -7,9 +7,9 @@ import mock.DummyMotor
 import org.junit.Before
 import org.junit.Test
 import org.junit.runner.RunWith
-import kotlin.math.abs
 import org.robolectric.RobolectricTestRunner
 import org.robolectric.annotation.Config
+import kotlin.math.abs
 
 private const val logOutput: Boolean = true
 
@@ -300,6 +300,66 @@ class CommandTest {
         }
         if (logOutput) println(compounded)
         assert(compounded epsilonEquals 3.0)
+    }
+
+    @Test
+    fun testCoroutineCommand() {
+        var count = -1
+        val command = CoroutineCommand {
+            count = 0
+            yield(false)
+            do {
+                count++
+                yield(false)
+            } while (count < 5)
+            yield(true)
+        }
+        assert(count == -1)
+        scheduler.schedule(command)
+        assert(count == 0)
+        scheduler.update()
+        assert(count == 1)
+        while (!command.isFinished()) scheduler.update()
+        assert(count == 5)
+    }
+
+    @OptIn(CommandScope.Unsafe::class)
+    @Test
+    fun testCoroutineAsync() {
+        var count = -1
+        var secondCount = -1
+        var hasCancelled = false
+        val command = CoroutineCommand {
+            count = 0
+            val background = async {
+                do {
+                    secondCount++
+                } while ((secondCount < 5).also { yield(!it) })
+            }
+            async {
+                while (true) yield(false)
+            }.ifInterrupted {
+                hasCancelled = true
+            }
+            yield(false)
+            count++
+            yield(false)
+            await(background)
+            count++
+        }
+        assert(count == -1 && secondCount == -1)
+        scheduler.schedule(command)
+        assert(count == 0 && secondCount == 0)
+        scheduler.update()
+        assert(count == 1 && secondCount == 1)
+        scheduler.update()
+        assert(count == 1 && secondCount == 2)
+        repeat(3) { scheduler.update() }
+        assert(count == 1 && secondCount == 5)
+        scheduler.update()
+        assert(count == 2 && secondCount == 5)
+        scheduler.update()
+        assert(command.isFinished() && hasCancelled)
     }
 
     @Test

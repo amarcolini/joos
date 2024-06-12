@@ -3,35 +3,45 @@ package com.amarcolini.joos.localization
 import com.amarcolini.joos.geometry.Pose2d
 import com.amarcolini.joos.kinematics.Kinematics
 import com.amarcolini.joos.kinematics.TankKinematics
-import kotlin.jvm.JvmField
 import kotlin.jvm.JvmOverloads
+import kotlin.jvm.JvmStatic
 
 /**
  * Default localizer for tank drives based on the drive encoders.
  *
- * @param getWheelPositions wheel positions in linear distance units
- * @param getWheelVelocities wheel velocities in linear distance units
- * @param getWheelVelocities lateral distance between pairs of wheels on different sides of the robot
+ * @param trackWidth lateral distance between pairs of wheels on different sides of the robot
  */
-class TankLocalizer @JvmOverloads constructor(
-    @JvmField val getWheelPositions: () -> List<Double>,
-    @JvmField val getWheelVelocities: () -> List<Double>? = { null },
+abstract class TankLocalizer(
     private val trackWidth: Double,
 ) : DeadReckoningLocalizer {
+    companion object {
+        @JvmStatic
+        @JvmOverloads
+        fun from(
+            getWheelPositions: () -> List<Double>,
+            getWheelVelocities: () -> List<Double>? = { null },
+            trackWidth: Double
+        ): TankLocalizer = object : TankLocalizer(trackWidth) {
+            override fun getWheelPositions(): List<Double> = getWheelPositions()
+
+            override fun getWheelVelocities(): List<Double>? = getWheelVelocities()
+        }
+    }
+
     private var _poseEstimate = Pose2d()
-    override var poseEstimate: Pose2d
+    final override var poseEstimate: Pose2d
         get() = _poseEstimate
         set(value) {
             lastWheelPositions = emptyList()
             _poseEstimate = value
         }
-    override var poseVelocity: Pose2d? = null
+    final override var poseVelocity: Pose2d? = null
         private set
     private var lastWheelPositions = emptyList<Double>()
-    override var lastRobotPoseDelta: Pose2d = Pose2d()
+    final override var lastRobotPoseDelta: Pose2d = Pose2d()
         private set
 
-    override fun update() {
+    final override fun update() {
         val wheelPositions = getWheelPositions()
         if (lastWheelPositions.isNotEmpty()) {
             val wheelDeltas = wheelPositions
@@ -54,4 +64,8 @@ class TankLocalizer @JvmOverloads constructor(
 
         lastWheelPositions = wheelPositions
     }
+
+    abstract fun getWheelPositions(): List<Double>
+
+    open fun getWheelVelocities(): List<Double>? = null
 }

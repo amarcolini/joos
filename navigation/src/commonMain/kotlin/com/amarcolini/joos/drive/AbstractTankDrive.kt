@@ -15,24 +15,23 @@ import kotlin.math.abs
  *
  * @param trackWidth Lateral distance between pairs of wheels on different sides of the robot.
  */
-abstract class AbstractTankDrive constructor(
+abstract class AbstractTankDrive @JvmOverloads constructor(
     protected val trackWidth: Double,
     protected val externalHeadingSensor: AngleSensor? = null
 ) : Drive() {
-
-    override var localizer: Localizer = TankLocalizer(
+    final override var localizer: Localizer = TankLocalizer.from(
         ::getWheelPositions,
         ::getWheelVelocities,
         trackWidth,
     ).let { if (externalHeadingSensor != null) it.addHeadingSensor(externalHeadingSensor) else it }
 
-    override fun setDriveSignal(driveSignal: DriveSignal) {
+    final override fun setDriveSignal(driveSignal: DriveSignal) {
         val velocities = TankKinematics.robotToWheelVelocities(driveSignal.vel, trackWidth)
         val accelerations = TankKinematics.robotToWheelAccelerations(driveSignal.accel, trackWidth)
         setWheelVelocities(velocities, accelerations)
     }
 
-    override fun setDrivePower(drivePower: Pose2d) {
+    final override fun setDrivePower(drivePower: Pose2d) {
         val powers = TankKinematics.robotToWheelVelocities(drivePower.copy(heading = drivePower.heading.value.rad), 2.0)
         setMotorPowers(powers[0], powers[1])
     }

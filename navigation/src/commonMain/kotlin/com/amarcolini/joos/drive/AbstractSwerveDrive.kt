@@ -9,7 +9,6 @@ import com.amarcolini.joos.localization.Localizer
 import com.amarcolini.joos.localization.SwerveLocalizer
 import com.amarcolini.joos.util.rad
 import kotlin.jvm.JvmOverloads
-import kotlin.math.abs
 import kotlin.math.sqrt
 
 /**
@@ -56,12 +55,12 @@ abstract class AbstractSwerveDrive @JvmOverloads constructor(
         }
     }
 
-    override var localizer: Localizer = SwerveLocalizer(
+    final override var localizer: Localizer = SwerveLocalizer(
         modules,
         modulePositions
     ).let { if (externalHeadingSensor != null) it.addHeadingSensor(externalHeadingSensor) else it }
 
-    override fun setDriveSignal(driveSignal: DriveSignal) {
+    final override fun setDriveSignal(driveSignal: DriveSignal) {
         val vectors = SwerveKinematics.robotToModuleVelocityVectors(
             driveSignal.vel,
             modulePositions
@@ -78,7 +77,7 @@ abstract class AbstractSwerveDrive @JvmOverloads constructor(
         }
     }
 
-    override fun setDrivePower(drivePower: Pose2d) {
+    final override fun setDrivePower(drivePower: Pose2d) {
         val actualDrivePower = drivePower.copy(heading = drivePower.heading.value.rad)
         val avg = sqrt(modulePositions.maxOf { it.squaredNorm() })
         val vectors =

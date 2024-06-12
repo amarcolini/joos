@@ -5,37 +5,50 @@ import com.amarcolini.joos.kinematics.Kinematics
 import com.amarcolini.joos.kinematics.MecanumKinematics
 import kotlin.jvm.JvmField
 import kotlin.jvm.JvmOverloads
+import kotlin.jvm.JvmStatic
 
 /**
  * Default localizer for mecanum drives based on the drive encoders.
  *
- * @param getWheelPositions wheel positions in linear distance units
- * @param getWheelVelocities wheel velocities in linear distance units
- * @param getWheelVelocities lateral distance between pairs of wheels on different sides of the robot
+ * @param trackWidth lateral distance between pairs of wheels on different sides of the robot
  * @param wheelBase distance between pairs of wheels on the same side of the robot
  * @param lateralMultiplier lateral multiplier
  */
-class MecanumLocalizer @JvmOverloads constructor(
-    @JvmField val getWheelPositions: () -> List<Double>,
-    @JvmField val getWheelVelocities: () -> List<Double>? = { null },
+abstract class MecanumLocalizer @JvmOverloads constructor(
     private val trackWidth: Double,
     private val wheelBase: Double = trackWidth,
     private val lateralMultiplier: Double = 1.0,
 ) : DeadReckoningLocalizer {
+    companion object {
+        @JvmStatic
+        @JvmOverloads
+        fun from(
+            getWheelPositions: () -> List<Double>,
+            getWheelVelocities: () -> List<Double>? = { null },
+            trackWidth: Double,
+            wheelBase: Double = trackWidth,
+            lateralMultiplier: Double = 1.0,
+        ): MecanumLocalizer = object : MecanumLocalizer(trackWidth, wheelBase, lateralMultiplier) {
+            override fun getWheelPositions(): List<Double> = getWheelPositions()
+
+            override fun getWheelVelocities(): List<Double>? = getWheelVelocities()
+        }
+    }
+
     private var _poseEstimate = Pose2d()
-    override var poseEstimate: Pose2d
+    final override var poseEstimate: Pose2d
         get() = _poseEstimate
         set(value) {
             lastWheelPositions = emptyList()
             _poseEstimate = value
         }
-    override var poseVelocity: Pose2d? = null
+    final override var poseVelocity: Pose2d? = null
         private set
     private var lastWheelPositions = emptyList<Double>()
-    override var lastRobotPoseDelta: Pose2d = Pose2d()
+    final override var lastRobotPoseDelta: Pose2d = Pose2d()
         private set
 
-    override fun update() {
+    final override fun update() {
         val wheelPositions = getWheelPositions()
         if (lastWheelPositions.isNotEmpty()) {
             val wheelDeltas = wheelPositions
@@ -67,4 +80,8 @@ class MecanumLocalizer @JvmOverloads constructor(
 
         lastWheelPositions = wheelPositions
     }
+
+    abstract fun getWheelPositions(): List<Double>
+
+    open fun getWheelVelocities(): List<Double>? = null
 }
