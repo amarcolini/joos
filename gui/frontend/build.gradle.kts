@@ -26,7 +26,7 @@ kotlin {
     }
 
     val doodleVersion = "0.10.2"
-    val coroutinesVersion = "1.8.1"
+    val coroutinesVersion = "1.8.0"
 
     sourceSets {
         val commonMain by getting {
@@ -35,6 +35,7 @@ kotlin {
                 implementation("io.nacular.doodle:animation:$doodleVersion")
                 implementation("io.nacular.doodle:controls:$doodleVersion")
                 implementation("io.nacular.doodle:themes:$doodleVersion")
+                //noinspection GradleDependency
                 implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:$coroutinesVersion")
                 api(project(":navigation"))
                 implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.7.2")
