@@ -1,3 +1,5 @@
+import org.jetbrains.kotlin.gradle.dsl.JvmTarget
+
 plugins {
     kotlin("jvm")
     `maven-publish`
@@ -14,15 +16,17 @@ kotlin {
         get("main").kotlin.srcDirs("src/main/kotlin")
         get("test").kotlin.srcDirs("src/test/kotlin")
     }
+    compilerOptions.jvmTarget.set(JvmTarget.JVM_1_8)
 }
 
 group = "$group.command"
 
 dependencies {
+    //noinspection GradleDependency
     implementation("org.jetbrains.kotlin:kotlin-stdlib:${Versions.kotlin}")
     implementation("com.google.devtools.ksp:symbol-processing-api:1.9.20-1.0.14")
     implementation("com.squareup:javapoet:1.13.0")
-    implementation("com.squareup:kotlinpoet:1.12.0")
+    implementation("com.squareup:kotlinpoet:1.13.1")
 }
 repositories {
     mavenCentral()

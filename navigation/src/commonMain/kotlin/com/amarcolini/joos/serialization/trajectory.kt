@@ -22,16 +22,20 @@ import kotlin.jvm.JvmStatic
 @Serializable
 sealed interface TrajectoryPiece
 
-sealed interface MovableTrajectoryPiece {
+@Serializable
+sealed interface MovableTrajectoryPiece : TrajectoryPiece {
     var end: Vector2d
     var heading: HeadingInterpolation
 }
 
 @Serializable
+sealed interface StationaryTrajectoryPiece : TrajectoryPiece
+
+@Serializable
 @SerialName("line")
 data class LinePiece @JvmOverloads constructor(
     override var end: Vector2d, override var heading: HeadingInterpolation = TangentHeading
-) : TrajectoryPiece, MovableTrajectoryPiece
+) : MovableTrajectoryPiece
 
 @Serializable
 @SerialName("spline")
@@ -41,19 +45,19 @@ data class SplinePiece @JvmOverloads constructor(
     var startTangentMag: Double = -1.0,
     var endTangentMag: Double = -1.0,
     override var heading: HeadingInterpolation = TangentHeading
-) : TrajectoryPiece, MovableTrajectoryPiece
+) : MovableTrajectoryPiece
 
 @Serializable
 @SerialName("turn")
 data class TurnPiece(
     var angle: Angle
-) : TrajectoryPiece
+) : StationaryTrajectoryPiece
 
 @Serializable
 @SerialName("wait")
 data class WaitPiece(
     var duration: Double
-) : TrajectoryPiece
+) : StationaryTrajectoryPiece
 
 @Serializable
 data class StartPiece @JvmOverloads constructor(
@@ -80,7 +84,7 @@ data class SerializableTrajectory(
     )
 
     data class PathResult(
-        val path: Path,
+        val path: Path?,
         val errors: List<Pair<Exception, TrajectoryPiece?>>
     )
 
@@ -97,6 +101,7 @@ data class SerializableTrajectory(
                     is SplinePiece -> builder.addSpline(
                         it.end, it.tangent, it.heading, it.startTangentMag, it.endTangentMag
                     )
+
                     is TurnPiece -> builder.turn(it.angle)
                     is WaitPiece -> builder.wait(it.duration)
                 }
@@ -116,19 +121,20 @@ data class SerializableTrajectory(
     fun createPath(): PathResult {
         val errors = ArrayList<Pair<Exception, TrajectoryPiece?>>()
         var builder = PathBuilder(start.pose, start.tangent)
-        var currentPath = Path(emptyList())
+        var currentPath: Path? = null
 
-        fun addToPath(path: Path) {
-            currentPath = Path(currentPath.segments + path.segments)
+        fun addToPath(segments: List<PathSegment>) {
+            if (segments.isNotEmpty())
+                currentPath = Path((currentPath?.segments ?: emptyList()) + segments)
         }
 
         fun splitCurrentPath(newHeading: (Angle) -> Angle = { it }, newTangent: (Angle) -> Angle = { it }) {
-            addToPath(builder.preBuild())
-            val lastSegment = currentPath.segments.last()
-            val endOfLast = when (lastSegment.interpolator) {
+            addToPath(builder.currentSegments())
+            val lastSegment = currentPath?.segments?.last()
+            val endOfLast = when (lastSegment?.interpolator) {
                 is TangentInterpolator, is LinearInterpolator -> lastSegment[0.0, 1.0]
-                else -> lastSegment.end()
-            }
+                else -> lastSegment?.end()
+            } ?: start.pose
             val newStart = endOfLast.copy(heading = newHeading(endOfLast.heading))
             builder = PathBuilder(
                 newStart,
@@ -142,6 +148,7 @@ data class SerializableTrajectory(
                 is SplinePiece -> builder.addSpline(
                     piece.end, piece.tangent, piece.heading, piece.startTangentMag, piece.endTangentMag
                 )
+
                 is TurnPiece -> splitCurrentPath(newHeading = { it + piece.angle })
                 is WaitPiece -> splitCurrentPath()
             }
@@ -161,7 +168,7 @@ data class SerializableTrajectory(
                 } else errors += e to it
             }
         }
-        addToPath(builder.preBuild())
+        addToPath(builder.currentSegments())
         return PathResult(currentPath, errors)
     }
 }

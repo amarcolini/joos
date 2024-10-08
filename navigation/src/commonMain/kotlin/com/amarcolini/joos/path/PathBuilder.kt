@@ -222,8 +222,7 @@ class PathBuilder(
      * Constructs the [Path] instance.
      */
     fun build(): Path {
-        segments.forEach { it.curve.reparameterize() }
-        return Path(segments)
+        return Path(segments).also { it.reparameterize() }
     }
 
     /**
@@ -232,4 +231,6 @@ class PathBuilder(
     fun preBuild(): Path {
         return Path(segments)
     }
+
+    fun currentSegments(): List<PathSegment> = segments
 }

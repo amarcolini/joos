@@ -1,8 +1,6 @@
 package field
 
 import com.amarcolini.joos.geometry.Vector2d
-import com.amarcolini.joos.path.heading.HeadingInterpolation
-import com.amarcolini.joos.path.heading.TangentHeading
 import com.amarcolini.joos.util.deg
 import io.nacular.doodle.core.Behavior
 import io.nacular.doodle.core.behavior
@@ -66,6 +64,7 @@ abstract class SplineKnot internal constructor() : FieldEntity() {
             }
             mouseDragged = { pos, delta ->
                 if (isMove) {
+                    println("Dragging! $knotSelected")
                     if (knotSelected == 0) {
                         val extreme = Point(Field.fieldSize, Field.fieldSize) * 0.5
                         position = (position + delta).coerceIn(-extreme, extreme).roundToNearest(0.1)
@@ -74,21 +73,22 @@ abstract class SplineKnot internal constructor() : FieldEntity() {
                         val vec = (pos).toVector2d() * if (knotSelected == 1) -1.0 else 1.0
                         val newMag = vec.norm() / stretchFactor
                         when (this@SplineKnot.tangentMode) {
-                            TangentMode.FREE -> {
+                            TangentMode.FREE, TangentMode.FIXED -> {
                                 val newAngle = vec.angle().degrees.roundToInt().deg
                                 tangent = newAngle
                             }
-                            TangentMode.FIXED -> {}
                         }
                         when (this@SplineKnot.lengthMode) {
                             LengthMode.FIXED_LENGTH -> {
                                 startTangentMag = -1.0
                                 endTangentMag = -1.0
                             }
+
                             LengthMode.MATCH_LENGTH -> {
                                 startTangentMag = newMag
                                 endTangentMag = newMag
                             }
+
                             LengthMode.FREE_LENGTH -> {
                                 if (knotSelected == 1) startTangentMag = newMag
                                 else endTangentMag = newMag

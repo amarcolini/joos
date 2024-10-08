@@ -2,7 +2,7 @@ import dev.icerock.gradle.MRVisibility
 
 plugins {
     kotlin("multiplatform")
-    id("dev.icerock.mobile.multiplatform-resources") version "0.23.0"
+    id("dev.icerock.mobile.multiplatform-resources") version Versions.moko
 //    application
 }
 
@@ -25,8 +25,8 @@ kotlin {
         }
     }
 
-    val doodleVersion = "0.10.0"
-    val coroutinesVersion = "1.6.4"
+    val doodleVersion = "0.10.2"
+    val coroutinesVersion = "1.8.1"
 
     sourceSets {
         val commonMain by getting {
@@ -37,8 +37,8 @@ kotlin {
                 implementation("io.nacular.doodle:themes:$doodleVersion")
                 implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:$coroutinesVersion")
                 api(project(":navigation"))
-                implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.5.0")
-                implementation("dev.icerock.moko:resources:0.23.0")
+                implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.7.2")
+                implementation("dev.icerock.moko:resources:${Versions.moko}")
 
                 // Optional
                 // implementation ("io.nacular.doodle:controls:$doodleVersion" )
@@ -49,7 +49,7 @@ kotlin {
 
         val commonTest by getting {
             dependencies {
-                implementation("dev.icerock.moko:resources-test:0.23.0")
+                implementation("dev.icerock.moko:resources-test:${Versions.moko}")
             }
         }
 
@@ -91,8 +91,8 @@ kotlin {
 }
 
 multiplatformResources {
-    multiplatformResourcesPackage = "com.amarcolini.joos.frontend" // required
-    multiplatformResourcesVisibility = MRVisibility.Public // optional, default Public
+    resourcesPackage.set("com.amarcolini.joos.frontend") // required
+    resourcesVisibility.set(MRVisibility.Public) // optional, default Public
 }
 
 java {

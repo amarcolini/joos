@@ -11,35 +11,28 @@ import com.amarcolini.joos.serialization.SerializableTrajectory
 import com.amarcolini.joos.serialization.StartPiece
 import field.DraggableTrajectory
 import field.Field
-import field.FieldEntity
 import field.Robot
 import io.nacular.doodle.controls.IndexedItem
 import io.nacular.doodle.controls.ItemVisualizer
 import io.nacular.doodle.controls.StringVisualizer
 import io.nacular.doodle.controls.StyledTextVisualizer
 import io.nacular.doodle.controls.buttons.PushButton
-import io.nacular.doodle.controls.dropdown.Dropdown
+import io.nacular.doodle.controls.dropdown.SelectBox
 import io.nacular.doodle.controls.form.verticalLayout
 import io.nacular.doodle.controls.modal.ModalManager
 import io.nacular.doodle.controls.text.Label
 import io.nacular.doodle.core.View
-import io.nacular.doodle.core.view
-import io.nacular.doodle.drawing.Canvas
 import io.nacular.doodle.drawing.Color
 import io.nacular.doodle.drawing.lighter
 import io.nacular.doodle.drawing.paint
 import io.nacular.doodle.event.*
-import io.nacular.doodle.geometry.Circle
-import io.nacular.doodle.geometry.Point
 import io.nacular.doodle.geometry.Size
 import io.nacular.doodle.layout.HorizontalFlowLayout
 import io.nacular.doodle.layout.Insets
-import io.nacular.doodle.layout.ListLayout
-import io.nacular.doodle.layout.WidthSource
 import io.nacular.doodle.layout.constraints.Strength
 import io.nacular.doodle.layout.constraints.constrain
 import io.nacular.doodle.text.StyledText
-import io.nacular.doodle.theme.basic.dropdown.BasicDropdownBehavior
+import io.nacular.doodle.theme.basic.dropdown.BasicSelectBoxBehavior
 import io.nacular.doodle.utils.Dimension
 import io.nacular.doodle.utils.ObservableList
 import io.nacular.doodle.utils.VerticalAlignment
@@ -88,7 +81,7 @@ internal object Settings : View() {
         updateControlSelection()
     }
 
-    private val trajectorySelect = Dropdown(
+    private val trajectorySelect = SelectBox(
         trajectories, object : ItemVisualizer<DraggableTrajectory, IndexedItem> {
             private val delegate = StringVisualizer(setOf(Dimension.Height, Dimension.Width))
             override fun invoke(item: DraggableTrajectory, previous: View?, context: IndexedItem): View {
@@ -97,7 +90,7 @@ internal object Settings : View() {
         }
     )
         .apply {
-            BasicDropdownBehavior
+            BasicSelectBoxBehavior
             size = Size(160, 35)
             idealSize = size
             changed += {
@@ -183,7 +176,7 @@ internal object Settings : View() {
         ScrubBar.visible = true
         trajectoryConfigMenu.visible = true
         Robot.visible = true
-        Robot.pose = trajectory.currentPath.start()
+        Robot.pose = trajectory.currentPath?.start() ?: trajectory.data.startData.start.pose
         ScrubBar.rerenderNow()
         Robot.rerenderNow()
         return true
@@ -197,7 +190,7 @@ internal object Settings : View() {
         }
     }
 
-    val control = Dropdown(
+    val control = SelectBox(
         listOf(
             StyledText(" Edit Path ", background = Color.Blue.lighter().paint),
             StyledText(" Edit Heading ", background = Color.Red.lighter().paint),

@@ -7,11 +7,10 @@ import com.amarcolini.joos.util.DoubleProgression
 import io.nacular.doodle.core.renderProperty
 import io.nacular.doodle.drawing.*
 import io.nacular.doodle.geometry.Circle
-import io.nacular.doodle.geometry.Point
 import io.nacular.doodle.geometry.Rectangle
 import io.nacular.doodle.geometry.path
 
-class PathEntity(path: Path, stroke: Stroke) : FieldEntity() {
+class PathEntity(path: Path?, stroke: Stroke) : FieldEntity() {
     var path by renderProperty(path)
     var stroke by renderProperty(stroke)
 
@@ -21,6 +20,7 @@ class PathEntity(path: Path, stroke: Stroke) : FieldEntity() {
     }
 
     override fun render(canvas: Canvas) {
+        val path = path ?: return
         val start = path.internalGet(0, 0.0).vec()
         val sampledPath = path(start.toPoint())
         path.segments.forEach { segment ->
@@ -49,6 +49,7 @@ class PathEntity(path: Path, stroke: Stroke) : FieldEntity() {
                         lastPoint = currentPoint
                     }
                 }
+
                 is LineSegment -> sampledPath.lineTo(curve[0.0, 1.0].toPoint())
             }
         }

@@ -22,13 +22,14 @@ tasks.withType<Test> {
 }
 
 dependencies {
+    //noinspection GradleDependency
     api("org.jetbrains.kotlin:kotlin-stdlib:${Versions.kotlin}")
     implementation("org.jetbrains.kotlin:kotlin-reflect:${Versions.kotlin}")
 
     compileOnly("org.firstinspires.ftc:RobotCore:${Versions.ftc}")
     compileOnly("org.firstinspires.ftc:Hardware:${Versions.ftc}")
     compileOnly("org.firstinspires.ftc:FtcCommon:${Versions.ftc}")
-    api("com.acmerobotics.dashboard:dashboard:0.4.15") {
+    api("com.acmerobotics.dashboard:dashboard:0.4.16") {
         exclude(group = "org.firstinspires.ftc")
     }
     api(project(":navigation"))
@@ -81,6 +82,7 @@ android {
 //            withJavadocJar()
         }
     }
+    kotlinOptions.jvmTarget = "1.8"
 }
 
 afterEvaluate {

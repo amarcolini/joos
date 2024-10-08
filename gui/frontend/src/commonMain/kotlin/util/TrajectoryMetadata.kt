@@ -1,10 +1,9 @@
 package util
 
-import com.amarcolini.joos.geometry.Vector2d
 import com.amarcolini.joos.serialization.*
 import field.SplineKnot
 
-data class TrajectoryMetadata(
+class TrajectoryMetadata(
     val startData: StartPieceWithData,
     val pieceData: MutableList<PieceWithData>
 ) {
@@ -14,55 +13,53 @@ data class TrajectoryMetadata(
             lengthMode: SplineKnot.LengthMode = SplineKnot.LengthMode.FIXED_LENGTH
         ): TrajectoryMetadata {
             val startData = StartPieceWithData(trajectory.start, lengthMode)
-            var currPos = { startData.start.pose.vec() }
-            val pieceData = trajectory.pieces.map {
-                when (it) {
-                    is LinePiece -> {
-                        currPos = it::end
-                        PieceWithData(it, it::end)
+            var currentPiece: PieceWithData? = null
+            val pieceData = mutableListOf<PieceWithData>()
+            for (piece in trajectory.pieces) {
+                when (piece) {
+                    is LinePiece -> piece.withData().also {
+                        pieceData += it
+                        currentPiece = it
                     }
-                    is SplinePiece -> {
-                        currPos = it::end
-                        SplinePieceWithData(it, lengthMode)
+
+                    is SplinePiece -> piece.with(lengthMode).also {
+                        pieceData += it
+                        currentPiece = it
                     }
-                    else -> PieceWithData(it, currPos)
+
+                    is StationaryTrajectoryPiece -> currentPiece?.stationaryPieces?.plusAssign(piece)
+                        ?: startData.stationaryPieces.add(piece)
                 }
             }
-            return TrajectoryMetadata(startData, pieceData.toMutableList())
+            return TrajectoryMetadata(startData, pieceData)
         }
 
         infix fun SplinePiece.with(mode: SplineKnot.LengthMode) = SplinePieceWithData(this, mode)
 
-        fun LinePiece.withData() = PieceWithData(this, this::end)
+        fun LinePiece.withData() = LinePieceWithData(this)
     }
 
-    fun recomputeKnotPositions() {
-        var currPos = { startData.start.pose.vec() }
-        pieceData.forEach {
-            when (it.trajectoryPiece) {
-                is LinePiece -> currPos = it.knotPosition
-                is SplinePiece -> currPos = it.knotPosition
-                else -> it.knotPosition = currPos
-            }
-        }
+    sealed class PieceWithData {
+        abstract val piece: MovableTrajectoryPiece
+        val stationaryPieces: MutableList<StationaryTrajectoryPiece> = mutableListOf()
     }
-
-    open class PieceWithData(
-        open val trajectoryPiece: TrajectoryPiece,
-        var knotPosition: () -> Vector2d
-    )
 
     data class StartPieceWithData(
         val start: StartPiece,
         var lengthMode: SplineKnot.LengthMode,
+        val stationaryPieces: MutableList<StationaryTrajectoryPiece> = mutableListOf()
     )
 
-    class SplinePieceWithData(
-        override val trajectoryPiece: SplinePiece,
+    data class SplinePieceWithData(
+        override val piece: SplinePiece,
         var lengthMode: SplineKnot.LengthMode
-    ) : PieceWithData(trajectoryPiece, trajectoryPiece::end)
+    ) : PieceWithData()
+
+    data class LinePieceWithData(
+        override val piece: LinePiece
+    ) : PieceWithData()
 
     fun serializableTrajectory() = SerializableTrajectory(startData.start, pieceData.map {
-        it.trajectoryPiece
+        it.piece
     }.toMutableList())
 }

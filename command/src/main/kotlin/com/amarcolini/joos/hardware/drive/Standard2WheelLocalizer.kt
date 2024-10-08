@@ -12,8 +12,8 @@ import com.amarcolini.joos.localization.TwoTrackingWheelLocalizer
 class Standard2WheelLocalizer(
     @JvmField val encoders: List<Motor.Encoder>,
     encoderPositions: List<Pose2d>,
-    @JvmField val externalHeadingSensor: AngleSensor,
-) : TwoTrackingWheelLocalizer(encoderPositions) {
+    headingSensor: AngleSensor,
+) : TwoTrackingWheelLocalizer(headingSensor, encoderPositions) {
     constructor(
         parallelEncoder: Motor.Encoder,
         parallelOffset: Double,
@@ -32,8 +32,4 @@ class Standard2WheelLocalizer(
     override fun getWheelPositions(): List<Double> = encoders.map { it.distance }
 
     override fun getWheelVelocities(): List<Double> = encoders.map { it.distanceVelocity }
-
-    override fun getHeading(): Angle = externalHeadingSensor.getAngle()
-
-    override fun getHeadingVelocity(): Angle? = externalHeadingSensor.getAngularVelocity()
 }

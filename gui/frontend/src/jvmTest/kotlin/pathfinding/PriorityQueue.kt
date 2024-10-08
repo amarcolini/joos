@@ -54,7 +54,7 @@ class PriorityQueue<E>(private val comparator: Comparator<in E>) {
         insert(element)
     }
 
-    fun remove(item: Item): Boolean = if (storage[item.index] == item) {
+    fun remove(item: Item): Boolean = if (storage.getOrNull(item.index) == item) {
         item.removed = true
         true
     } else false

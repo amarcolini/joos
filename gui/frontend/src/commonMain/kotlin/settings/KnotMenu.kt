@@ -7,7 +7,7 @@ import com.amarcolini.joos.util.deg
 import field.HeadingKnot
 import field.PathKnot
 import field.SplineKnot
-import io.nacular.doodle.controls.dropdown.Dropdown
+import io.nacular.doodle.controls.dropdown.SelectBox
 import io.nacular.doodle.controls.text.Label
 import io.nacular.doodle.core.View
 import io.nacular.doodle.drawing.Color
@@ -15,7 +15,6 @@ import io.nacular.doodle.drawing.darker
 import io.nacular.doodle.drawing.paint
 import io.nacular.doodle.geometry.Size
 import io.nacular.doodle.layout.Insets
-import io.nacular.doodle.layout.ListLayout
 import io.nacular.doodle.layout.WidthSource
 import io.nacular.doodle.layout.constraints.Strength.Companion.Weak
 import util.BetterListLayout
@@ -49,11 +48,10 @@ internal object KnotMenu {
         lengthMenu: Boolean = false,
     ): View {
         return viewBuilder {
-            +customMenus
-
+//            +customMenus
             if (lengthMenu) {
                 val lengthModeOptions = listOf("Match", "Fixed", "Free")
-                +(Label("Length mode:") with Dropdown(lengthModeOptions).apply {
+                +(Label("Length mode:") with SelectBox(lengthModeOptions).apply {
                     size = Size(
                         lengthModeOptions.maxOf { textMetrics.width(it) } + 40.0,
                         lengthModeOptions.maxOf { textMetrics.height(it) } + 10.0,
@@ -63,8 +61,8 @@ internal object KnotMenu {
                         SplineKnot.LengthMode.FIXED_LENGTH -> 1
                         SplineKnot.LengthMode.FREE_LENGTH -> 2
                     }
-                    this.changed += { dropdown ->
-                        val lengthMode = when (dropdown.value.getOrNull()) {
+                    this.changed += { selectBox ->
+                        val lengthMode = when (selectBox.value.getOrNull()) {
                             "Match" -> SplineKnot.LengthMode.MATCH_LENGTH
                             "Fixed" -> SplineKnot.LengthMode.FIXED_LENGTH
                             "Free" -> SplineKnot.LengthMode.FREE_LENGTH
@@ -75,6 +73,17 @@ internal object KnotMenu {
                 })
             }
 
+//            +PushButton("hello :)")
+//            +PushButton("what's your name?")
+//            val values = listOf("nunya business", "my name's ___", "what's that over there?")
+//            +SelectBox(values).apply {
+//                size = Size(
+//                    values.maxOf { textMetrics.width(it) } + 40.0,
+//                    values.maxOf { textMetrics.height(it) } + 10.0,
+//                )
+//                println(size)
+//            }
+
             minimumSize = Size(200.0, 100.0)
             size = minimumSize
             val radius = 10.0
@@ -83,9 +92,9 @@ internal object KnotMenu {
                 rect(bounds.atOrigin, radius, Color.White.darker(0.2f).paint)
             }
             layout = BetterListLayout(widthSource = WidthSource.Parent)
-            sizePreferencesChanged += { _, _, new ->
-                size = new.idealSize ?: new.minimumSize
-            }
+//            sizePreferencesChanged += { _, _, new ->
+//                size = new.idealSize ?: new.minimumSize
+//            }
         }
     }
 
@@ -121,7 +130,7 @@ internal object KnotMenu {
             }
 
             val headingOptions = listOf("Tangent", "Spline", "Linear", "Constant")
-            +(Label("Length mode:") with Dropdown(headingOptions).apply {
+            +(Label("Interpolation mode:") with SelectBox(headingOptions).apply {
                 size = Size(
                     headingOptions.maxOf { textMetrics.width(it) } + 40.0,
                     headingOptions.maxOf { textMetrics.height(it) } + 10.0,
@@ -132,9 +141,9 @@ internal object KnotMenu {
                     is LinearHeading -> 2
                     ConstantHeading -> 3
                 }
-                this.changed += { dropdown ->
+                this.changed += { selectBox ->
                     val currentHeading = numField.value.deg
-                    val headingInterpolation = when (dropdown.value.getOrNull()) {
+                    val headingInterpolation = when (selectBox.value.getOrNull()) {
                         "Tangent" -> TangentHeading
                         "Spline" -> SplineHeading(currentHeading)
                         "Linear" -> LinearHeading(currentHeading)
