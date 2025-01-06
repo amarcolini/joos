@@ -9,15 +9,17 @@ import io.nacular.doodle.drawing.Stroke
 import io.nacular.doodle.geometry.Point
 
 class DraggablePath : EntityGroup() {
-    private val start = PathKnot().apply {
+    private val start = SplineKnot().apply {
         startVisible = false
         lengthMode = SplineKnot.LengthMode.FREE_LENGTH
+        headingVisible = false
     }
 
-    private val end = PathKnot().apply {
+    private val end = SplineKnot().apply {
         endVisible = false
         lengthMode = SplineKnot.LengthMode.FIXED_LENGTH
         position = Point(30.0, 30.0)
+        headingVisible = false
     }
 
     private val path = PathEntity(

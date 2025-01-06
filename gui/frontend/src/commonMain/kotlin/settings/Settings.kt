@@ -192,8 +192,7 @@ internal object Settings : View() {
 
     val control = SelectBox(
         listOf(
-            StyledText(" Edit Path ", background = Color.Blue.lighter().paint),
-            StyledText(" Edit Heading ", background = Color.Red.lighter().paint),
+            StyledText(" Edit Path "),
             StyledText("View Trajectory")
         ), StyledTextVisualizer()
     )
@@ -213,11 +212,6 @@ internal object Settings : View() {
             }
 
             1 -> {
-                hideTrajectoryMenu()
-                currentTrajectory?.mode = DraggableTrajectory.Mode.EditHeading
-            }
-
-            2 -> {
                 currentTrajectory?.mode = DraggableTrajectory.Mode.View
                 if (currentTrajectory?.let { traj -> showTrajectoryMenu(traj) } != true) {
 //                            window.alert("Failed to create Trajectory!")

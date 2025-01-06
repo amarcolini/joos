@@ -16,7 +16,11 @@ repositories {
 kotlin {
     js(IR) {
         binaries.executable()
-        browser()
+        browser {
+            webpackTask {
+                sourceMaps = true
+            }
+        }
     }
 
     jvm {
@@ -25,7 +29,7 @@ kotlin {
         }
     }
 
-    val doodleVersion = "0.10.2"
+    val doodleVersion = "0.10.3"
     val coroutinesVersion = "1.8.0"
 
     sourceSets {

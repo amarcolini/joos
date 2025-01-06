@@ -4,5 +4,5 @@ object Versions {
     const val android = "7.4.0"
     const val library = "0.4.9"
     const val ftc = "10.1.0"
-    const val moko = "0.24.2"
+    const val moko = "0.24.3"
 }

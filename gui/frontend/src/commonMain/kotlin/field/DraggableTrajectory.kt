@@ -53,14 +53,12 @@ class DraggableTrajectory(var data: TrajectoryMetadata) : EntityGroup() {
 
     enum class Mode {
         View,
-        EditHeading,
         EditPath
     }
 
     var mode: Mode by Delegates.observable(Mode.EditPath) { _, _, new ->
         when (new) {
             Mode.View -> disableEditing()
-            Mode.EditHeading -> initializeHeadingEditing()
             Mode.EditPath -> initializePathEditing()
         }
     }
@@ -134,7 +132,7 @@ class DraggableTrajectory(var data: TrajectoryMetadata) : EntityGroup() {
         if (index < 0 || index >= data.pieceData.size) return
         data.pieceData.removeAt(index)
         update()
-        if (mode == Mode.EditHeading || mode == Mode.EditPath)
+        if (mode == Mode.EditPath)
             updateZIndices(index)
     }
 
@@ -149,7 +147,6 @@ class DraggableTrajectory(var data: TrajectoryMetadata) : EntityGroup() {
         )
         update()
         val knot = when (mode) {
-            Mode.EditHeading -> createHeadingKnot(new)
             Mode.EditPath -> createPathKnot(new, actualIndex)
             Mode.View -> null
         }
@@ -209,37 +206,28 @@ class DraggableTrajectory(var data: TrajectoryMetadata) : EntityGroup() {
     }
 
     private fun makeMenu(
-        knot: PathKnot,
+        knot: SplineKnot,
+        piece: MovableTrajectoryPiece?,
         customMenu: MenuCreationContext.() -> Unit
     ) = addMenu(knot) {
         val innerMenu = menus({ it(Unit) }, customMenu)
         KnotMenu.createPathKnotMenu(
             listOf(innerMenu),
             knot,
+            piece,
             knot.startVisible || knot.endVisible
         )
     }
 
     private fun makeMenu(
-        knot: HeadingKnot,
-        piece: MovableTrajectoryPiece,
-        customMenu: MenuCreationContext.() -> Unit = {}
-    ) = addMenu(knot) {
-        val innerMenu = menus({ it(Unit) }, customMenu)
-        KnotMenu.createHeadingKnotMenu(
-            listOf(innerMenu),
-            knot, piece
-        )
-    }
-
-    private fun makeMenu(
-        knot: PathKnot,
+        knot: SplineKnot,
+        piece: MovableTrajectoryPiece?,
         pieceIndex: Int,
         insertAfter: Boolean = true,
         insertBefore: Boolean = true,
         deletable: Boolean = true,
         stationaryPieces: List<StationaryTrajectoryPiece> = emptyList()
-    ) = makeMenu(knot) {
+    ) = makeMenu(knot, piece) {
         val knotPosition = knot.position.toVector2d()
         if (insertAfter) menu("Insert After") {
             action("Spline") { insert(pieceIndex + 1, makeSpline(knotPosition)) }
@@ -309,11 +297,23 @@ class DraggableTrajectory(var data: TrajectoryMetadata) : EntityGroup() {
     private fun createPathKnot(
         pieceData: TrajectoryMetadata.PieceWithData,
         index: Int = data.pieceData.indexOf(pieceData)
-    ): PathKnot {
+    ): SplineKnot {
         val nextSpline = data.pieceData.getOrNull(index + 1)?.piece as? SplinePiece
-        val knot = PathKnot().apply {
+        val initialHeading = pieceData.piece.heading as? ValueHeading
+        val knot = SplineKnot().apply {
             position = pieceData.piece.end.toPoint()
             tangentMode = SplineKnot.TangentMode.FIXED
+            if (initialHeading != null) {
+                headingVisible = true
+                this.heading = initialHeading.target
+            } else headingVisible = false
+            onChange += {
+                val newHeading = (pieceData.piece.heading as? ValueHeading)?.apply {
+                    this.target = it.heading
+                }
+                it.headingVisible = newHeading != null
+                update()
+            }
         }
         when (pieceData) {
             is TrajectoryMetadata.SplinePieceWithData -> knot.apply {
@@ -346,48 +346,32 @@ class DraggableTrajectory(var data: TrajectoryMetadata) : EntityGroup() {
         knot.zOrder = index
         makeMenu(
             knot,
+            pieceData.piece,
             index,
             stationaryPieces = pieceData.stationaryPieces
         )
         return knot
     }
 
-    private fun createHeadingKnot(pieceData: TrajectoryMetadata.PieceWithData): HeadingKnot {
-        val piece = pieceData.piece
-        val heading = piece.heading as? ValueHeading
-        return HeadingKnot().apply {
-            position = piece.end.toPoint()
-            if (heading != null) tangent = heading.target
-            else endVisible = false
-            onChange += {
-                piece.end = it.position.toVector2d()
-                val newHeading = (piece.heading as? ValueHeading)?.apply {
-                    target = it.tangent
-                }
-                it.endVisible = newHeading != null
-                update()
-            }
-            makeMenu(this, piece)
-        }
-    }
-
     private fun initializePathEditing() {
         disableEditing()
-        knots += PathKnot().apply {
+        knots += SplineKnot().apply {
             val startData = data.startData
             val startPos = startData.start.pose::vec
             position = startPos().toPoint()
             tangent = startData.start.tangent
+            heading = startData.start.pose.heading
             startVisible = false
             endVisible = data.pieceData.getOrNull(0)?.piece is SplinePiece
+            headingVisible = true
             onChange += {
-                startData.start.pose = Pose2d(it.position.toVector2d(), startData.start.pose.heading)
+                startData.start.pose = Pose2d(it.position.toVector2d(), it.heading)
                 startData.start.tangent = it.tangent
                 update()
             }
             isSpecial = startData.stationaryPieces.isNotEmpty()
             makeMenu(
-                this, -1,
+                this, null,-1,
                 insertAfter = true,
                 insertBefore = false,
                 deletable = false,
@@ -397,26 +381,6 @@ class DraggableTrajectory(var data: TrajectoryMetadata) : EntityGroup() {
 
         data.pieceData.forEachIndexed { i, pieceData ->
             knots += createPathKnot(pieceData, i)
-        }
-        children += knots
-        recomputeTransforms()
-    }
-
-    private fun initializeHeadingEditing() {
-        disableEditing()
-        knots += HeadingKnot().apply {
-            val startData = data.startData
-            position = startData.start.pose.vec().toPoint()
-            tangent = startData.start.pose.heading
-            startVisible = false
-            endVisible = true
-            onChange += {
-                startData.start.pose = Pose2d(it.position.toVector2d(), it.tangent)
-                update()
-            }
-        }
-        data.pieceData.forEach { pieceData ->
-            knots += createHeadingKnot(pieceData)
         }
         children += knots
         recomputeTransforms()

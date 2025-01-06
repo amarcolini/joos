@@ -17,6 +17,7 @@ import io.nacular.doodle.application.Modules.Companion.PathModule
 import io.nacular.doodle.application.Modules.Companion.PointerModule
 import io.nacular.doodle.application.Modules.Companion.PopupModule
 import io.nacular.doodle.application.application
+import io.nacular.doodle.drawing.TextMetrics
 import io.nacular.doodle.theme.basic.BasicTheme
 import io.nacular.doodle.theme.native.NativeTheme
 import org.kodein.di.*
@@ -25,71 +26,73 @@ import util.TrajectoryMetadata
 
 
 fun main() {
-    application(
-        modules = listOf(
-            ImageModule,
-            PointerModule,
-            FocusModule,
-            AccessibilityModule,
-            PopupModule,
-            AnimationModule,
-            ModalModule,
-            MenuFactoryModule,
-            PathModule,
-            BasicTheme.BasicTheme,
-            BasicTheme.basicButtonBehavior(),
-            BasicTheme.basicSelectBoxBehavior(),
-            BasicTheme.basicMutableSelectBoxBehavior(),
-            BasicTheme.basicLabelBehavior(),
-            BasicTheme.basicMenuBehavior(),
-            NativeTheme.NativeTheme,
-            NativeTheme.nativeTextFieldBehavior(),
+        application(
+            modules = listOf(
+                ImageModule,
+                PointerModule,
+                FocusModule,
+                AccessibilityModule,
+                PopupModule,
+                AnimationModule,
+                ModalModule,
+                MenuFactoryModule,
+                PathModule,
+                BasicTheme.BasicTheme,
+                BasicTheme.basicButtonBehavior(),
+                BasicTheme.basicSelectBoxBehavior(),
+                BasicTheme.basicMutableSelectBoxBehavior(),
+                BasicTheme.basicLabelBehavior(),
+                BasicTheme.basicMenuBehavior(),
+                NativeTheme.NativeTheme,
+                NativeTheme.nativeTextFieldBehavior(),
 //            DI.Module("pathmetrics") {
 //                bind<PathMetrics>() with singleton {
 //                    PathMetricsImpl(instance())
 //                }
 //            }
 //            KeyboardModule,
-        )
-    ) {
-        val trajectories = mutableListOf<SerializableTrajectory>()
-        trajectories += (
-            SerializableTrajectory(
-            StartPiece(Pose2d(0.0, 0.0, -90.deg)),
-            mutableListOf(
-                LinePiece(Vector2d(30.0, 20.0)),
-                SplinePiece(Vector2d(40.0, 30.0), 90.deg)
-            )
-        )
-        )
-        trajectories += (
-                SerializableTrajectory(
-                    StartPiece(Pose2d(10.0, 10.0, 45.deg)),
-                    mutableListOf(
-                        LinePiece(Vector2d(20.0, 21.0)),
-                        SplinePiece(Vector2d(-40.0, 30.0), 45.deg)
+            ).also { println("this at least") }
+        ) {
+            println("oh come on")
+            val trajectories = mutableListOf<SerializableTrajectory>()
+            trajectories += (
+                    SerializableTrajectory(
+                        StartPiece(Pose2d(0.0, 0.0, -90.deg)),
+                        mutableListOf(
+                            LinePiece(Vector2d(30.0, 20.0)),
+                            SplinePiece(Vector2d(40.0, 30.0), 90.deg)
+                        )
                     )
-                )
-                )
-        trajectories.map { DraggableTrajectory(TrajectoryMetadata.fromTrajectory(it)) }.let {
-            Settings.trajectories += it
+                    )
+            trajectories += (
+                    SerializableTrajectory(
+                        StartPiece(Pose2d(10.0, 10.0, 45.deg)),
+                        mutableListOf(
+                            LinePiece(Vector2d(20.0, 21.0)),
+                            SplinePiece(Vector2d(-40.0, 30.0), 45.deg)
+                        )
+                    )
+                    )
+            trajectories.map { DraggableTrajectory(TrajectoryMetadata.fromTrajectory(it)) }.let {
+                Settings.trajectories += it
+            }
+            println("got this far")
+            GUIApp(
+                GUIApp.GUIConfig(),
+                instance(),
+                instance(),
+                instance(),
+                instance(),
+                instance(),
+                instance<TextMetrics>().also { println("got that far") },
+                instance(),
+                instance(),
+                instance(),
+                instance(),
+                instance(),
+                instance(),
+            )
         }
-        GUIApp(
-            GUIApp.GUIConfig(),
-            instance(),
-            instance(),
-            instance(),
-            instance(),
-            instance(),
-            instance(),
-            instance(),
-            instance(),
-            instance(),
-            instance(),
-            instance(),
-            instance(),
-        )
-    }
 }
 
 val AnimationModule = DI.Module(name = "AnimationModule") {
