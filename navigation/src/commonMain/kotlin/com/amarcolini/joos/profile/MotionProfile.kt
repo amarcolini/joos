@@ -82,4 +82,8 @@ class MotionProfile(val segments: List<MotionSegment>) {
         builder.appendProfile(other)
         return builder.build()
     }
+
+    override fun toString(): String {
+        return "[${segments.joinToString(",")}]"
+    }
 }

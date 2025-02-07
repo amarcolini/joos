@@ -1,4 +1,4 @@
-package com.amarcolini.joos.hardware.drive
+package com.amarcolini.joos.command
 
 import com.amarcolini.joos.followers.PathFollower
 import com.amarcolini.joos.geometry.Angle

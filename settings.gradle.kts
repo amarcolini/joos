@@ -2,8 +2,8 @@ rootProject.name = "joos"
 include(":navigation")
 include(":gui")
 include(":gui:frontend")
-include(":command")
-include(":command:annotation")
+include(":ftc")
+include(":ftc:annotation")
 
 pluginManagement {
     repositories {
@@ -12,3 +12,4 @@ pluginManagement {
         mavenCentral()
     }
 }
+include(":command")

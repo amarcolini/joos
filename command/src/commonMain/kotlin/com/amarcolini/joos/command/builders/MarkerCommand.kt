@@ -5,6 +5,8 @@ import com.amarcolini.joos.command.CommandGroup
 import com.amarcolini.joos.command.Component
 import com.amarcolini.joos.command.SequentialCommand
 import com.amarcolini.joos.util.NanoClock
+import kotlin.jvm.JvmField
+import kotlin.jvm.JvmOverloads
 
 /**
  * A command that runs commands in sequence while scheduling other commands to run in parallel.

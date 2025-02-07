@@ -15,6 +15,7 @@ import org.junit.jupiter.api.Test
 import org.knowm.xchart.QuickChart
 import org.knowm.xchart.style.theme.MatlabTheme
 import kotlin.math.PI
+import kotlin.math.sqrt
 
 class ProfileTest {
     @Test
@@ -25,6 +26,33 @@ class ProfileTest {
                 MotionState(60.0, 0.0),
                 30.0,
                 30.0
+            )
+        )
+    }
+
+    @Test
+    fun testJerkProfile() {
+        GraphUtil.saveProfile(
+            "Jerk Profile", MotionProfileGenerator.generateSimpleMotionProfile(
+                MotionState(0.0, 0.0),
+                MotionState(60.0, 0.0),
+                30.0,
+                50.0,
+                70.0
+            )
+        )
+    }
+
+    @Test
+    fun testAsymmetricalProfile() {
+        GraphUtil.saveProfile(
+            "Asymmetrical Profile", MotionProfileGenerator.generateMotionProfile(
+                MotionState(0.0, 0.0),
+                MotionState(60.0, 0.0),
+                { _, _ -> 30.0 },
+                { _, ds, lastVel -> sqrt(lastVel * lastVel + 2 * ds * 45.0) },
+                { _, ds, lastVel -> sqrt(lastVel * lastVel + 2 * ds * 20.0) },
+                1.0
             )
         )
     }

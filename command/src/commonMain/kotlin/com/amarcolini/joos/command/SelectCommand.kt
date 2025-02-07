@@ -1,24 +1,24 @@
 package com.amarcolini.joos.command
 
-import java.util.function.Supplier
+import kotlin.jvm.JvmOverloads
 
 /**
  * A command that runs the specified command every time it is scheduled.
  */
 class SelectCommand @JvmOverloads constructor(
-    private val command: Supplier<Command>,
+    private val command: () -> Command,
     override val requirements: Set<Component> = emptySet()
 ) : Command() {
 
     constructor(
-        command: Supplier<Command>,
+        command: () -> Command,
         vararg requirements: Component
     ) : this(command, requirements.toSet())
 
     private var selected: Command = empty()
 
     override fun init() {
-        selected = command.get()
+        selected = command()
         selected.init()
     }
 

@@ -3,6 +3,7 @@ package com.amarcolini.joos.command.builders
 import com.amarcolini.joos.command.Command
 import com.amarcolini.joos.command.Component
 import com.amarcolini.joos.path.Path
+import kotlin.jvm.JvmField
 
 /**
  * A command wrapper that also contains a [Path].

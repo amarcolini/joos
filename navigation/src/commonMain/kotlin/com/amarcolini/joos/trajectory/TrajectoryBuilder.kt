@@ -608,7 +608,7 @@ open class TrajectoryBuilder(
 
     override fun makePathSegment(path: Path): PathTrajectorySegment {
         return TrajectoryGenerator.generatePathTrajectorySegment(
-            path, currentVelConstraint, currentAccelConstraint, currentMotionState, resolution = resolution
+            path, currentVelConstraint, currentAccelConstraint, currentAccelConstraint, currentMotionState, resolution = resolution
         ).also { currentMotionState = it.profile.end() }
     }
 

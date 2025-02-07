@@ -23,7 +23,7 @@ class MotionSegment(val start: MotionState, val dt: Double) {
      */
     fun reversed(): MotionSegment {
         val end = end()
-        val state = MotionState(end.x, -3 * dt * dt * start.j - 2 * dt * start.a - start.v, 3 * dt * start.j + start.a, -start.j)
+        val state = MotionState(end.x, -end.v, end.a, -end.j)
         return MotionSegment(state, dt)
     }
 

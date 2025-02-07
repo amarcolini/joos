@@ -3,6 +3,7 @@ package com.amarcolini.joos
 import com.amarcolini.joos.command.Command
 import com.amarcolini.joos.command.CommandGroup
 import com.amarcolini.joos.command.Component
+import com.amarcolini.joos.command.DrivePathFollower
 import com.amarcolini.joos.command.builders.PathCommandBuilder
 import com.amarcolini.joos.control.PIDCoefficients
 import com.amarcolini.joos.drive.DriveSignal
@@ -10,7 +11,6 @@ import com.amarcolini.joos.followers.HolonomicGVFFollower
 import com.amarcolini.joos.followers.PathFollower
 import com.amarcolini.joos.geometry.Pose2d
 import com.amarcolini.joos.hardware.MotorGroup
-import com.amarcolini.joos.hardware.drive.DrivePathFollower
 import com.amarcolini.joos.localization.Localizer
 import com.amarcolini.joos.util.deg
 import org.junit.Test
@@ -52,8 +52,6 @@ class BuilderTest {
         override var localizer: Localizer
             get() = throw Error("Not implemented")
             set(value) {}
-        override val motors: MotorGroup
-            get() = throw Error("Not implemented")
 
         override fun setDriveSignal(driveSignal: DriveSignal) {
         }

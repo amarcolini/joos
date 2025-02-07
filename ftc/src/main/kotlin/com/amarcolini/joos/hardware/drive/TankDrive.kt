@@ -1,6 +1,6 @@
 package com.amarcolini.joos.hardware.drive
 
-import com.amarcolini.joos.command.Component
+import com.amarcolini.joos.command.DriveComponent
 import com.amarcolini.joos.drive.AbstractTankDrive
 import com.amarcolini.joos.hardware.MotorGroup
 import com.amarcolini.joos.localization.AngleSensor
@@ -24,7 +24,7 @@ open class TankDrive @JvmOverloads constructor(
         externalHeadingSensor: AngleSensor? = null
     ) : this(left, right, constraints.trackWidth, externalHeadingSensor)
 
-    final override val motors: MotorGroup = MotorGroup(leftMotors, rightMotors)
+    val motors: MotorGroup = MotorGroup(leftMotors, rightMotors)
 
     final override fun setMotorPowers(left: Double, right: Double) {
         leftMotors.setPower(left)

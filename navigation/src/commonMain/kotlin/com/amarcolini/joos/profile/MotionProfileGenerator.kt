@@ -61,14 +61,13 @@ object MotionProfileGenerator {
                 MotionState(
                     goal.x,
                     goal.v,
-                    -goal.a,
+                    goal.a,
                     goal.j
                 ),
-                maxVel,
+                -maxVel,
                 maxAccel,
-                maxJerk
-            )
-                .reversed()
+                -maxJerk
+            ).reversed()
 
             val noCoastProfile = accelProfile + decelProfile
             val remainingDistance = goal.x - noCoastProfile.end().x
@@ -137,17 +136,18 @@ object MotionProfileGenerator {
                 MotionState(
                     goal.x,
                     goal.v,
-                    -goal.a,
-                    goal.j
+                    goal.a,
+                    -goal.j
                 ),
-                maxVel,
+                -maxVel,
                 maxAccel,
                 maxJerk
-            )
-                .reversed()
+            ).reversed()
+            println(decelerationProfile)
 
             val noCoastProfile = accelerationProfile + decelerationProfile
             val remainingDistance = goal.x - noCoastProfile.end().x
+            println(remainingDistance)
 
             if (remainingDistance >= 0.0) {
                 // we just need to add a coast segment of appropriate duration
@@ -345,6 +345,7 @@ object MotionProfileGenerator {
         goal: MotionState,
         velocityConstraint: VelocityConstraint,
         accelerationConstraint: AccelerationConstraint,
+        decelerationConstraint: AccelerationConstraint = accelerationConstraint,
         resolution: Double = 0.25
     ): MotionProfile {
         if (goal.x < start.x) {
@@ -353,6 +354,7 @@ object MotionProfileGenerator {
                 goal.flipped(),
                 { s, ds -> velocityConstraint[-s, -ds] },
                 { s, ds, lastVel -> accelerationConstraint[-s, -ds, -lastVel] },
+                { s, ds, lastVel -> decelerationConstraint[-s, -ds, -lastVel] },
                 resolution
             ).flipped()
         }
@@ -381,7 +383,7 @@ object MotionProfileGenerator {
             goal,
             goal.x - s,
             velocityConstraints.reversed(),
-            accelerationConstraint,
+            decelerationConstraint,
         ).map { (motionState, ds) ->
             Pair(afterDisplacement(motionState, ds), ds)
         }.map { (motionState, ds) ->

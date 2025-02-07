@@ -1,9 +1,6 @@
 package com.amarcolini.joos.command
 
-import com.amarcolini.joos.dashboard.SuperTelemetry
-import java.util.function.BooleanSupplier
-import java.util.function.Consumer
-import java.util.function.Supplier
+import kotlin.jvm.JvmStatic
 
 /**
  * A state machine representing a complete action to be performed using any number of [Component]s.
@@ -11,25 +8,20 @@ import java.util.function.Supplier
  * together to form complex multi-step actions.
  */
 abstract class Command {
-    /**
-     * The global [SuperTelemetry] instance.
-     */
-    @JvmField
-    protected val telem: SuperTelemetry = CommandScheduler.telem
 
     companion object {
         /**
          * Creates a [BasicCommand] out of the provided [runnable].
          */
         @JvmStatic
-        fun of(runnable: Runnable): BasicCommand = BasicCommand(runnable)
+        fun of(runnable: () -> Unit): BasicCommand = BasicCommand(runnable)
 
         /**
          * Creates a [SelectCommand] out of the provided [command]. Note that requirements must be explicitly
          * specified, as the [SelectCommand] is uncertain of what requirements it will have before being scheduled.
          */
         @JvmStatic
-        fun select(vararg requirements: Component, command: Supplier<Command>): SelectCommand =
+        fun select(vararg requirements: Component, command: () -> Command): SelectCommand =
             SelectCommand(command, *requirements)
 
         /**
@@ -69,45 +61,6 @@ abstract class Command {
      */
     open fun isFinished(): Boolean = false
 
-    /**
-     * Cancels this command.
-     */
-    fun cancel(): Unit = CommandScheduler.cancel(this)
-
-    /**
-     * Schedules this command.
-     */
-    fun schedule(): Boolean = CommandScheduler.schedule(this)
-
-    /**
-     * Returns whether this command is currently registered with the [CommandScheduler].
-     */
-    fun isScheduled(): Boolean = CommandScheduler.isScheduled(this)
-
-    /**
-     * Runs this command independently of the [CommandScheduler]. Initializes, executes and ends this command synchronously
-     * while also updating all of its required components and updating [CommandScheduler.telem].
-     *
-     * *Note*: If this command does not end by itself, this method will run continuously.
-     */
-    fun runBlocking() {
-        requirements.forEach { it.update() }
-        init()
-        telem.update()
-        var interrupted = false
-        do {
-            requirements.forEach { it.update() }
-            execute()
-            telem.update()
-            if (Thread.currentThread().isInterrupted) {
-                interrupted = true
-                break
-            }
-        } while (!isFinished())
-        end(interrupted)
-        telem.update()
-    }
-
     //These are for chaining commands
 
     /**
@@ -120,7 +73,7 @@ abstract class Command {
     /**
      * Adds a runnable to run after this one.
      */
-    infix fun then(runnable: Runnable): SequentialCommand =
+    infix fun then(runnable: () -> Unit): SequentialCommand =
         this then BasicCommand(runnable)
 
     /**
@@ -145,7 +98,7 @@ abstract class Command {
     /**
      * Adds a runnable to run in parallel with this one (Both run simultaneously until they finish).
      */
-    infix fun and(runnable: Runnable): ParallelCommand =
+    infix fun and(runnable: () -> Unit): ParallelCommand =
         this and BasicCommand(runnable)
 
     /**
@@ -158,21 +111,21 @@ abstract class Command {
     /**
      * Adds a runnable to run in parallel with this one (Both run simultaneously until one finishes).
      */
-    infix fun race(runnable: Runnable): RaceCommand =
+    infix fun race(runnable: () -> Unit): RaceCommand =
         this race BasicCommand(runnable)
 
     /**
      * Waits until [condition] returns true after this command finishes.
      */
-    infix fun waitUntil(condition: BooleanSupplier): SequentialCommand =
+    infix fun waitUntil(condition: () -> Boolean): SequentialCommand =
         this then FunctionalCommand(isFinished = condition)
 
     /**
      * Overrides this command's [isFinished] function to finish when [condition] returns true.
      */
-    fun runUntil(condition: BooleanSupplier): FunctionalCommand = if (this is FunctionalCommand)
+    fun runUntil(condition: () -> Boolean): FunctionalCommand = if (this is FunctionalCommand)
         this.apply {
-            isFinished = condition
+            isFinishedFunction = condition
         }
     else FunctionalCommand(
         this::init,
@@ -187,8 +140,8 @@ abstract class Command {
      * Overrides this command's [isFinished] function to finish when [condition] returns true, or, if it doesn't,
      * when this command would normally finish.
      */
-    fun stopWhen(condition: BooleanSupplier): FunctionalCommand =
-        runUntil { isFinished() || condition.asBoolean }
+    fun stopWhen(condition: () -> Boolean): FunctionalCommand =
+        runUntil { isFinished() || condition() }
 
     /**
      * Overrides this command's [isFinished] function to run until it is cancelled.
@@ -213,8 +166,8 @@ abstract class Command {
     /**
      * Overrides this command's [init] function.
      */
-    fun setInit(action: Runnable): FunctionalCommand = if (this is FunctionalCommand)
-        this.apply { init = action }
+    fun setInit(action: () -> Unit): FunctionalCommand = if (this is FunctionalCommand)
+        this.apply { initFunction = action }
     else FunctionalCommand(
         action,
         this::execute,
@@ -227,8 +180,8 @@ abstract class Command {
     /**
      * Overrides this command's [execute] function.
      */
-    fun setExecute(action: Runnable): FunctionalCommand = if (this is FunctionalCommand)
-        this.apply { execute = action }
+    fun setExecute(action: () -> Unit): FunctionalCommand = if (this is FunctionalCommand)
+        this.apply { executeFunction = action }
     else FunctionalCommand(
         this::init,
         action,
@@ -241,8 +194,8 @@ abstract class Command {
     /**
      * Overrides this command's [end] function.
      */
-    fun setEnd(action: Consumer<Boolean>): FunctionalCommand = if (this is FunctionalCommand)
-        this.apply { end = action }
+    fun setEnd(action: (Boolean) -> Unit): FunctionalCommand = if (this is FunctionalCommand)
+        this.apply { endFunction = action }
     else FunctionalCommand(
         this::init,
         this::execute,
@@ -255,21 +208,21 @@ abstract class Command {
     /**
      * Returns a [ListenerCommand] that runs the specified action when this command initializes.
      */
-    fun onInit(action: Runnable): ListenerCommand = if (this is ListenerCommand)
+    fun onInit(action: () -> Unit): ListenerCommand = if (this is ListenerCommand)
         this.apply { onInit = action }
     else ListenerCommand(this, action, {}, {})
 
     /**
      * Returns a [ListenerCommand] that runs the specified action whenever this command updates.
      */
-    fun onExecute(action: Runnable): ListenerCommand = if (this is ListenerCommand)
+    fun onExecute(action: () -> Unit): ListenerCommand = if (this is ListenerCommand)
         this.apply { onExecute = action }
     else ListenerCommand(this, {}, action, {})
 
     /**
      * Returns a [ListenerCommand] that runs the specified action when this command is ended.
      */
-    fun onEnd(action: Consumer<Boolean>): ListenerCommand = if (this is ListenerCommand)
+    fun onEnd(action: (Boolean) -> Unit): ListenerCommand = if (this is ListenerCommand)
         this.apply { onEnd = action }
     else ListenerCommand(this, {}, {}, action)
 
@@ -318,9 +271,4 @@ abstract class Command {
             requirements
         )
     }
-
-    /**
-     * Stops the currently active OpMode after this command ends.
-     */
-    fun thenStopOpMode(): SequentialCommand = this then CommandScheduler::stopOpMode
 }

@@ -21,6 +21,7 @@ object TrajectoryGenerator {
         path: Path,
         velocityConstraint: TrajectoryVelocityConstraint,
         accelerationConstraint: TrajectoryAccelerationConstraint,
+        decelerationConstraint: TrajectoryAccelerationConstraint = accelerationConstraint,
         start: MotionState,
         goal: MotionState,
         resolution: Double
@@ -44,6 +45,13 @@ object TrajectoryGenerator {
                 val lastT = path.reparam(s - ds)
                 val result =
                     accelerationConstraint[path.deriv(s, t), path.deriv(s - ds, lastT), ds, lastVel].maxOf { it.second }
+                if (result < 0) throw UnsatisfiableConstraint() else result
+            },
+            { s, ds, lastVel ->
+                val t = path.reparam(s)
+                val lastT = path.reparam(s - ds)
+                val result =
+                    decelerationConstraint[path.deriv(s, t), path.deriv(s - ds, lastT), ds, lastVel].maxOf { it.second }
                 if (result < 0) throw UnsatisfiableConstraint() else result
             },
             resolution
@@ -82,6 +90,7 @@ object TrajectoryGenerator {
         path: Path,
         velocityConstraint: TrajectoryVelocityConstraint,
         accelerationConstraint: TrajectoryAccelerationConstraint,
+        decelerationConstraint: TrajectoryAccelerationConstraint = accelerationConstraint,
         start: MotionState = MotionState(0.0, 0.0, 0.0),
         goal: MotionState = MotionState(path.length(), 0.0, 0.0),
         resolution: Double = 0.25
@@ -90,6 +99,7 @@ object TrajectoryGenerator {
             path,
             velocityConstraint,
             accelerationConstraint,
+            decelerationConstraint,
             start,
             goal,
             resolution

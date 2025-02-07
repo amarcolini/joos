@@ -4,8 +4,6 @@ import com.amarcolini.joos.command.*
 import com.amarcolini.joos.geometry.Angle
 import com.amarcolini.joos.geometry.Pose2d
 import com.amarcolini.joos.geometry.Vector2d
-import com.amarcolini.joos.hardware.drive.DriveTrajectoryFollower
-import com.amarcolini.joos.hardware.drive.FollowTrajectoryCommand
 import com.amarcolini.joos.path.Path
 import com.amarcolini.joos.path.PathSegment
 import com.amarcolini.joos.path.heading.*
@@ -14,6 +12,7 @@ import com.amarcolini.joos.trajectory.TrajectoryBuilder
 import com.amarcolini.joos.trajectory.TrajectorySegment
 import com.amarcolini.joos.trajectory.constraints.TrajectoryAccelerationConstraint
 import com.amarcolini.joos.trajectory.constraints.TrajectoryVelocityConstraint
+import kotlin.jvm.JvmOverloads
 
 /**
  * A convenient way to create [Command]s to follow trajectories and perform other actions simultaneously.
@@ -116,7 +115,7 @@ class TrajectoryCommandBuilder @JvmOverloads constructor(
     /**
      * Runs [runnable] in parallel [ds] units into the previous trajectory segment.
      */
-    fun afterDisp(ds: Double, runnable: Runnable) = afterDisp(ds, Command.of(runnable))
+    fun afterDisp(ds: Double, runnable: () -> Unit) = afterDisp(ds, Command.of(runnable))
 
     /**
      * Runs [command] in parallel when the previous trajectory segment is nearest to [pos].
@@ -133,7 +132,7 @@ class TrajectoryCommandBuilder @JvmOverloads constructor(
     /**
      * Runs [runnable] in parallel when the previous trajectory segment is nearest to [pos].
      */
-    fun whenAt(point: Vector2d, runnable: Runnable) = whenAt(point, Command.of(runnable))
+    fun whenAt(point: Vector2d, runnable: () -> Unit) = whenAt(point, Command.of(runnable))
 
     /**
      * Runs [command] [dt] seconds into the previous trajectory segment or other command.
@@ -148,7 +147,7 @@ class TrajectoryCommandBuilder @JvmOverloads constructor(
     /**
      * Runs [runnable] [dt] seconds into the previous trajectory segment or other command.
      */
-    fun afterTime(dt: Double, runnable: Runnable) = afterTime(dt, Command.of(runnable))
+    fun afterTime(dt: Double, runnable: () -> Unit) = afterTime(dt, Command.of(runnable))
 
     /**
      * Waits for the currently running trajectory and then runs [command].
@@ -162,7 +161,7 @@ class TrajectoryCommandBuilder @JvmOverloads constructor(
     /**
      * Waits for the currently running trajectory and then runs [runnable].
      */
-    fun stopAndThen(runnable: Runnable) = stopAndThen(Command.of(runnable))
+    fun stopAndThen(runnable: () -> Unit) = stopAndThen(Command.of(runnable))
 
     /**
      * Waits for the currently running trajectory and then waits [duration] seconds.

@@ -5,9 +5,11 @@ import com.amarcolini.joos.control.PIDCoefficients
 import com.amarcolini.joos.control.PIDController
 import com.amarcolini.joos.geometry.Angle
 import com.amarcolini.joos.kinematics.DiffSwerveKinematics
+import com.amarcolini.joos.util.NanoClock
 import com.amarcolini.joos.util.rad
 import com.amarcolini.joos.util.wrap
 import kotlin.jvm.JvmField
+import kotlin.jvm.JvmOverloads
 import kotlin.math.PI
 import kotlin.math.abs
 
@@ -45,15 +47,16 @@ abstract class SwerveModule {
 /**
  * A basic [SwerveModule] implementation using a [PIDController] to hold module position.
  */
-abstract class PIDSwerveModule(
-    pidCoefficients: PIDCoefficients
+abstract class PIDSwerveModule @JvmOverloads constructor(
+    pidCoefficients: PIDCoefficients,
+    nanoClock: NanoClock = NanoClock.system
 ) : SwerveModule() {
     private var targetSpeed: (Double) -> Unit = { mult: Double ->
         setCorrectedDrivePower(0.0)
     }
 
     @JvmField
-    protected val pidController = PIDController(pidCoefficients)
+    protected val pidController = PIDController(pidCoefficients, nanoClock)
 
     init {
         pidController.setInputBounds(-PI / 2, PI / 2)
@@ -105,14 +108,15 @@ abstract class PIDSwerveModule(
 /**
  * A basic [SwerveModule] implementation using a [PIDController] to control a differential swerve module.
  */
-abstract class PIDDiffSwerveModule(
+abstract class PIDDiffSwerveModule @JvmOverloads constructor(
     pidCoefficients: PIDCoefficients,
     protected var feedforward: Feedforward,
+    nanoClock: NanoClock = NanoClock.system
 ) : SwerveModule() {
     private var targetPower: Double = 0.0
 
     @JvmField
-    protected val pidController = PIDController(pidCoefficients)
+    protected val pidController = PIDController(pidCoefficients, nanoClock)
 
     init {
         pidController.setInputBounds(-PI / 2, PI / 2)

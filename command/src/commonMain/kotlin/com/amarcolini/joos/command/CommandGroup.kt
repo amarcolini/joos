@@ -1,7 +1,9 @@
 package com.amarcolini.joos.command
 
+import kotlin.jvm.JvmField
+
 /**
- * A type of command that runs multiple commands. Acts similarly to [CommandScheduler].
+ * A type of command that runs multiple commands.
  *
  * @see ParallelCommand
  * @see RaceCommand
@@ -33,9 +35,8 @@ abstract class CommandGroup(
     /**
      * Command scheduling policy. If true, all markers which cannot currently be scheduled will be scheduled as soon as
      * they can be scheduled. If false (default behavior), all commands which cannot currently be scheduled will not be scheduled.
-     * Inherits from [CommandScheduler.waitToScheduleCommands].
      */
-    var waitToScheduleCommands: Boolean = CommandScheduler.waitToScheduleCommands
+    protected var waitToScheduleCommands: Boolean = false
 
     @JvmField
     protected val scheduleQueue = mutableListOf<Command>()
@@ -107,5 +108,5 @@ abstract class CommandGroup(
     /**
      * Adds a runnable to this group.
      */
-    fun add(runnable: Runnable): CommandGroup = add(of(runnable))
+    fun add(runnable: () -> Unit): CommandGroup = add(of(runnable))
 }

@@ -1,6 +1,7 @@
 package com.amarcolini.joos.command
 
-import java.util.function.Consumer
+import kotlin.jvm.JvmField
+import kotlin.jvm.JvmOverloads
 
 /**
  * A command useful for adding listeners to other commands.
@@ -11,9 +12,9 @@ import java.util.function.Consumer
  */
 class ListenerCommand @JvmOverloads constructor(
     private val command: Command = empty(),
-    @JvmField var onInit: Runnable = Runnable {},
-    @JvmField var onExecute: Runnable = Runnable {},
-    @JvmField var onEnd: Consumer<Boolean> = Consumer<Boolean> {}
+    @JvmField var onInit: () -> Unit =  {},
+    @JvmField var onExecute: () -> Unit =  {},
+    @JvmField var onEnd: (Boolean) -> Unit = {}
 ) : Command() {
     override val requirements: Set<Component> = command.requirements
 
@@ -21,17 +22,17 @@ class ListenerCommand @JvmOverloads constructor(
 
     override fun init() {
         command.init()
-        onInit.run()
+        onInit()
     }
 
     override fun execute() {
         command.execute()
-        onExecute.run()
+        onExecute()
     }
 
     override fun end(interrupted: Boolean) {
         command.end(interrupted)
-        onEnd.accept(interrupted)
+        onEnd(interrupted)
     }
 
     override fun isFinished(): Boolean = command.isFinished()

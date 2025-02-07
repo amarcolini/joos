@@ -1,6 +1,7 @@
 package com.amarcolini.joos.command
 
 import com.amarcolini.joos.util.NanoClock
+import kotlin.jvm.JvmOverloads
 
 /**
  * A command that waits the specified duration before finishing.

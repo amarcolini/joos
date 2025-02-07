@@ -1,6 +1,6 @@
 package com.amarcolini.joos.hardware.drive
 
-import com.amarcolini.joos.command.Component
+import com.amarcolini.joos.command.DriveComponent
 import com.amarcolini.joos.drive.AbstractMecanumDrive
 import com.amarcolini.joos.hardware.Motor
 import com.amarcolini.joos.hardware.MotorGroup
@@ -11,7 +11,7 @@ import com.amarcolini.joos.trajectory.constraints.MecanumConstraints
  * A [Component] implementation of a mecanum drive.
  */
 open class MecanumDrive @JvmOverloads constructor(
-    final override val motors: MotorGroup,
+    val motors: MotorGroup,
     trackWidth: Double = 1.0,
     wheelBase: Double = trackWidth,
     lateralMultiplier: Double = 1.0,

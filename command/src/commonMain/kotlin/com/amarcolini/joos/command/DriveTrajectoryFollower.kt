@@ -1,8 +1,5 @@
-package com.amarcolini.joos.hardware.drive
+package com.amarcolini.joos.command
 
-import com.amarcolini.joos.command.Command
-import com.amarcolini.joos.command.FunctionalCommand
-import com.amarcolini.joos.drive.DriveSignal
 import com.amarcolini.joos.followers.TrajectoryFollower
 import com.amarcolini.joos.geometry.Angle
 import com.amarcolini.joos.geometry.Pose2d

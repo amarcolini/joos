@@ -1,16 +1,15 @@
-package com.amarcolini.joos.hardware.drive
+package com.amarcolini.joos.command
 
-import com.amarcolini.joos.command.Command
-import com.amarcolini.joos.command.Component
 import com.amarcolini.joos.drive.Drive
 import com.amarcolini.joos.drive.DriveSignal
 import com.amarcolini.joos.followers.PathFollower
 import com.amarcolini.joos.followers.TrajectoryFollower
 import com.amarcolini.joos.geometry.Pose2d
-import com.amarcolini.joos.hardware.MotorGroup
 import com.amarcolini.joos.localization.Localizer
 import com.amarcolini.joos.path.Path
 import com.amarcolini.joos.trajectory.Trajectory
+import kotlin.jvm.JvmField
+import kotlin.jvm.JvmStatic
 
 /**
  * An interface representing a [Component] implementation of [Drive].
@@ -20,13 +19,7 @@ interface DriveComponent : Component {
 
     override fun update() {
         localizer.update()
-        motors.update()
     }
-
-    /**
-     * All the motors in this drive.
-     */
-    val motors: MotorGroup
 
     fun setDriveSignal(driveSignal: DriveSignal)
     fun setDrivePower(drivePower: Pose2d)

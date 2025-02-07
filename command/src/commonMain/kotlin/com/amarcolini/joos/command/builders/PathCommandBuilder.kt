@@ -4,13 +4,12 @@ import com.amarcolini.joos.command.*
 import com.amarcolini.joos.geometry.Angle
 import com.amarcolini.joos.geometry.Pose2d
 import com.amarcolini.joos.geometry.Vector2d
-import com.amarcolini.joos.hardware.drive.DrivePathFollower
-import com.amarcolini.joos.hardware.drive.FollowPathCommand
 import com.amarcolini.joos.path.Path
 import com.amarcolini.joos.path.PathBuilder
 import com.amarcolini.joos.path.PathContinuityViolationException
 import com.amarcolini.joos.path.PathSegment
 import com.amarcolini.joos.path.heading.*
+import kotlin.jvm.JvmOverloads
 import kotlin.math.min
 
 /**
@@ -133,7 +132,7 @@ class PathCommandBuilder @JvmOverloads constructor(
     /**
      * Runs [runnable] in parallel [ds] units into the previous path segment.
      */
-    fun afterDisp(ds: Double, runnable: Runnable) = afterDisp(ds, Command.of(runnable))
+    fun afterDisp(ds: Double, runnable: () -> Unit) = afterDisp(ds, Command.of(runnable))
 
     /**
      * Runs [command] in parallel when the previous path segment is nearest to [pos].
@@ -159,7 +158,7 @@ class PathCommandBuilder @JvmOverloads constructor(
     /**
      * Runs [runnable] in parallel when the previous path segment is nearest to [pos].
      */
-    fun whenAt(point: Vector2d, runnable: Runnable) = whenAt(point, Command.of(runnable))
+    fun whenAt(point: Vector2d, runnable: () -> Unit) = whenAt(point, Command.of(runnable))
 
     /**
      * Runs [command] [dt] seconds into the previous path segment or other command.
@@ -182,7 +181,7 @@ class PathCommandBuilder @JvmOverloads constructor(
     /**
      * Runs [runnable] [dt] seconds into the previous path segment or other command.
      */
-    fun afterTime(dt: Double, runnable: Runnable) = afterTime(dt, Command.of(runnable))
+    fun afterTime(dt: Double, runnable: () -> Unit) = afterTime(dt, Command.of(runnable))
 
     /**
      * Waits for the currently running path and then runs [command].
@@ -196,7 +195,7 @@ class PathCommandBuilder @JvmOverloads constructor(
     /**
      * Waits for the currently running path and then runs [runnable].
      */
-    fun stopAndThen(runnable: Runnable) = stopAndThen(Command.of(runnable))
+    fun stopAndThen(runnable: () -> Unit) = stopAndThen(Command.of(runnable))
 
     /**
      * Waits for the currently running path and then waits [duration] seconds.

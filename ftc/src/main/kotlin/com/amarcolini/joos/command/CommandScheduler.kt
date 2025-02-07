@@ -143,7 +143,7 @@ object CommandScheduler : OpModeManagerNotifier.Notifications {
             return false
         }
         for (command in commands) {
-            success = success && if (!command.isScheduled() && isAvailable(command)) {
+            success = success && if (!isScheduled(command) && isAvailable(command)) {
                 command.requirements.forEach {
                     val cancelled = requirements[it]
                     requirements[it] = command
@@ -173,7 +173,7 @@ object CommandScheduler : OpModeManagerNotifier.Notifications {
      * @see waitToScheduleCommands
      */
     @JvmStatic
-    fun schedule(runnable: Runnable): Boolean = schedule(Command.of(runnable))
+    fun schedule(runnable: Runnable): Boolean = schedule(Command.of { runnable.run() })
 
     /**
      * Schedules commands for execution.
@@ -186,7 +186,7 @@ object CommandScheduler : OpModeManagerNotifier.Notifications {
      * @see waitToScheduleCommands
      */
     @JvmStatic
-    fun schedule(repeat: Boolean, runnable: Runnable): Boolean = schedule(BasicCommand(runnable).runUntil { !repeat })
+    fun schedule(repeat: Boolean, runnable: Runnable): Boolean = schedule(BasicCommand { runnable.run() }.runUntil { !repeat })
 
     internal var isBusy = false
 
@@ -232,6 +232,30 @@ object CommandScheduler : OpModeManagerNotifier.Notifications {
         val tempCache = actionCache
         actionCache = LinkedHashSet()
         tempCache.forEach { it() }
+    }
+
+    /**
+     * Runs a command independently of the [CommandScheduler]. Initializes, executes and ends this command synchronously
+     * while also updating all of its required components and updating [CommandScheduler.telem].
+     *
+     * *Note*: If this command does not end by itself, this method will run continuously.
+     */
+    fun runBlocking(command: Command) {
+        command.requirements.forEach { it.update() }
+        command.init()
+        telem.update()
+        var interrupted = false
+        do {
+            command.requirements.forEach { it.update() }
+            command.execute()
+            telem.update()
+            if (Thread.currentThread().isInterrupted) {
+                interrupted = true
+                break
+            }
+        } while (!command.isFinished())
+        command.end(interrupted)
+        telem.update()
     }
 
     /**
@@ -293,7 +317,7 @@ object CommandScheduler : OpModeManagerNotifier.Notifications {
      */
     @JvmStatic
     fun map(condition: BooleanSupplier, runnable: Runnable) {
-        map(condition, Command.of(runnable))
+        map(condition, Command.of { runnable.run() })
     }
 
     /**
