@@ -346,7 +346,7 @@ class Motor @JvmOverloads constructor(
         when (runMode) {
             RunMode.RUN_USING_ENCODER -> {
                 veloController.setTarget(velocity)
-                power = feedforward.calculate(
+                internal.power = feedforward.calculate(
                     velocity,
                     acceleration,
                     veloController.update(this.velocity)
@@ -354,7 +354,7 @@ class Motor @JvmOverloads constructor(
             }
 
             RunMode.RUN_WITHOUT_ENCODER -> {
-                power = feedforward.calculate(
+                internal.power = feedforward.calculate(
                     velocity,
                     acceleration
                 )
@@ -381,7 +381,7 @@ class Motor @JvmOverloads constructor(
         setTickVelocity(rpm * TPR / 60)
 
     /**
-     * The percentage of power to the motor in the range `[-1.0, 1.0]`.
+     * The percentage of power to the motor in the range `[-1.0, 1.0]`. This uses no feedback control whatsoever.
      */
     var power: Double = 0.0
         set(value) {
@@ -392,15 +392,15 @@ class Motor @JvmOverloads constructor(
         get() = internal.power * (if (reversed) -1.0 else 1.0)
 
     /**
-     * Updates both [RunMode.RUN_USING_ENCODER] and [RunMode.RUN_TO_POSITION]. Running this method is
+     * Updates [RunMode.RUN_USING_ENCODER]. Running this method is
      * not necessary for [RunMode.RUN_WITHOUT_ENCODER].
      */
     override fun update() {
         if (runMode == RunMode.RUN_USING_ENCODER) {
-            power = feedforward.calculate(
+            internal.power = feedforward.calculate(
                 targetVel,
                 targetAccel,
-                veloController.update(this.velocity)
+                veloController.update(this.velocity).also { println(it) }
             )
         }
     }

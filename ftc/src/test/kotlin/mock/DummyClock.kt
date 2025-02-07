@@ -20,4 +20,8 @@ object DummyClock : NanoClock {
     fun step(duration: Double) {
         mockSeconds += duration
     }
+
+    fun setTime(duration: Double) {
+        mockSeconds = duration
+    }
 }

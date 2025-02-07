@@ -1,16 +1,10 @@
 package com.amarcolini.joos.command
 
 import com.acmerobotics.dashboard.FtcDashboard
-import com.acmerobotics.dashboard.telemetry.MultipleTelemetry
-import com.amarcolini.joos.gamepad.MultipleGamepad
-import com.qualcomm.robotcore.eventloop.opmode.Autonomous
-import com.qualcomm.robotcore.eventloop.opmode.OpMode
-import com.qualcomm.robotcore.eventloop.opmode.OpModeRegistrar
-import com.qualcomm.robotcore.eventloop.opmode.TeleOp
-import com.qualcomm.robotcore.hardware.HardwareMap
 import com.amarcolini.joos.dashboard.SuperTelemetry
-import org.firstinspires.ftc.ftccommon.external.OnCreateEventLoop
-import kotlin.reflect.full.hasAnnotation
+import com.amarcolini.joos.gamepad.MultipleGamepad
+import com.qualcomm.robotcore.eventloop.opmode.OpMode
+import com.qualcomm.robotcore.hardware.HardwareMap
 
 /**
  * A class that makes any command-based robot code a lot smoother

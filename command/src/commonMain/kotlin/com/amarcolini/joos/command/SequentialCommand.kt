@@ -25,9 +25,9 @@ class SequentialCommand(
     }
 
     override fun isFinished() =
-        if (scheduledCommands.isEmpty()) {
+        if (scheduledCommands.isEmpty() && scheduleQueue.isEmpty()) {
             index++
-            if (index >= commands.lastIndex) true
+            if (index > commands.lastIndex) true
             else {
                 scheduleQueue += commands[index]
                 false

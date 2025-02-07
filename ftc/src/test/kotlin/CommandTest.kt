@@ -11,7 +11,7 @@ import org.robolectric.RobolectricTestRunner
 import org.robolectric.annotation.Config
 import kotlin.math.abs
 
-private const val logOutput: Boolean = true
+private const val logOutput: Boolean = false
 
 @RunWith(RobolectricTestRunner::class)
 @Config(manifest = Config.NONE)
@@ -42,13 +42,11 @@ class CommandTest {
         val command = RangeCommand("test", 0, 10, true)
         val extraCommands = List(10) { i -> RangeCommand("extra #$i", 0, 0, true) }
         scheduler.schedule(command, *extraCommands.toTypedArray())
-        assert(command.isScheduled())
         assert(scheduler.isScheduled(command))
         assert(command.isInitialized)
         while (!command.isFinished()) scheduler.update()
         scheduler.update()
         assert(command.hasEnded)
-        assert(!command.isScheduled())
         assert(!scheduler.isScheduled(command))
         assert(command.num == command.end)
     }
@@ -92,15 +90,13 @@ class CommandTest {
         if (logOutput) println("   **testProperCancelling**")
         val command = RangeCommand("test", 0, 10, false)
         scheduler.schedule(command)
-        assert(command.isScheduled())
         assert(scheduler.isScheduled(command))
         assert(command.isInitialized)
         scheduler.update()
         scheduler.update()
-        command.cancel()
+        scheduler.cancel(command)
         scheduler.update()
         assert(command.hasEnded)
-        assert(!command.isScheduled())
         assert(!scheduler.isScheduled(command))
         assert(command.num == 2)
     }
@@ -115,10 +111,9 @@ class CommandTest {
         val command2 = RangeCommand("teSt3", 0, 10, true, setOf(component))
         scheduler.schedule(command2)
         assert(command.num == 1)
-        assert(!command.isScheduled())
         assert(!scheduler.isScheduled(command))
         assert(command.hasEnded && command.wasInterrupted)
-        assert(command2.isInitialized && command2.isScheduled())
+        assert(command2.isInitialized && scheduler.isScheduled(command2))
         scheduler.update()
         assert(command2.num == 1)
 
@@ -135,10 +130,9 @@ class CommandTest {
         val command2 = RangeCommand("teSt3", 0, 10, true, setOf(component))
         assert(!scheduler.schedule(command2))
         assert(command.num == 1)
-        assert(command.isScheduled())
         assert(scheduler.isScheduled(command))
         assert(!command.hasEnded && !command.wasInterrupted)
-        assert(!command2.isInitialized && !command2.isScheduled())
+        assert(!command2.isInitialized && !scheduler.isScheduled(command2))
         scheduler.update()
         assert(command2.num != 1 && command.num == 2)
 
@@ -154,7 +148,7 @@ class CommandTest {
         val group = cmd1 then cmd2
 
         scheduler.schedule(group)
-        assert(group.isScheduled())
+        assert(scheduler.isScheduled(group))
         assert(!group.isFinished())
         assert(cmd1.isInitialized)
         assert(!cmd2.isInitialized)
@@ -165,8 +159,9 @@ class CommandTest {
         assert(!group.isFinished())
         assert(cmd1.num == 5)
         assert(!cmd1.wasInterrupted && cmd1.hasEnded)
+        scheduler.update()
         assert(cmd2.isInitialized)
-        assert(cmd2.num == 1)
+        assert(cmd2.num == 2)
         while (!group.isFinished()) scheduler.update()
         assert(cmd2.isFinished() && cmd2.hasEnded && !cmd2.wasInterrupted)
     }
@@ -177,7 +172,7 @@ class CommandTest {
         val cmd = WaitCommand(1.0)
         val clock = NanoClock.system
         val start = clock.seconds()
-        cmd.runBlocking()
+        scheduler.runBlocking(cmd)
         //Accurate to a thousandth of a second
         assert(abs(clock.seconds() - start - 1.0) < 0.001)
     }
@@ -221,7 +216,7 @@ class CommandTest {
             .then { if (logOutput) println("third") }
             .wait(1.0)
             .then { if (logOutput) println("So cool!!") }
-        cmd.runBlocking()
+        scheduler.runBlocking(cmd)
     }
 
     @Test
@@ -279,7 +274,7 @@ class CommandTest {
                 if (logOutput) println("setting number to $newNumber.")
             }
         }
-        cmd.runBlocking()
+        scheduler.runBlocking(cmd)
         assert(number == 1)
     }
 

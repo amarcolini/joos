@@ -1,17 +1,10 @@
 package com.qualcomm.robotcore.eventloop.opmode
 
 import com.amarcolini.joos.command.CommandScheduler
-import com.qualcomm.ftccommon.FtcEventLoop
-import com.qualcomm.ftccommon.UpdateUI
-import com.qualcomm.hardware.HardwareFactory
 import com.qualcomm.robotcore.eventloop.opmode.OpModeManagerImpl.ForceStopException
 import com.qualcomm.robotcore.hardware.Gamepad
-import com.qualcomm.robotcore.hardware.HardwareMap
 import com.qualcomm.robotcore.robocol.TelemetryMessage
-import com.qualcomm.robotcore.util.Dimmer
 import mock.MockHardwareMap
-import mock.mockApplication
-import org.firstinspires.ftc.ftccommon.internal.AnnotatedHooksClassFilter
 import org.firstinspires.ftc.robotcore.internal.opmode.OpModeServices
 
 class MockOpModeManager(private val opMode: OpMode) :
