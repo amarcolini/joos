@@ -95,6 +95,10 @@ class DraggableTrajectory(var data: TrajectoryMetadata) : EntityGroup() {
                     AngularAccelerationConstraint(maxAngAccel)
                 )
             )
+
+        @Transient
+        override val decelConstraint: TrajectoryAccelerationConstraint
+            get() = accelConstraint
     }
 
     val constraints: TempGenericConstraints = TempGenericConstraints()
