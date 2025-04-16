@@ -185,9 +185,8 @@ private class CommandScopeImpl(block: suspend CommandScope.() -> Unit) : Command
         do {
             command.execute()
             val isFinished = command.isFinished()
-            yield(isFinished)
+            yield(false)
         } while (!isFinished)
-        yield(true)
     }
 
     inner class DeferredScopeImpl(block: suspend CommandScope.() -> Unit) : DeferredScope() {
