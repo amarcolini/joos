@@ -19,7 +19,7 @@ kotlin {
     compilerOptions.jvmTarget.set(JvmTarget.JVM_1_8)
 }
 
-group = "$group.command"
+group = "$group.ftc"
 
 dependencies {
     //noinspection GradleDependency

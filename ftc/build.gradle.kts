@@ -5,9 +5,8 @@ plugins {
     id("org.jetbrains.dokka")
 }
 
-extra {
-    extra["dokkaName"] = "FTC"
-}
+extra["dokkaName"] = "FTC"
+
 repositories {
     google()
     maven { url = uri("https://maven.brott.dev/") }
@@ -92,7 +91,7 @@ afterEvaluate {
         publications {
             register<MavenPublication>("release") {
                 from(components["release"])
-                artifactId = "command"
+                artifactId = "ftc"
                 pom {
                     name.set("Joos")
                     description.set("A comprehensive kotlin library designed for FTC.")

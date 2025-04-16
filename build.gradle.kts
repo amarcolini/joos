@@ -1,7 +1,7 @@
 import org.jetbrains.dokka.gradle.AbstractDokkaLeafTask
 
 plugins {
-id("org.jetbrains.kotlin.jvm") version "1.9.0" apply false//    kotlin("jvm") version Versions.kotlin apply false
+    id("org.jetbrains.kotlin.jvm") version "1.9.0" apply false//    kotlin("jvm") version Versions.kotlin apply false
     id("com.android.library") version Versions.android apply false
     id("org.jetbrains.kotlin.android") version Versions.kotlin apply false
     id("org.jetbrains.dokka") version Versions.dokka
@@ -89,12 +89,14 @@ allprojects {
 
     tasks.withType<org.jetbrains.kotlin.gradle.tasks.KotlinCompile>().configureEach {
         kotlinOptions {
-            freeCompilerArgs = listOf("-Xjvm-default=all", "-Xexpect-actual-classes") //all or all-compatibility
+            freeCompilerArgs =
+                listOf("-Xjvm-default=all", "-Xexpect-actual-classes") //all or all-compatibility
         }
     }
 
     rootProject.plugins.withType(org.jetbrains.kotlin.gradle.targets.js.nodejs.NodeJsRootPlugin::class.java) {
-        rootProject.the<org.jetbrains.kotlin.gradle.targets.js.nodejs.NodeJsRootExtension>().nodeVersion = "16.0.0"
+        rootProject.the<org.jetbrains.kotlin.gradle.targets.js.nodejs.NodeJsRootExtension>().nodeVersion =
+            "16.0.0"
     }
 //    tasks.findByPath(":gui:mergeClasses")?.configure<Copy> {
 //        duplicatesStrategy = DuplicatesStrategy.EXCLUDE
