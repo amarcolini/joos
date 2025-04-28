@@ -74,6 +74,8 @@ android {
     }
     defaultConfig {
         minSdk = 24
+        //noinspection ExpiredTargetSdkVersion
+        targetSdk = 28
     }
     publishing {
         singleVariant("release") {
@@ -83,7 +85,7 @@ android {
         }
     }
     kotlinOptions.jvmTarget = "1.8"
-    buildToolsVersion = "30.0.3"
+//    buildToolsVersion = "30.0.3"
 }
 
 afterEvaluate {
