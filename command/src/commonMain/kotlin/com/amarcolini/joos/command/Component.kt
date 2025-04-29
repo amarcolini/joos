@@ -13,18 +13,18 @@ interface Component {
          * Creates a component using the provided [runnable].
          */
         @JvmStatic
-        fun of(runnable: () -> Unit): Component =
+        fun of(runnable: Runnable): Component =
             object : Component {
-                override fun update() = runnable()
+                override fun update() = runnable.run()
             }
 
         /**
          * Creates a component using the provided [runnable] and [defaultCommandSupplier].
          */
         @JvmStatic
-        fun of(defaultCommandSupplier: () -> Command? = { null }, runnable: () -> Unit): Component =
+        fun of(defaultCommandSupplier: () -> Command? = { null }, runnable: Runnable): Component =
             object : Component {
-                override fun update() = runnable()
+                override fun update() = runnable.run()
                 override val defaultCommand get() = defaultCommandSupplier()
             }
 
@@ -32,9 +32,9 @@ interface Component {
          * Creates a component using the provided [runnable] and [defaultCommand].
          */
         @JvmStatic
-        fun of(defaultCommand: Command, runnable: () -> Unit): Component =
+        fun of(defaultCommand: Command, runnable: Runnable): Component =
             object : Component {
-                override fun update() = runnable()
+                override fun update() = runnable.run()
                 override val defaultCommand = defaultCommand
             }
     }

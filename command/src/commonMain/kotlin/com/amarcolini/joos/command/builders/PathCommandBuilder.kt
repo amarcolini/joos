@@ -26,7 +26,7 @@ class PathCommandBuilder @JvmOverloads constructor(
     var allowedMarkerError: Double = 5.0
 ) {
     private var builder = PathBuilder(startPose, startTangent)
-    private var lastPathCommand: FollowPathCommand? = null
+    private var lastPathCommand: FollowPathCommand<*>? = null
     private var currentCommandStack: SequentialCommand = SequentialCommand(Command.empty())
     private val currentMarkers = mutableListOf<MarkerCommand.Marker>()
     private val outputCommand = SequentialCommand()
@@ -38,7 +38,7 @@ class PathCommandBuilder @JvmOverloads constructor(
         segmentIndex: Int,
         condition: (ds: Double, pose: Pose2d) -> Boolean = { _, _ -> true }
     ): Boolean {
-        val pathCommand = command as? FollowPathCommand
+        val pathCommand = command as? FollowPathCommand<*>
         return pathCommand?.run {
             val segmentDisp = path.segments.subList(0, segmentIndex - 1).sumOf { it.length() }
             pathFollower.lastProjectDisplacement >= segmentDisp &&
@@ -132,10 +132,10 @@ class PathCommandBuilder @JvmOverloads constructor(
     /**
      * Runs [runnable] in parallel [ds] units into the previous path segment.
      */
-    fun afterDisp(ds: Double, runnable: () -> Unit) = afterDisp(ds, Command.of(runnable))
+    fun afterDisp(ds: Double, runnable: Runnable) = afterDisp(ds, Command.of(runnable))
 
     /**
-     * Runs [command] in parallel when the previous path segment is nearest to [pos].
+     * Runs [command] in parallel when the previous path segment is nearest to [point].
      */
     fun whenAt(point: Vector2d, command: Command): PathCommandBuilder {
         val position = getLastPathPosition()
@@ -156,9 +156,9 @@ class PathCommandBuilder @JvmOverloads constructor(
     }
 
     /**
-     * Runs [runnable] in parallel when the previous path segment is nearest to [pos].
+     * Runs [runnable] in parallel when the previous path segment is nearest to [point].
      */
-    fun whenAt(point: Vector2d, runnable: () -> Unit) = whenAt(point, Command.of(runnable))
+    fun whenAt(point: Vector2d, runnable: Runnable) = whenAt(point, Command.of(runnable))
 
     /**
      * Runs [command] [dt] seconds into the previous path segment or other command.
@@ -181,7 +181,7 @@ class PathCommandBuilder @JvmOverloads constructor(
     /**
      * Runs [runnable] [dt] seconds into the previous path segment or other command.
      */
-    fun afterTime(dt: Double, runnable: () -> Unit) = afterTime(dt, Command.of(runnable))
+    fun afterTime(dt: Double, runnable: Runnable) = afterTime(dt, Command.of(runnable))
 
     /**
      * Waits for the currently running path and then runs [command].
@@ -195,7 +195,7 @@ class PathCommandBuilder @JvmOverloads constructor(
     /**
      * Waits for the currently running path and then runs [runnable].
      */
-    fun stopAndThen(runnable: () -> Unit) = stopAndThen(Command.of(runnable))
+    fun stopAndThen(runnable: Runnable) = stopAndThen(Command.of(runnable))
 
     /**
      * Waits for the currently running path and then waits [duration] seconds.

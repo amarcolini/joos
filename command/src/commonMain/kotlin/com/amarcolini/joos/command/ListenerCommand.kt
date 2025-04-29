@@ -12,9 +12,9 @@ import kotlin.jvm.JvmOverloads
  */
 class ListenerCommand @JvmOverloads constructor(
     private val command: Command = empty(),
-    @JvmField var onInit: () -> Unit =  {},
-    @JvmField var onExecute: () -> Unit =  {},
-    @JvmField var onEnd: (Boolean) -> Unit = {}
+    @JvmField var onInit: Runnable = Runnable {},
+    @JvmField var onExecute: Runnable = Runnable {},
+    @JvmField var onEnd: CommandEnd = CommandEnd {}
 ) : Command() {
     override val requirements: Set<Component> = command.requirements
 
@@ -22,17 +22,17 @@ class ListenerCommand @JvmOverloads constructor(
 
     override fun init() {
         command.init()
-        onInit()
+        onInit.run()
     }
 
     override fun execute() {
         command.execute()
-        onExecute()
+        onExecute.run()
     }
 
     override fun end(interrupted: Boolean) {
         command.end(interrupted)
-        onEnd(interrupted)
+        onEnd.end(interrupted)
     }
 
     override fun isFinished(): Boolean = command.isFinished()

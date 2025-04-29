@@ -21,7 +21,7 @@ abstract class AbstractSwerveDrive @JvmOverloads constructor(
     val modules: List<SwerveModule>,
     protected val modulePositions: List<Vector2d>,
     protected val externalHeadingSensor: AngleSensor? = null
-) : Drive() {
+) : Drive {
     @JvmOverloads
     constructor(
         frontLeft: SwerveModule,

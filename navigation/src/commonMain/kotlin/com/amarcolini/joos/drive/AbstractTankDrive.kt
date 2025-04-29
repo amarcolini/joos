@@ -18,7 +18,7 @@ import kotlin.math.abs
 abstract class AbstractTankDrive @JvmOverloads constructor(
     protected val trackWidth: Double,
     protected val externalHeadingSensor: AngleSensor? = null
-) : Drive() {
+) : Drive {
     final override var localizer: Localizer = TankLocalizer.from(
         ::getWheelPositions,
         ::getWheelVelocities,

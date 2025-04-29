@@ -14,7 +14,7 @@ abstract class Command {
          * Creates a [BasicCommand] out of the provided [runnable].
          */
         @JvmStatic
-        fun of(runnable: () -> Unit): BasicCommand = BasicCommand(runnable)
+        fun of(runnable: Runnable): BasicCommand = BasicCommand(runnable::run)
 
         /**
          * Creates a [SelectCommand] out of the provided [command]. Note that requirements must be explicitly
@@ -73,7 +73,7 @@ abstract class Command {
     /**
      * Adds a runnable to run after this one.
      */
-    infix fun then(runnable: () -> Unit): SequentialCommand =
+    infix fun then(runnable: Runnable): SequentialCommand =
         this then BasicCommand(runnable)
 
     /**
@@ -98,7 +98,7 @@ abstract class Command {
     /**
      * Adds a runnable to run in parallel with this one (Both run simultaneously until they finish).
      */
-    infix fun and(runnable: () -> Unit): ParallelCommand =
+    infix fun and(runnable: Runnable): ParallelCommand =
         this and BasicCommand(runnable)
 
     /**
@@ -111,7 +111,7 @@ abstract class Command {
     /**
      * Adds a runnable to run in parallel with this one (Both run simultaneously until one finishes).
      */
-    infix fun race(runnable: () -> Unit): RaceCommand =
+    infix fun race(runnable: Runnable): RaceCommand =
         this race BasicCommand(runnable)
 
     /**
@@ -166,7 +166,7 @@ abstract class Command {
     /**
      * Overrides this command's [init] function.
      */
-    fun setInit(action: () -> Unit): FunctionalCommand = if (this is FunctionalCommand)
+    fun setInit(action: Runnable): FunctionalCommand = if (this is FunctionalCommand)
         this.apply { initFunction = action }
     else FunctionalCommand(
         action,
@@ -180,7 +180,7 @@ abstract class Command {
     /**
      * Overrides this command's [execute] function.
      */
-    fun setExecute(action: () -> Unit): FunctionalCommand = if (this is FunctionalCommand)
+    fun setExecute(action: Runnable): FunctionalCommand = if (this is FunctionalCommand)
         this.apply { executeFunction = action }
     else FunctionalCommand(
         this::init,
@@ -194,7 +194,7 @@ abstract class Command {
     /**
      * Overrides this command's [end] function.
      */
-    fun setEnd(action: (Boolean) -> Unit): FunctionalCommand = if (this is FunctionalCommand)
+    fun setEnd(action: CommandEnd): FunctionalCommand = if (this is FunctionalCommand)
         this.apply { endFunction = action }
     else FunctionalCommand(
         this::init,
@@ -208,21 +208,21 @@ abstract class Command {
     /**
      * Returns a [ListenerCommand] that runs the specified action when this command initializes.
      */
-    fun onInit(action: () -> Unit): ListenerCommand = if (this is ListenerCommand)
+    fun onInit(action: Runnable): ListenerCommand = if (this is ListenerCommand)
         this.apply { onInit = action }
     else ListenerCommand(this, action, {}, {})
 
     /**
      * Returns a [ListenerCommand] that runs the specified action whenever this command updates.
      */
-    fun onExecute(action: () -> Unit): ListenerCommand = if (this is ListenerCommand)
+    fun onExecute(action: Runnable): ListenerCommand = if (this is ListenerCommand)
         this.apply { onExecute = action }
     else ListenerCommand(this, {}, action, {})
 
     /**
      * Returns a [ListenerCommand] that runs the specified action when this command is ended.
      */
-    fun onEnd(action: (Boolean) -> Unit): ListenerCommand = if (this is ListenerCommand)
+    fun onEnd(action: CommandEnd): ListenerCommand = if (this is ListenerCommand)
         this.apply { onEnd = action }
     else ListenerCommand(this, {}, {}, action)
 

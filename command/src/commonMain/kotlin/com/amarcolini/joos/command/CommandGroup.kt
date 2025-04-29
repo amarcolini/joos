@@ -108,5 +108,5 @@ abstract class CommandGroup(
     /**
      * Adds a runnable to this group.
      */
-    fun add(runnable: () -> Unit): CommandGroup = add(of(runnable))
+    fun add(runnable: Runnable): CommandGroup = add(of(runnable))
 }

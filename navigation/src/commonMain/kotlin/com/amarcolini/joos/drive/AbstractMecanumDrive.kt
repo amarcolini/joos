@@ -22,7 +22,7 @@ abstract class AbstractMecanumDrive @JvmOverloads constructor(
     protected val wheelBase: Double = trackWidth,
     protected val lateralMultiplier: Double = 1.0,
     protected val externalHeadingSensor: AngleSensor? = null
-) : Drive() {
+) : Drive {
     final override var localizer: Localizer = MecanumLocalizer.from(
         ::getWheelPositions,
         ::getWheelVelocities,

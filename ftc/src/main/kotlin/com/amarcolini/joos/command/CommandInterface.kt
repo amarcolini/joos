@@ -35,6 +35,14 @@ interface CommandInterface {
     fun schedule(runnable: Runnable): Boolean = CommandScheduler.schedule(runnable)
 
     /**
+     * Runs a command independently of the [CommandScheduler]. Initializes, executes and ends this command synchronously
+     * while also updating all of its required components and updating [CommandScheduler.telem].
+     *
+     * *Note*: If this command does not end by itself, this method will run indefinitely.
+     */
+    fun runBlocking(command: Command) = CommandScheduler.runBlocking(command)
+
+    /**
      * Schedules commands for execution.
      *
      * @return `true` if all commands were successfully scheduled immediately, and `false` if they were not. Note that if

@@ -1,6 +1,6 @@
 package com.amarcolini.joos.hardware.drive
 
-import com.amarcolini.joos.command.DriveComponent
+import com.amarcolini.joos.command.Component
 import com.amarcolini.joos.drive.AbstractTankDrive
 import com.amarcolini.joos.hardware.MotorGroup
 import com.amarcolini.joos.localization.AngleSensor
@@ -15,7 +15,7 @@ open class TankDrive @JvmOverloads constructor(
     @JvmField val rightMotors: MotorGroup,
     trackWidth: Double = 1.0,
     externalHeadingSensor: AngleSensor? = null,
-) : AbstractTankDrive(trackWidth, externalHeadingSensor), DriveComponent {
+) : AbstractTankDrive(trackWidth, externalHeadingSensor), Component {
     @JvmOverloads
     constructor(
         left: MotorGroup,
@@ -41,7 +41,7 @@ open class TankDrive @JvmOverloads constructor(
     )
 
     final override fun update() {
-        updatePoseEstimate()
+        localizer.update()
         motors.forEach { it.update() }
     }
 }

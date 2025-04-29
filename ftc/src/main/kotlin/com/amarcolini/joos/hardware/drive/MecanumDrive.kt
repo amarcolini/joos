@@ -1,7 +1,8 @@
 package com.amarcolini.joos.hardware.drive
 
-import com.amarcolini.joos.command.DriveComponent
+import com.amarcolini.joos.command.Component
 import com.amarcolini.joos.drive.AbstractMecanumDrive
+import com.amarcolini.joos.drive.Drive
 import com.amarcolini.joos.hardware.Motor
 import com.amarcolini.joos.hardware.MotorGroup
 import com.amarcolini.joos.localization.AngleSensor
@@ -19,7 +20,7 @@ open class MecanumDrive @JvmOverloads constructor(
 ) : AbstractMecanumDrive(
     trackWidth, wheelBase, lateralMultiplier,
     externalHeadingSensor
-), DriveComponent {
+), Component {
     /**
      * Constructs a mecanum drive using [constraints].
      */
@@ -74,7 +75,7 @@ open class MecanumDrive @JvmOverloads constructor(
     }
 
     final override fun update() {
-        updatePoseEstimate()
+        localizer.update()
         motors.forEach { it.update() }
     }
 }

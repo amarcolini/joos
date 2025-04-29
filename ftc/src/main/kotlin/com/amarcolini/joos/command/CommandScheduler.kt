@@ -48,6 +48,7 @@ object CommandScheduler : OpModeManagerNotifier.Notifications {
      */
     @JvmStatic
     var opMode: OpMode? = null
+        @JvmSynthetic
         internal set(value) {
             gamepad = if (value == null) {
                 reset()
@@ -173,7 +174,7 @@ object CommandScheduler : OpModeManagerNotifier.Notifications {
      * @see waitToScheduleCommands
      */
     @JvmStatic
-    fun schedule(runnable: Runnable): Boolean = schedule(Command.of { runnable.run() })
+    fun schedule(runnable: Runnable): Boolean = schedule(Command.of(runnable))
 
     /**
      * Schedules commands for execution.
@@ -238,8 +239,9 @@ object CommandScheduler : OpModeManagerNotifier.Notifications {
      * Runs a command independently of the [CommandScheduler]. Initializes, executes and ends this command synchronously
      * while also updating all of its required components and updating [CommandScheduler.telem].
      *
-     * *Note*: If this command does not end by itself, this method will run continuously.
+     * *Note*: If this command does not end by itself, this method will run indefinitely.
      */
+    @JvmStatic
     fun runBlocking(command: Command) {
         command.requirements.forEach { it.update() }
         command.init()
@@ -317,7 +319,7 @@ object CommandScheduler : OpModeManagerNotifier.Notifications {
      */
     @JvmStatic
     fun map(condition: BooleanSupplier, runnable: Runnable) {
-        map(condition, Command.of { runnable.run() })
+        map(condition, Command.of(runnable))
     }
 
     /**

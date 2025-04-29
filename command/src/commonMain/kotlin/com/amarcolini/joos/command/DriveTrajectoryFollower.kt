@@ -1,5 +1,6 @@
 package com.amarcolini.joos.command
 
+import com.amarcolini.joos.drive.Drive
 import com.amarcolini.joos.followers.TrajectoryFollower
 import com.amarcolini.joos.geometry.Angle
 import com.amarcolini.joos.geometry.Pose2d
@@ -7,7 +8,7 @@ import com.amarcolini.joos.trajectory.Trajectory
 import com.amarcolini.joos.trajectory.TrajectoryBuilder
 import com.amarcolini.joos.trajectory.constraints.TrajectoryConstraints
 
-interface DriveTrajectoryFollower : DriveComponent {
+interface DriveTrajectoryFollower : Drive, Component {
     val trajectoryFollower: TrajectoryFollower
     val constraints: TrajectoryConstraints
 
@@ -50,7 +51,7 @@ interface DriveTrajectoryFollower : DriveComponent {
     /**
      * Returns a [Command] that follows the provided trajectory.
      */
-    fun followTrajectory(trajectory: Trajectory): FollowTrajectoryCommand = FollowTrajectoryCommand(
+    fun followTrajectory(trajectory: Trajectory) = FollowTrajectoryCommand(
         trajectory, trajectoryFollower, this
     )
 }

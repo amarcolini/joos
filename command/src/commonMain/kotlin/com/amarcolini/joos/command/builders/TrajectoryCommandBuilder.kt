@@ -25,7 +25,7 @@ class TrajectoryCommandBuilder @JvmOverloads constructor(
     startTangent: Angle = startPose.heading
 ) {
     private var builder = drive.trajectoryBuilder(startPose, startTangent)
-    private var lastTrajectoryCommand: FollowTrajectoryCommand? = null
+    private var lastTrajectoryCommand: FollowTrajectoryCommand<*>? = null
     private var currentCommandStack: SequentialCommand = SequentialCommand(Command.empty())
     private val currentMarkers = mutableListOf<MarkerCommand.Marker>()
     private val markersToCompile = mutableListOf<(Trajectory) -> MarkerCommand.Marker>()
@@ -115,10 +115,10 @@ class TrajectoryCommandBuilder @JvmOverloads constructor(
     /**
      * Runs [runnable] in parallel [ds] units into the previous trajectory segment.
      */
-    fun afterDisp(ds: Double, runnable: () -> Unit) = afterDisp(ds, Command.of(runnable))
+    fun afterDisp(ds: Double, runnable: Runnable) = afterDisp(ds, Command.of(runnable))
 
     /**
-     * Runs [command] in parallel when the previous trajectory segment is nearest to [pos].
+     * Runs [command] in parallel when the previous trajectory segment is nearest to [point].
      */
     fun whenAt(point: Vector2d, command: Command): TrajectoryCommandBuilder {
         addMarker(command) {
@@ -130,9 +130,9 @@ class TrajectoryCommandBuilder @JvmOverloads constructor(
     }
 
     /**
-     * Runs [runnable] in parallel when the previous trajectory segment is nearest to [pos].
+     * Runs [runnable] in parallel when the previous trajectory segment is nearest to [point].
      */
-    fun whenAt(point: Vector2d, runnable: () -> Unit) = whenAt(point, Command.of(runnable))
+    fun whenAt(point: Vector2d, runnable: Runnable) = whenAt(point, Command.of(runnable))
 
     /**
      * Runs [command] [dt] seconds into the previous trajectory segment or other command.
@@ -147,7 +147,7 @@ class TrajectoryCommandBuilder @JvmOverloads constructor(
     /**
      * Runs [runnable] [dt] seconds into the previous trajectory segment or other command.
      */
-    fun afterTime(dt: Double, runnable: () -> Unit) = afterTime(dt, Command.of(runnable))
+    fun afterTime(dt: Double, runnable: Runnable) = afterTime(dt, Command.of(runnable))
 
     /**
      * Waits for the currently running trajectory and then runs [command].
@@ -161,7 +161,7 @@ class TrajectoryCommandBuilder @JvmOverloads constructor(
     /**
      * Waits for the currently running trajectory and then runs [runnable].
      */
-    fun stopAndThen(runnable: () -> Unit) = stopAndThen(Command.of(runnable))
+    fun stopAndThen(runnable: Runnable) = stopAndThen(Command.of(runnable))
 
     /**
      * Waits for the currently running trajectory and then waits [duration] seconds.
