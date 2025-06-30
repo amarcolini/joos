@@ -6,7 +6,7 @@ import kotlin.js.JsExport
 /**
  * Motion profile velocity constraint.
  */
-@JsExport
+
 fun interface TrajectoryVelocityConstraint {
     /**
      * Returns the maximum profile velocity.

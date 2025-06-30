@@ -15,7 +15,6 @@ import kotlin.math.roundToInt
  *
  * @param segments list of path segments
  */
-@JsExport
 class Path(@JvmField val segments: List<PathSegment>) {
 
     /**

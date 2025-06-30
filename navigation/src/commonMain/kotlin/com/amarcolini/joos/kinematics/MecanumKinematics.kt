@@ -15,7 +15,6 @@ import kotlin.jvm.JvmStatic
  *
  * [This paper](http://www.chiefdelphi.com/media/papers/download/2722) provides a motivated derivation.
  */
-@JsExport
 object MecanumKinematics {
 
     /**

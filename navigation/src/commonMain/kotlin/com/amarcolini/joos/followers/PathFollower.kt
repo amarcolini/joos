@@ -14,7 +14,6 @@ import kotlin.math.abs
  *
  * @param clock clock
  */
-@JsExport
 abstract class PathFollower @JvmOverloads constructor(
     protected val admissibleError: Pose2d,
     protected val clock: NanoClock = NanoClock.system

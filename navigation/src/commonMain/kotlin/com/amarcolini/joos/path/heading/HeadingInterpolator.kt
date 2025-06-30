@@ -11,7 +11,7 @@ import kotlin.jvm.JvmStatic
 /**
  * Interpolator for specifying the heading for holonomic paths.
  */
-@JsExport
+
 abstract class HeadingInterpolator {
     /**
      * Base parametric curve
@@ -80,7 +80,7 @@ abstract class HeadingInterpolator {
     internal abstract fun internalSecondDeriv(s: Double, t: Double): Angle
 }
 
-@JsExport
+
 @kotlinx.serialization.Serializable
 sealed interface HeadingInterpolation
 

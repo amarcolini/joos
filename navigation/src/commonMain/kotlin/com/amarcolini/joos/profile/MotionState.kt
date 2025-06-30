@@ -10,7 +10,6 @@ import kotlin.math.pow
 /**
  * Kinematic state of a motion profile at any given time.
  */
-@JsExport
 class MotionState @JvmOverloads constructor(
     @JvmField val x: Double,
     @JvmField val v: Double,

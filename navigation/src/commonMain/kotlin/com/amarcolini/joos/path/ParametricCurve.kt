@@ -16,7 +16,6 @@ import kotlin.math.roundToInt
  * the arc length parameter (s). Note that the arc length reparameterization is lazy, meaning that it is computed only
  * when needed. To precompute, use [reparameterize].
  */
-@JsExport
 abstract class ParametricCurve {
     /**
      * Returns the vector [s] units along the curve.
@@ -209,6 +208,7 @@ abstract class ParametricCurve {
                 }
             }
             parameterize(tLo, tHi, 0)
+            println(tSamples.size)
             this.length = length
         }
 

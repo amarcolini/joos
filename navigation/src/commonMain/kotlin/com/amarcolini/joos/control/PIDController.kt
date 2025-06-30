@@ -13,7 +13,6 @@ import kotlin.math.max
  * @param pid traditional PID coefficients
  * @param clock clock
  */
-@JsExport
 class PIDController @JvmOverloads constructor(
     pid: PIDCoefficients,
     private val clock: NanoClock = NanoClock.system

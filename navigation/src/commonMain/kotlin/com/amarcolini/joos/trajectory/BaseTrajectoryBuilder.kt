@@ -18,7 +18,6 @@ import kotlin.jvm.JvmOverloads
  * @param startDeriv start derivative
  * @param startSecondDeriv start second derivative
  */
-@JsExport
 @Suppress("UNCHECKED_CAST")
 abstract class BaseTrajectoryBuilder<T : BaseTrajectoryBuilder<T>> protected constructor(
     private val startPose: Pose2d,

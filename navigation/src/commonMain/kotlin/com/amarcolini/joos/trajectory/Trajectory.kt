@@ -18,7 +18,6 @@ import kotlin.jvm.JvmField
  * @param segments list of trajectory segments
  * @see TrajectorySegment
  */
-@JsExport
 class Trajectory(
     @JvmField val segments: List<TrajectorySegment>
 ) {

@@ -13,7 +13,7 @@ import kotlin.math.min
 /**
  * Configuration describing constraints and other robot-specific parameters.
  */
-@JsExport
+
 interface TrajectoryConstraints {
     @Transient
     val velConstraint: TrajectoryVelocityConstraint
@@ -83,7 +83,7 @@ data class MecanumConstraints @JvmOverloads constructor(
 )
 
 @Serializable
-@JsExport
+
 data class GenericConstraints @JvmOverloads constructor(
     @JvmField val maxVel: Double = 30.0,
     @JvmField val maxAccel: Double = 30.0,
@@ -98,7 +98,7 @@ data class GenericConstraints @JvmOverloads constructor(
 )
 
 @Serializable
-@JsExport
+
 data class TankConstraints @JvmOverloads constructor(
     @JvmField val maxWheelVel: Double,
     @JvmField val trackWidth: Double,

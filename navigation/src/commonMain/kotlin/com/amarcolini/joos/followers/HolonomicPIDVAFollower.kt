@@ -24,7 +24,6 @@ import kotlin.math.PI
  * @param timeout max time to wait for the error to be admissible
  * @param clock clock
  */
-@JsExport
 class HolonomicPIDVAFollower @JvmOverloads constructor(
     axialCoeffs: PIDCoefficients,
     lateralCoeffs: PIDCoefficients,

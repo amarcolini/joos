@@ -14,7 +14,6 @@ import kotlin.math.*
 /**
  * A class representing different angle units.
  */
-@JsExport
 enum class AngleUnit {
     /**
      * A unit of measure for angles equivalent to 1/360 of a full rotation.
@@ -30,7 +29,6 @@ enum class AngleUnit {
 /**
  * Class for representing angles.
  */
-@JsExport
 @kotlinx.serialization.Serializable(with = AngleSerializer::class)
 data class Angle @JvmOverloads constructor(
     @JvmField val value: Double = 0.0,

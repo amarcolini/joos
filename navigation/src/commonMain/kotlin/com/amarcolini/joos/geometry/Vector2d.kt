@@ -16,7 +16,6 @@ import kotlin.math.sqrt
 /**
  * Class for representing 2D vectors (x and y).
  */
-@JsExport
 @kotlinx.serialization.Serializable
 data class Vector2d @JvmOverloads constructor(
     @JvmField val x: Double = 0.0,

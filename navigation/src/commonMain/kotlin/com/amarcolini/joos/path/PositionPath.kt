@@ -13,7 +13,6 @@ import kotlin.math.roundToInt
  *
  * @param segments list of curves.
  */
-@JsExport
 class PositionPath(val segments: List<ParametricCurve>) {
 
     /**

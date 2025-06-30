@@ -11,7 +11,6 @@ import kotlin.jvm.JvmOverloads
 /**
  * Class for representing 2D robot poses (x, y, and heading) and their derivatives.
  */
-@JsExport
 @kotlinx.serialization.Serializable
 data class Pose2d @JvmOverloads constructor(
     @JvmField val x: Double = 0.0,

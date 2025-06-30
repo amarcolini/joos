@@ -12,7 +12,6 @@ import kotlin.math.*
 /**
  * Motion profile generator with arbitrary start and end motion states and either dynamic constraints or jerk limiting.
  */
-@JsExport
 @Suppress("LargeClass", "ComplexMethod", "NestedBlockDepth")
 object MotionProfileGenerator {
 

@@ -11,7 +11,6 @@ import kotlin.jvm.JvmOverloads
  * @param kI integral gain
  * @param kD derivative gain
  */
-@JsExport
 data class PIDCoefficients @JvmOverloads constructor(
     @JvmField var kP: Double = 0.0,
     @JvmField var kI: Double = 0.0,

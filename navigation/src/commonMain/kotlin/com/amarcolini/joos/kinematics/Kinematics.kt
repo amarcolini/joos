@@ -12,7 +12,6 @@ import kotlin.math.sin
 /**
  * A collection of methods for various kinematics-related tasks.
  */
-@JsExport
 object Kinematics {
 
     /**

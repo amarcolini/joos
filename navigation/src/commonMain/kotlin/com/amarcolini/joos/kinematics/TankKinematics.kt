@@ -14,7 +14,6 @@ import kotlin.jvm.JvmStatic
  *
  * [This page](http://rossum.sourceforge.net/papers/DiffSteer/) gives a motivated derivation.
  */
-@JsExport
 object TankKinematics {
 
     /**

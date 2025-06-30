@@ -8,6 +8,9 @@ plugins {
 extra["dokkaName"] = "Navigation"
 
 kotlin {
+    wasmWasi {
+        binaries.executable()
+    }
     jvm {
         compilations.all {
             kotlinOptions {
@@ -63,7 +66,7 @@ kotlin {
 dependencies {
     commonMainApi("org.jetbrains.kotlin:kotlin-stdlib:${Versions.kotlin}")
     commonMainImplementation("org.jetbrains.kotlin:kotlin-reflect:${Versions.kotlin}")
-    commonMainImplementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.5.0")
+    commonMainImplementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.6.3")
     commonTestImplementation(kotlin("test"))
     dokkaPlugin("org.jetbrains.dokka:mathjax-plugin:${Versions.dokka}")
 //    implementation("com.fasterxml.jackson.core:jackson-databind:2.13.3")

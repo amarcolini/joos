@@ -16,7 +16,6 @@ import kotlin.jvm.JvmOverloads
  * @param startSecondDeriv start second derivative
  * @see PathBuilder
  */
-@JsExport
 class PositionPathBuilder(
     startPos: Vector2d,
     startDeriv: Vector2d,

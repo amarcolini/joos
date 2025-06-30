@@ -17,7 +17,6 @@ import kotlin.jvm.JvmOverloads
 /**
  * Builder for trajectories with *dynamic* constraints.
  */
-@JsExport
 open class TrajectoryBuilder(
     startPose: Pose2d,
     startDeriv: Pose2d,

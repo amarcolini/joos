@@ -20,7 +20,6 @@ import kotlin.math.sqrt
  * @param timeout max time to wait for the error to be admissible
  * @param clock clock
  */
-@JsExport
 class RamseteFollower @JvmOverloads constructor(
     private val b: Double = 0.051,
     private val zeta: Double = 0.018,

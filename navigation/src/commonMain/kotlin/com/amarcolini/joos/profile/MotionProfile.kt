@@ -8,7 +8,6 @@ import kotlin.js.JsExport
  *
  * @param segments profile motion segments
  */
-@JsExport
 class MotionProfile(val segments: List<MotionSegment>) {
     init {
         require(segments.isNotEmpty()) { "A MotionProfile cannot be constructed without any MotionSegments." }

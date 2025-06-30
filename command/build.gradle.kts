@@ -7,6 +7,9 @@ plugins {
 extra["dokkaName"] = "Command"
 
 kotlin {
+    wasmWasi {
+        binaries.executable()
+    }
     jvm {
         compilations.all {
             kotlinOptions {

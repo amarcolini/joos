@@ -8,7 +8,6 @@ import kotlin.jvm.JvmField
 /**
  * Generic interface for estimating robot pose over time.
  */
-@JsExport
 interface Localizer {
 
     /**

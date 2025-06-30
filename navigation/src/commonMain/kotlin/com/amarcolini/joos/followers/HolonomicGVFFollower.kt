@@ -31,7 +31,6 @@ import kotlin.math.sqrt
  * @param errorMapFunc error map function (see [GuidingVectorField])
  * @param clock clock
  */
-@JsExport
 class HolonomicGVFFollower @JvmOverloads constructor(
     @JvmField var maxVel: Double,
     @JvmField var maxAccel: Double,

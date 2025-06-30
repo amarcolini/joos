@@ -1,7 +1,6 @@
 package com.amarcolini.joos.control
 
 import com.amarcolini.joos.util.epsilonEquals
-import kotlin.js.JsExport
 import kotlin.jvm.JvmField
 import kotlin.jvm.JvmOverloads
 import kotlin.math.sign
@@ -12,7 +11,6 @@ import kotlin.math.sign
  * @param kA acceleration gain
  * @param kStatic additive constant
  */
-@JsExport
 data class DCMotorFeedforward @JvmOverloads constructor(
     @JvmField var kV: Double = 0.0,
     @JvmField var kA: Double = 0.0,

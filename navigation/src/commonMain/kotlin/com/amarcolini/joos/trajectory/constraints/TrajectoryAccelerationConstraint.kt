@@ -8,7 +8,7 @@ import kotlin.math.min
 /**
  * Motion profile acceleration constraint.
  */
-@JsExport
+
 fun interface TrajectoryAccelerationConstraint {
 
     /**

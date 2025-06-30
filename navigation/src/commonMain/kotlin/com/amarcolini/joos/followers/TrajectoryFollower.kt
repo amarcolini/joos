@@ -17,7 +17,6 @@ import kotlin.math.abs
  * @param timeout max time to wait for the error to be admissible
  * @param clock clock
  */
-@JsExport
 abstract class TrajectoryFollower @JvmOverloads constructor(
     private val admissibleError: Pose2d = Pose2d(),
     private val timeout: Double = 0.0,
